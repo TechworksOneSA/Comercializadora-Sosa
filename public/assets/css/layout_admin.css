@@ -1,0 +1,467 @@
+/* =========================================================
+   LAYOUT ADMIN - Estilos específicos
+   Sistema POS/ERP para Ferretería
+========================================================= */
+
+/* SIDEBAR - Clean Professional Design */
+.admin-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--admin-sidebar-width);
+  background: var(--primary);
+  color: #ffffff;
+  padding: 28px 22px;
+  box-shadow: var(--admin-shadow-sidebar);
+  z-index: 50;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+/* Custom scrollbar for WebKit browsers - Enhanced Premium Version */
+.admin-sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.admin-sidebar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s var(--admin-animation-smooth);
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.4) 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.admin-sidebar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.admin-sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 18px 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 28px;
+  position: relative;
+  z-index: 2;
+}
+
+.admin-sidebar-brand::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  border-radius: 1px;
+}
+
+.admin-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  background: var(--card-white);
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.3s var(--admin-animation-smooth);
+  position: relative;
+}
+
+.admin-logo:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.admin-brand-title {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
+  text-align: center;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.admin-brand-sub {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.85;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.admin-nav {
+  padding: 0;
+}
+
+.admin-nav-section {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+  margin: 20px 12px 8px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.admin-nav-item {
+  display: block;
+  padding: 14px 18px;
+  border-radius: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  margin: 4px 0;
+  position: relative;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.admin-nav-item::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  background: #ffffff;
+  border-radius: 0 2px 2px 0;
+  transition: height 0.2s ease;
+}
+
+.admin-nav-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.admin-nav-item:hover::after {
+  height: 20px;
+}
+
+.admin-nav-item:active {
+  background: rgba(255, 255, 255, 0.08) !important;
+  transform: none !important;
+}
+
+.admin-nav-item:focus {
+  outline: none !important;
+  background: transparent !important;
+}
+
+.admin-nav-item:active:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.admin-nav-item.active {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff;
+  font-weight: 600;
+  animation: pulseActive 2s ease-in-out infinite;
+  box-shadow:
+    0 4px 12px rgba(255, 255, 255, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateX(4px);
+}
+
+.admin-nav-item.active::after {
+  height: 100%;
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+  border-radius: 0;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes pulseActive {
+  0%, 100% {
+    box-shadow:
+      0 4px 12px rgba(255, 255, 255, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 6px 16px rgba(255, 255, 255, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: 100%;
+    opacity: 1;
+  }
+}
+
+.admin-nav-icon {
+  display: none;
+}
+
+/* MAIN CONTENT AREA */
+.admin-main {
+  margin-left: var(--admin-sidebar-width);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+
+/* TOPBAR - Ultra Premium Glass Header */
+.admin-topbar {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: var(--admin-backdrop-blur);
+  height: var(--admin-topbar-height);
+  padding: 0 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+  box-shadow: var(--admin-shadow-topbar);
+  z-index: 10;
+  transition: all 0.3s var(--admin-animation-smooth);
+}
+
+.admin-topbar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(10, 61, 145, 0.1),
+    rgba(10, 61, 145, 0.2),
+    rgba(10, 61, 145, 0.1),
+    transparent
+  );
+}
+
+.admin-topbar-title {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 2px rgba(10, 61, 145, 0.1);
+  position: relative;
+}
+
+.admin-topbar-title::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  border-radius: 1px;
+  transition: width 0.4s var(--admin-animation-smooth);
+}
+
+.admin-topbar:hover .admin-topbar-title::after {
+  width: 100%;
+}
+
+.admin-user {
+  font-weight: 600;
+  color: var(--text);
+  margin-right: 16px;
+  font-size: 14px;
+}
+
+.admin-logout {
+  background: linear-gradient(135deg, var(--accent) 0%, #d32f2f 100%);
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.3s var(--admin-animation-bounce);
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.3), 0 1px 4px rgba(198, 40, 40, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.admin-logout::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.admin-logout:hover::before {
+  left: 100%;
+}
+
+.admin-logout:hover {
+  background: linear-gradient(135deg, #b71c1c 0%, #c62828 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(198, 40, 40, 0.4), 0 3px 8px rgba(198, 40, 40, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* CONTENT AREA - Professional KPI Cards */
+.admin-content {
+  padding: 32px 28px;
+  flex: 1;
+  background: var(--surface);
+}
+
+/* Ultra Premium KPI Cards with Glass Morphism */
+.admin-content > * {
+  background: var(--card-white);
+  border-radius: var(--admin-radius-card);
+  padding: 28px;
+  margin-bottom: 28px;
+  box-shadow: var(--admin-shadow-card);
+  border: 1px solid rgba(10, 61, 145, 0.08);
+  transition: all 0.4s var(--admin-animation-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-content > *::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.admin-content > *:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--admin-shadow-hover);
+  border-color: rgba(10, 61, 145, 0.12);
+}
+
+.admin-content > *:hover::before {
+  opacity: 1;
+}
+
+.admin-content > *::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  pointer-events: none;
+}
+
+.admin-content h1,
+.admin-content h2,
+.admin-content h3 {
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+
+.admin-content h1 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.admin-content h2 {
+  font-size: 22px;
+}
+
+.admin-content h3 {
+  font-size: 18px;
+}
+
+.admin-content p,
+.admin-content span {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 900px) {
+  .admin-sidebar {
+    width: var(--admin-sidebar-width-tablet);
+    padding: 20px 16px;
+  }
+
+  .admin-main {
+    margin-left: var(--admin-sidebar-width-tablet);
+  }
+
+  .admin-content {
+    padding: 24px 20px;
+  }
+
+  .admin-topbar {
+    padding: 0 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-sidebar {
+    position: fixed;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: var(--admin-sidebar-width);
+    z-index: 100;
+  }
+
+  .admin-main {
+    margin-left: 0;
+  }
+
+  .admin-content {
+    padding: 20px 16px;
+  }
+
+  .admin-topbar {
+    padding: 0 16px;
+  }
+}

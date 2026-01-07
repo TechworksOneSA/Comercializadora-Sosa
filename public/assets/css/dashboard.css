@@ -1,0 +1,349 @@
+/* Dashboard Styles - Comercializadora Sosa */
+
+.dashboard-container {
+  padding: 2rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  min-height: 100vh;
+}
+
+.dashboard-header {
+  background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%);
+  padding: 2rem;
+  border-radius: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 20px rgba(10, 61, 145, 0.3);
+  color: white;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.dashboard-header p {
+  opacity: 0.9;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.dashboard-section {
+  margin-bottom: 3rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0a3d91;
+  margin: 0 0 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  background: white;
+  padding: 1.75rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-left: 5px solid;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Metric Card Color Variants */
+.metric-card.ventas {
+  border-color: #10b981;
+}
+.metric-card.efectivo {
+  border-color: #3b82f6;
+}
+.metric-card.gastos {
+  border-color: #ef4444;
+}
+.metric-card.ganancia {
+  border-color: #8b5cf6;
+}
+.metric-card.usuarios {
+  border-color: #6366f1;
+}
+.metric-card.productos {
+  border-color: #8b5cf6;
+}
+.metric-card.clientes {
+  border-color: #3b82f6;
+}
+.metric-card.inventario {
+  border-color: #f59e0b;
+}
+.metric-card.reportes {
+  border-color: #ec4899;
+}
+.metric-card.proveedores {
+  border-color: #059669;
+}
+.metric-card.pos {
+  border-color: #7c3aed;
+}
+
+.metric-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  line-height: 1.1;
+}
+
+/* Metric Value Colors */
+.metric-card.ventas .metric-value {
+  color: #10b981;
+}
+.metric-card.efectivo .metric-value {
+  color: #3b82f6;
+}
+.metric-card.gastos .metric-value {
+  color: #ef4444;
+}
+.metric-card.ganancia .metric-value {
+  color: #8b5cf6;
+}
+
+.metric-detail {
+  font-size: 0.875rem;
+  color: #64748b;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 0.75rem;
+}
+
+/* Quick Access Cards */
+.quick-access-card {
+  background: white;
+  padding: 1.75rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-left: 5px solid;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+}
+
+.quick-access-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  text-decoration: none;
+}
+
+.quick-access-card .metric-detail {
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: #64748b;
+}
+
+.quick-access-card.usuarios {
+  border-color: #6366f1;
+}
+.quick-access-card.productos {
+  border-color: #8b5cf6;
+}
+.quick-access-card.clientes {
+  border-color: #3b82f6;
+}
+.quick-access-card.ventas {
+  border-color: #10b981;
+}
+.quick-access-card.pos {
+  border-color: #7c3aed;
+}
+.quick-access-card.inventario {
+  border-color: #f59e0b;
+}
+.quick-access-card.reportes {
+  border-color: #ec4899;
+}
+.quick-access-card.proveedores {
+  border-color: #059669;
+}
+
+/* Alert Cards */
+.alert-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-left: 5px solid;
+}
+
+.alert-card.danger {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.alert-card.warning {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.alert-card.info {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.alert-card.success {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.alert-title {
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.alert-title.success {
+  color: #065f46;
+}
+
+.alert-content {
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.alert-content.success {
+  color: #047857;
+}
+
+.alert-content a {
+  color: #3b82f6;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.alert-content a:hover {
+  text-decoration: underline;
+}
+
+.badge-critical {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Text Utilities */
+.text-success {
+  color: #10b981 !important;
+}
+
+.text-danger {
+  color: #ef4444 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+
+  .dashboard-header {
+    padding: 1.5rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .metric-card,
+  .quick-access-card {
+    padding: 1.25rem;
+  }
+
+  .metric-value {
+    font-size: 1.75rem;
+  }
+
+  .section-title {
+    font-size: 1.125rem;
+    margin: 1.5rem 0 1rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 0.75rem;
+  }
+
+  .metric-icon {
+    font-size: 2rem;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-section {
+    margin-bottom: 2rem;
+  }
+}
+
+/* Utility Classes */
+.text-center {
+  text-align: center;
+}
+
+.mb-0 {
+  margin-bottom: 0;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}

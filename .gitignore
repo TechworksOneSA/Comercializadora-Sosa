@@ -1,0 +1,146 @@
+# ========================================
+# .gitignore - Comercializadora Sosa
+# ========================================
+# Este archivo especifica qué archivos/carpetas
+# NO deben ser versionados en Git
+
+# === CONFIGURACIONES SENSIBLES ===
+# Archivos con credenciales y configuración local
+/app/config/env.local.php
+/app/config/env.production.php
+.env
+.env.local
+.env.production
+*.key
+*.pem
+
+# === DEPENDENCIAS ===
+# Bibliotecas de terceros (instalar con composer/npm)
+/vendor/
+/node_modules/
+composer.lock
+package-lock.json
+
+# === ARCHIVOS SUBIDOS POR USUARIOS ===
+# Imágenes, documentos, uploads temporales
+/public/uploads/*
+!/public/uploads/.gitkeep
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+
+# === LOGS Y CACHÉ ===
+# Archivos de log y caché temporal
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/cache/*
+!/storage/cache/.gitkeep
+/app/cache/*
+/temp/*
+*.log
+error_log
+php_error_log
+
+# === SESIONES ===
+# Archivos de sesión de PHP
+/storage/sessions/*
+!/storage/sessions/.gitkeep
+/tmp/sessions/*
+
+# === BACKUPS Y EXPORTACIONES ===
+# Dumps de base de datos y backups
+*.sql
+*.sql.gz
+*.sql.zip
+*.backup
+*.bak
+/backups/*
+/exports/*
+dump.sql
+
+# === SISTEMA OPERATIVO ===
+# Archivos del sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# === IDEs Y EDITORES ===
+# Configuraciones de editores de código
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.project
+.settings/
+.buildpath
+
+# === TEMPORALES ===
+# Archivos temporales de PHP y otros
+*.tmp
+*.temp
+*.cache
+.phpunit.cache/
+.php_cs.cache
+.php-cs-fixer.cache
+
+# === COMPOSER ===
+# Dependencias de Composer
+/vendor/
+composer.phar
+composer.lock
+
+# === NPM / YARN ===
+# Dependencias de Node.js
+/node_modules/
+npm-debug.log
+yarn-error.log
+yarn.lock
+package-lock.json
+.npm/
+.yarn/
+
+# === BUILD / DIST ===
+# Archivos compilados/generados
+/build/
+/dist/
+/out/
+*.min.js
+*.min.css
+*.map
+
+# === PRUEBAS ===
+# Archivos de testing
+/coverage/
+.phpunit.result.cache
+phpunit.xml
+
+# === DOCUMENTACIÓN GENERADA ===
+# Docs auto-generados
+/docs/api/
+/phpdoc/
+
+# === CERTIFICADOS SSL ===
+# Certificados locales de desarrollo
+*.crt
+*.csr
+*.key
+*.pem
+ssl/
+
+# === OTROS ===
+# Varios
+.htaccess.backup
+wp-config-backup.php
+*.orig
+*.rej
+.sass-cache/

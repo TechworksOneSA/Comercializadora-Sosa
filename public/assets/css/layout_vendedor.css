@@ -1,0 +1,261 @@
+/* =========================================================
+   LAYOUT VENDEDOR - Estilos específicos
+   Sistema POS/ERP para Ferretería - Panel de Ventas
+========================================================= */
+
+/* SIDEBAR VENDEDOR - Same Premium Design as Admin */
+.layout-vendedor .sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 260px;
+  background: var(--primary);
+  color: #ffffff;
+  padding: 0;
+  box-shadow: 12px 0 48px rgba(0, 0, 0, 0.18), 4px 0 16px rgba(10, 61, 145, 0.08);
+  z-index: 50;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Custom scrollbar for WebKit browsers */
+.layout-vendedor .sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.layout-vendedor .sidebar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.layout-vendedor .sidebar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.layout-vendedor .sidebar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.4) 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Sidebar Header */
+.layout-vendedor .sidebar-header {
+  padding: 1.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.layout-vendedor .sidebar-header h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.25rem 0;
+}
+
+.layout-vendedor .sidebar-header p {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+/* Navigation */
+.layout-vendedor .sidebar-nav {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.layout-vendedor .sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.layout-vendedor .sidebar-nav > ul > li {
+  margin-bottom: 0.5rem;
+}
+
+/* Navigation Links */
+.layout-vendedor .sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  position: relative;
+}
+
+.layout-vendedor .sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.layout-vendedor .sidebar-link.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+.layout-vendedor .sidebar-link svg {
+  flex-shrink: 0;
+}
+
+.layout-vendedor .sidebar-link span {
+  color: inherit;
+}
+
+/* Section Headers */
+.layout-vendedor .sidebar-section {
+  margin: 1rem 0;
+}
+
+.layout-vendedor .sidebar-section > p {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 0.5rem 0.75rem;
+}
+
+/* Nested Lists */
+.layout-vendedor .sidebar-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.layout-vendedor .sidebar-section li {
+  margin-bottom: 0.25rem;
+}
+
+.layout-vendedor .sidebar-section .sidebar-link {
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+}
+
+/* Sidebar Footer */
+.layout-vendedor .sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.1);
+  margin-top: auto;
+}
+
+.layout-vendedor .sidebar-footer .flex {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.layout-vendedor .sidebar-footer .w-8 {
+  width: 2rem;
+  height: 2rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.layout-vendedor .sidebar-footer p {
+  margin: 0;
+  color: #ffffff;
+  font-size: 0.875rem;
+}
+
+.layout-vendedor .sidebar-footer .text-xs {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.layout-vendedor .sidebar-footer .btn {
+  display: block;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  background: rgba(198, 40, 40, 0.9);
+  color: #ffffff;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.layout-vendedor .sidebar-footer .btn:hover {
+  background: rgba(198, 40, 40, 1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.4);
+}
+
+/* Main Content Area */
+.layout-vendedor .main-content {
+  margin-left: 260px;
+  min-height: 100vh;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navbar */
+.layout-vendedor .navbar {
+  background: #ffffff;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+/* Content Wrapper */
+.layout-vendedor .content-wrapper {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .layout-vendedor .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    width: 260px;
+  }
+
+  .layout-vendedor .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .layout-vendedor .main-content {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .layout-vendedor .content-wrapper {
+    padding: 1rem;
+  }
+}
