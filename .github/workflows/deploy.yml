@@ -1,36 +1,44 @@
-name: Deploy Comercializadora
+name: Deploy to Hetzner (Apache PHP)
+
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
+      - name: Sanity check (no leaks)
+        shell: bash
+        run: |
+          echo "Host length: ${#SSH_HOST}"
+          echo "User length: ${#SSH_USER}"
+          echo "Key length : ${#SSH_KEY}"
+          if [ ${#SSH_HOST} -lt 7 ]; then echo "SSH_HOST missing/empty"; exit 1; fi
+          if [ ${#SSH_USER} -lt 1 ]; then echo "SSH_USER missing/empty"; exit 1; fi
+          if [ ${#SSH_KEY} -lt 100 ]; then echo "SSH_KEY missing/too short"; exit 1; fi
+          echo "Secrets present ✅"
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}        # ej: 46.224.204.198
-          username: ${{ secrets.SSH_USER }}    # ej: ops o root
-          key: ${{ secrets.SSH_KEY }}          # private key completa
-          port: ${{ secrets.SSH_PORT }}        # 22 (opcional)
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
           script_stop: true
           timeout: 30s
           command_timeout: 10m
           script: |
             set -e
             cd /srv/apps/comercializadora
-
-            echo "== Pull latest =="
             git fetch --all
             git reset --hard origin/main
-
-            echo "== Permissions (safe defaults) =="
-            sudo chown -R ${USER}:www-data /srv/apps/comercializadora
-            sudo find /srv/apps/comercializadora -type d -exec chmod 755 {} \;
-            sudo find /srv/apps/comercializadora -type f -exec chmod 644 {} \;
-
-            echo "== Reload Apache =="
+            sudo chown -R ops:www-data /srv/apps/comercializadora
             sudo systemctl reload apache2
-
             echo "DONE"
