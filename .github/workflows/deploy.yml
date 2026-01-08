@@ -1,23 +1,24 @@
-name: Deploy to Hetzner (Apache PHP)
-
+name: Deploy Comercializadora
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.SSH_HOST }}        # ej: 46.224.204.198
+          username: ${{ secrets.SSH_USER }}    # ej: ops o root
+          key: ${{ secrets.SSH_KEY }}          # private key completa
+          port: ${{ secrets.SSH_PORT }}        # 22 (opcional)
+          script_stop: true
+          timeout: 30s
+          command_timeout: 10m
           script: |
             set -e
-
             cd /srv/apps/comercializadora
 
             echo "== Pull latest =="
@@ -25,14 +26,9 @@ jobs:
             git reset --hard origin/main
 
             echo "== Permissions (safe defaults) =="
-            sudo chown -R ops:www-data /srv/apps/comercializadora
+            sudo chown -R ${USER}:www-data /srv/apps/comercializadora
             sudo find /srv/apps/comercializadora -type d -exec chmod 755 {} \;
             sudo find /srv/apps/comercializadora -type f -exec chmod 644 {} \;
-
-            # Si tiene carpetas que requieran escritura (uploads/cache), agréguelo aquí:
-            # sudo mkdir -p /srv/apps/comercializadora/public/uploads
-            # sudo chown -R www-data:www-data /srv/apps/comercializadora/public/uploads
-            # sudo chmod -R 775 /srv/apps/comercializadora/public/uploads
 
             echo "== Reload Apache =="
             sudo systemctl reload apache2
