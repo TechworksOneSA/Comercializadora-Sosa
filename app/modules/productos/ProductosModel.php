@@ -41,27 +41,30 @@ class ProductosModel extends Model
 
         // búsqueda por texto
         if ($q !== "") {
-            $where[] = "(p.nombre LIKE :q OR p.sku LIKE :q OR p.codigo_barra LIKE :q)";
-            $params[":q"] = "%{$q}%";
+            $where[] = "(p.nombre LIKE :q1 OR p.sku LIKE :q2 OR p.codigo_barra LIKE :q3)";
+            $searchTerm = "%{$q}%";
+            $params["q1"] = $searchTerm;
+            $params["q2"] = $searchTerm;
+            $params["q3"] = $searchTerm;
         }
 
         // filtros
         $categoriaId = (int)($filters["categoria_id"] ?? 0);
         if ($categoriaId > 0) {
             $where[] = "p.categoria_id = :categoria_id";
-            $params[":categoria_id"] = $categoriaId;
+            $params["categoria_id"] = $categoriaId;
         }
 
         $marcaId = (int)($filters["marca_id"] ?? 0);
         if ($marcaId > 0) {
             $where[] = "p.marca_id = :marca_id";
-            $params[":marca_id"] = $marcaId;
+            $params["marca_id"] = $marcaId;
         }
 
         $estado = strtoupper(trim($filters["estado"] ?? "ALL"));
         if (in_array($estado, ["ACTIVO", "INACTIVO"], true)) {
             $where[] = "p.estado = :estado";
-            $params[":estado"] = $estado;
+            $params["estado"] = $estado;
         }
 
         $stock = strtolower(trim($filters["stock"] ?? "all"));
@@ -94,7 +97,13 @@ class ProductosModel extends Model
         $sql .= " ORDER BY p.estado DESC, p.created_at DESC";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
+        
+        // Bind parameters individually
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(":" . $key, $value);
+        }
+        
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -241,7 +250,7 @@ class ProductosModel extends Model
 
     public function listarActivos(): array
     {
-        $sql = "SELECT id, sku, nombre, precio_venta, stock
+        $sql = "SELECT id, sku, nombre, tipo_producto, precio_venta, stock
                 FROM productos
                 WHERE estado = 'ACTIVO'
                 ORDER BY nombre ASC";

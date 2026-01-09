@@ -2,6 +2,7 @@
 
 require_once __DIR__ . "/ComprasModel.php";
 require_once __DIR__ . "/../productos/ProductosModel.php";
+require_once __DIR__ . "/../productos/ProductosSeriesModel.php";
 require_once __DIR__ . "/../proveedores/ProveedoresModel.php";
 
 class ComprasController extends Controller
@@ -67,7 +68,8 @@ class ComprasController extends Controller
         $productosJson = $input['productos_json'] ?? '[]';
         $productosData = json_decode($productosJson, true);
 
-        $detalles   = [];
+        $detalles = [];
+        $seriesPorProducto = []; // Almacenar series para cada producto
         $totalBruto = 0;
         $totalDesc  = 0;
 
@@ -76,6 +78,8 @@ class ComprasController extends Controller
             $cant  = (float)($item['cantidad'] ?? 0);
             $costo = (float)($item['costo_unitario'] ?? 0);
             $desc  = (float)($item['descuento'] ?? 0);
+            $tipo  = $item['tipo_producto'] ?? 'MISC';
+            $series = $item['series'] ?? [];
 
             if ($pid <= 0 || $cant <= 0 || $costo < 0) continue;
 
@@ -90,6 +94,11 @@ class ComprasController extends Controller
                 'descuento'      => $desc,
                 'subtotal'       => $subtotal,
             ];
+            
+            // Si el producto aplica serie, almacenar las series
+            if ($tipo === 'UNIDAD' && !empty($series)) {
+                $seriesPorProducto[$pid] = $series;
+            }
         }
 
         $errors = [];
@@ -130,7 +139,25 @@ class ComprasController extends Controller
             'notas'        => $notas,
         ];
 
-        $this->model->crearCompra($header, $detalles);
+        $compra_id = $this->model->crearCompra($header, $detalles);
+        
+        // Guardar series si hay productos con serie
+        if (!empty($seriesPorProducto) && $compra_id) {
+            $seriesModel = new ProductosSeriesModel();
+            
+            foreach ($seriesPorProducto as $producto_id => $series) {
+                foreach ($series as $numero_serie) {
+                    if (!empty(trim($numero_serie))) {
+                        $seriesModel->guardarSerie([
+                            'producto_id' => $producto_id,
+                            'numero_serie' => trim($numero_serie),
+                            'compra_id' => $compra_id,
+                            'estado' => 'EN_STOCK'
+                        ]);
+                    }
+                }
+            }
+        }
 
         header("Location: " . url('/admin/compras?msg=Compra registrada e inventario actualizado correctamente'));
         exit;

@@ -6,11 +6,11 @@ class Database
   {
     // En Docker: host=db, port=3306
     // En Windows/XAMPP: host=localhost, port=3306 (o el que tenga)
-    $host = getenv('DB_HOST') ?: 'db';
+    $host = defined('DB_HOST') ? DB_HOST : (getenv('DB_HOST') ?: 'localhost');
     $port = getenv('DB_PORT') ?: '3306';
-    $name = getenv('DB_NAME') ?: 'comercializadora_sosa';
-    $user = getenv('DB_USER') ?: 'root';
-    $pass = getenv('DB_PASS') ?: '';
+    $name = defined('DB_NAME') ? DB_NAME : (getenv('DB_NAME') ?: 'comercializadora_sosa');
+    $user = defined('DB_USER') ? DB_USER : (getenv('DB_USER') ?: 'root');
+    $pass = defined('DB_PASS') ? DB_PASS : (getenv('DB_PASS') ?: '');
 
     $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
 

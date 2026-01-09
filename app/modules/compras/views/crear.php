@@ -12,6 +12,7 @@ foreach ($productos as $p) {
         'nombre' => $p['nombre'],
         'sku'   => $p['sku'] ?? '',
         'codigo_barra' => $p['codigo_barra'] ?? '',
+        'tipo_producto' => $p['tipo_producto'] ?? 'MISC',
         'costo' => isset($p['costo_actual']) ? (float)$p['costo_actual'] : 0,
         'stock_actual' => (int)($p['stock'] ?? 0),
     ];
@@ -175,40 +176,63 @@ foreach ($productos as $p) {
         border: 2px solid #e2e8f0;
         border-radius: 0.75rem;
         overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .productos-table thead {
         background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%);
-        color: white;
+        color: #ffffff;
     }
 
     .productos-table th {
-        padding: 1rem;
+        padding: 1.125rem 1rem;
         text-align: left;
-        font-weight: 600;
-        font-size: 0.9rem;
+        font-weight: 700;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        vertical-align: middle;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     .productos-table td {
-        padding: 0.75rem;
+        padding: 1rem 0.75rem;
         border-bottom: 1px solid #e2e8f0;
+        vertical-align: middle;
+    }
+
+    .productos-table tbody tr {
+        transition: background-color 0.2s;
     }
 
     .productos-table tbody tr:hover {
         background: #f8fafc;
     }
 
+    .productos-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
     .productos-table input {
         width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #e2e8f0;
+        padding: 0.625rem;
+        border: 1px solid #cbd5e1;
         border-radius: 0.375rem;
         font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .productos-table input:hover {
+        border-color: #94a3b8;
     }
 
     .productos-table input:focus {
         outline: none;
         border-color: #0a3d91;
+        box-shadow: 0 0 0 3px rgba(10, 61, 145, 0.1);
     }
 
     .btn-remove {
@@ -329,29 +353,34 @@ foreach ($productos as $p) {
 
     .producto-info {
         display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        flex-direction: column;
+        gap: 0.375rem;
     }
 
     .producto-nombre {
         font-weight: 600;
         color: #1e293b;
+        font-size: 0.95rem;
+        line-height: 1.4;
     }
 
     .producto-sku {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         color: #64748b;
         font-family: 'Courier New', monospace;
+        letter-spacing: 0.3px;
     }
 
     .stock-badge {
         display: inline-block;
-        padding: 0.25rem 0.5rem;
-        background: #e0f2fe;
+        padding: 0.25rem 0.625rem;
+        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
         color: #0369a1;
-        border-radius: 0.375rem;
+        border-radius: 0.5rem;
         font-size: 0.75rem;
         font-weight: 600;
+        margin-top: 0.25rem;
+        border: 1px solid #7dd3fc;
     }
 
     .autocomplete-dropdown {
@@ -501,6 +530,246 @@ foreach ($productos as $p) {
     .fbselect-menu::-webkit-scrollbar-thumb:hover {
         background: #64748b;
     }
+
+    /* Alerta emergente para productos con serie */
+    .alert-serie {
+        position: relative;
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border: 2px solid #3b82f6;
+        border-radius: 0.75rem;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: none;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .alert-serie.show {
+        display: flex;
+    }
+
+    .alert-serie-icon {
+        font-size: 1.8rem;
+        flex-shrink: 0;
+    }
+
+    .alert-serie-content {
+        flex: 1;
+    }
+
+    .alert-serie-title {
+        font-weight: 700;
+        color: #1e40af;
+        font-size: 1.05rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .alert-serie-text {
+        color: #1e3a8a;
+        font-size: 0.9rem;
+    }
+
+    .alert-serie-sku {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        background: white;
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .alert-serie-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #1e40af;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        transition: background 0.2s;
+    }
+
+    .alert-serie-close:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Modal para ingresar series */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9998;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal-overlay.show {
+        display: block;
+    }
+
+    .modal-series {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        background: white;
+        border-radius: 1.5rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        z-index: 9999;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow: hidden;
+        opacity: 0;
+        transition: all 0.3s ease-out;
+    }
+
+    .modal-series.show {
+        display: flex;
+        flex-direction: column;
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%);
+        padding: 1.5rem;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .modal-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .series-input-group {
+        margin-bottom: 1rem;
+    }
+
+    .series-input-label {
+        display: block;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .series-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.95rem;
+        transition: border-color 0.2s;
+    }
+
+    .series-input:focus {
+        outline: none;
+        border-color: #0a3d91;
+        box-shadow: 0 0 0 3px rgba(10, 61, 145, 0.1);
+    }
+
+    .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 2px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+
+    .btn-modal-cancel {
+        background: #e2e8f0;
+        color: #475569;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-modal-cancel:hover {
+        background: #cbd5e1;
+    }
+
+    .btn-modal-save {
+        background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(10, 61, 145, 0.3);
+    }
+
+    .btn-modal-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(10, 61, 145, 0.4);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    }
 </style>
 
 <div class="compras-container">
@@ -510,6 +779,18 @@ foreach ($productos as $p) {
             <p>Registre compras a proveedores y actualice el stock automáticamente</p>
         </div>
         <a href="<?= url('/admin/compras') ?>" class="btn-volver">← Volver</a>
+    </div>
+
+    <!-- Alerta para productos con serie -->
+    <div class="alert-serie" id="alertSerie">
+        <span class="alert-serie-icon">📦</span>
+        <div class="alert-serie-content">
+            <div class="alert-serie-title">Producto con Serie Detectado</div>
+            <div class="alert-serie-text">
+                <span id="alertSerieProducto"></span> | SKU: <span class="alert-serie-sku" id="alertSerieSku"></span>
+            </div>
+        </div>
+        <button type="button" class="alert-serie-close" onclick="closeAlertSerie()">×</button>
     </div>
 
     <div class="form-container">
@@ -621,11 +902,119 @@ foreach ($productos as $p) {
     </div>
 </div>
 
+<!-- Modal para ingresar series -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalSeries()"></div>
+<div class="modal-series" id="modalSeries">
+    <div class="modal-header">
+        <h3>📦 Ingresar Números de Serie</h3>
+        <button type="button" class="modal-close" onclick="closeModalSeries()">×</button>
+    </div>
+    <div class="modal-body" id="modalSeriesBody">
+        <!-- Los inputs se generarán dinámicamente -->
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn-modal-cancel" onclick="closeModalSeries()">Cancelar</button>
+        <button type="button" class="btn-modal-save" onclick="saveSeriesModal()">Guardar Series</button>
+    </div>
+</div>
+
 <!-- JavaScript del módulo -->
 <script src="<?= url('/assets/js/facebook-selectors.js') ?>"></script>
 <script>
     const PRODUCTOS = <?= json_encode($productosJs) ?>;
     let productosEnCompra = [];
+    let currentProductoIndex = null;
+
+    // Función para mostrar alerta de serie
+    function showAlertSerie(producto) {
+        const alert = document.getElementById('alertSerie');
+        document.getElementById('alertSerieProducto').textContent = producto.nombre;
+        document.getElementById('alertSerieSku').textContent = producto.sku;
+        alert.classList.add('show');
+        
+        // Auto ocultar después de 5 segundos
+        setTimeout(() => {
+            closeAlertSerie();
+        }, 5000);
+    }
+
+    function closeAlertSerie() {
+        document.getElementById('alertSerie').classList.remove('show');
+    }
+
+    // Función para abrir modal de series
+    function openModalSeries(index) {
+        const producto = productosEnCompra[index];
+        currentProductoIndex = index;
+        
+        const modalBody = document.getElementById('modalSeriesBody');
+        const cantidad = Math.floor(producto.cantidad);
+        
+        let html = '';
+        for (let i = 0; i < cantidad; i++) {
+            const value = producto.series && producto.series[i] ? producto.series[i] : '';
+            html += `
+                <div class="series-input-group">
+                    <label class="series-input-label">Serie ${i + 1} de ${cantidad}</label>
+                    <input type="text" 
+                           class="series-input" 
+                           id="serie_${i}" 
+                           value="${value}"
+                           placeholder="Ingrese número de serie ${i + 1}"
+                           autocomplete="off">
+                </div>
+            `;
+        }
+        
+        modalBody.innerHTML = html;
+        document.getElementById('modalOverlay').classList.add('show');
+        document.getElementById('modalSeries').classList.add('show');
+        
+        // Focus en el primer input
+        setTimeout(() => {
+            document.getElementById('serie_0')?.focus();
+        }, 100);
+    }
+
+    function closeModalSeries() {
+        document.getElementById('modalOverlay').classList.remove('show');
+        document.getElementById('modalSeries').classList.remove('show');
+        currentProductoIndex = null;
+    }
+
+    function saveSeriesModal() {
+        if (currentProductoIndex === null) return;
+        
+        const producto = productosEnCompra[currentProductoIndex];
+        const cantidad = Math.floor(producto.cantidad);
+        const series = [];
+        
+        // Recoger todos los valores
+        for (let i = 0; i < cantidad; i++) {
+            const input = document.getElementById(`serie_${i}`);
+            const valor = input?.value.trim() || '';
+            series.push(valor);
+        }
+        
+        // Validar que no haya vacíos
+        const seriesVacias = series.filter(s => !s).length;
+        if (seriesVacias > 0) {
+            alert(`⚠️ Faltan ${seriesVacias} números de serie por ingresar.`);
+            return;
+        }
+        
+        // Validar duplicados
+        const seriesSet = new Set(series);
+        if (seriesSet.size !== series.length) {
+            alert('⚠️ Hay números de serie duplicados. Cada serie debe ser única.');
+            return;
+        }
+        
+        // Guardar series
+        producto.series = series;
+        closeModalSeries();
+        renderizarTabla();
+    }
 
     // Función para buscar productos
     function buscarProducto(query) {
@@ -684,16 +1073,30 @@ foreach ($productos as $p) {
         const existe = productosEnCompra.find(p => p.id === producto.id);
         if (existe) {
             existe.cantidad += 1;
+            // Si el producto aplica serie, agregar espacio para una serie más
+            if (existe.tipo_producto === 'UNIDAD' && existe.series) {
+                existe.series.push('');
+            }
         } else {
-            productosEnCompra.push({
+            const nuevoProducto = {
                 id: producto.id,
                 nombre: producto.nombre,
                 sku: producto.sku,
                 stock_actual: producto.stock_actual,
+                tipo_producto: producto.tipo_producto || 'MISC',
                 cantidad: 1,
                 costo_unitario: producto.costo || 0,
                 descuento: 0
-            });
+            };
+            
+            // Si aplica serie, inicializar array de series
+            if (nuevoProducto.tipo_producto === 'UNIDAD') {
+                nuevoProducto.series = [''];
+                // Mostrar alerta de que es un producto con serie
+                showAlertSerie(nuevoProducto);
+            }
+            
+            productosEnCompra.push(nuevoProducto);
         }
         renderizarTabla();
     }
@@ -704,7 +1107,32 @@ foreach ($productos as $p) {
     }
 
     function actualizarCantidad(index, valor) {
-        productosEnCompra[index].cantidad = parseFloat(valor) || 0;
+        const producto = productosEnCompra[index];
+        const nuevaCantidad = parseFloat(valor) || 0;
+        producto.cantidad = nuevaCantidad;
+        
+        // Si el producto aplica serie, ajustar el array de series
+        if (producto.tipo_producto === 'UNIDAD' && producto.series) {
+            const cantidadActual = producto.series.length;
+            const diferencia = Math.floor(nuevaCantidad) - cantidadActual;
+            
+            if (diferencia > 0) {
+                // Agregar más espacios para series
+                for (let i = 0; i < diferencia; i++) {
+                    producto.series.push('');
+                }
+            } else if (diferencia < 0) {
+                // Quitar espacios sobrantes
+                producto.series = producto.series.slice(0, Math.floor(nuevaCantidad));
+            }
+            
+            // Si la cantidad es mayor a 0, abrir modal para ingresar series
+            if (Math.floor(nuevaCantidad) > 0) {
+                openModalSeries(index);
+            }
+        }
+        
+        renderizarTabla();
         calcularTotales();
     }
 
@@ -729,15 +1157,52 @@ foreach ($productos as $p) {
 
         tbody.innerHTML = productosEnCompra.map((p, index) => {
             const subtotal = (p.cantidad * p.costo_unitario) - p.descuento;
+            
+            // Indicador de series completadas
+            let seriesStatus = '';
+            if (p.tipo_producto === 'UNIDAD' && p.series) {
+                const seriesCompletas = p.series.filter(s => s.trim() !== '').length;
+                const totalSeries = Math.floor(p.cantidad);
+                const porcentaje = totalSeries > 0 ? (seriesCompletas / totalSeries * 100) : 0;
+                
+                let statusColor = '#ef4444'; // rojo
+                let statusText = 'Pendiente';
+                if (porcentaje === 100) {
+                    statusColor = '#10b981'; // verde
+                    statusText = 'Completo';
+                } else if (porcentaje > 0) {
+                    statusColor = '#f59e0b'; // amarillo
+                    statusText = 'Parcial';
+                }
+                
+                seriesStatus = `
+                    <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="background: ${statusColor}; color: white; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">
+                            📋 Series: ${seriesCompletas}/${totalSeries} ${statusText}
+                        </span>
+                        <button type="button" 
+                                onclick="openModalSeries(${index})" 
+                                style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: all 0.2s;"
+                                onmouseover="this.style.transform='scale(1.05)'"
+                                onmouseout="this.style.transform='scale(1)'">
+                            ✏️ Editar Series
+                        </button>
+                    </div>
+                `;
+            }
 
             return `
             <tr>
                 <td>
                     <div class="producto-info">
                         <div>
-                            <div class="producto-nombre">${p.nombre}</div>
+                            <div class="producto-nombre">
+                                ${p.nombre}
+                                ${p.tipo_producto === 'UNIDAD' ? '<span style="margin-left: 0.5rem; background: #10b981; color: white; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">📦 Serie</span>' : ''}
+                            </div>
                             <div class="producto-sku">SKU: ${p.sku}</div>
                             <span class="stock-badge">Stock actual: ${p.stock_actual}</span>
+                            ${seriesStatus}
                         </div>
                     </div>
                 </td>
@@ -769,6 +1234,10 @@ foreach ($productos as $p) {
         calcularTotales();
     }
 
+    function actualizarSerie(productoIndex, serieIndex, valor) {
+        productosEnCompra[productoIndex].series[serieIndex] = valor.trim();
+    }
+
     function calcularTotales() {
         let totalBruto = 0;
         let totalDescuento = 0;
@@ -794,6 +1263,26 @@ foreach ($productos as $p) {
             e.preventDefault();
             alert('Debe agregar al menos un producto con cantidad mayor a 0');
             return;
+        }
+
+        // Validar que productos con serie tengan todos los números de serie ingresados
+        for (let producto of productosValidos) {
+            if (producto.tipo_producto === 'UNIDAD' && producto.series) {
+                const seriesVacias = producto.series.filter(s => !s || s.trim() === '');
+                if (seriesVacias.length > 0) {
+                    e.preventDefault();
+                    alert(`⚠️ El producto "${producto.nombre}" requiere ${producto.series.length} números de serie.\nPor favor complete todos los campos de serie.`);
+                    return;
+                }
+                
+                // Validar que no haya series duplicadas
+                const seriesSet = new Set(producto.series);
+                if (seriesSet.size !== producto.series.length) {
+                    e.preventDefault();
+                    alert(`⚠️ El producto "${producto.nombre}" tiene números de serie duplicados.\nCada número de serie debe ser único.`);
+                    return;
+                }
+            }
         }
 
         // Convertir a JSON para enviar

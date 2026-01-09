@@ -479,6 +479,73 @@ $marcaText = $marcaId && isset($mapMar[$marcaId]) ? $mapMar[$marcaId] : '';
         text-align: center;
     }
 }
+
+/* Estilos para tipo de producto (solo visualización) */
+.tipo-producto-display {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+}
+
+.tipo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tipo-badge-serie {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08));
+    color: #065f46;
+    border: 2px solid rgba(16, 185, 129, 0.35);
+}
+
+.tipo-badge-misc {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.08));
+    color: #92400e;
+    border: 2px solid rgba(245, 158, 11, 0.35);
+}
+
+.tipo-badge-icon {
+    font-size: 1.5rem;
+}
+
+.tipo-badge-text {
+    letter-spacing: 0.3px;
+}
+
+.btn-series {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-series:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.btn-series svg {
+    width: 18px;
+    height: 18px;
+}
 </style>
 
 <div class="inventario-editar-container <?= $isModal ? 'bm-embed' : '' ?>">
@@ -520,18 +587,54 @@ $marcaText = $marcaId && isset($mapMar[$marcaId]) ? $mapMar[$marcaId] : '';
                         class="form-input"
                         required
                         value="<?= htmlspecialchars($producto['sku'] ?? '') ?>"
-                        placeholder="Código único del producto">
+                        placeholder="Código único del producto"
+                        readonly>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label class="form-label">Código de Barras / QR</label>
-                    <input
-                        type="text"
-                        name="codigo_barra"
-                        class="form-input"
-                        value="<?= htmlspecialchars($producto['codigo_barra'] ?? '') ?>"
-                        placeholder="Código de barras o QR">
+            <!-- Tipo de Producto (Solo Visualización) -->
+            <div class="form-section">
+                <div class="section-title">Tipo de Producto (No editable)</div>
+                
+                <?php
+                $tipoActual = strtoupper($producto['tipo_producto'] ?? 'UNIDAD');
+                $tipoLabel = '';
+                $tipoIcon = '';
+                $tipoClass = '';
+                
+                if ($tipoActual === 'UNIDAD') {
+                    $tipoLabel = 'Aplica Serie';
+                    $tipoIcon = '📦';
+                    $tipoClass = 'tipo-badge-serie';
+                } else {
+                    $tipoLabel = 'Misceláneo';
+                    $tipoIcon = '🔩';
+                    $tipoClass = 'tipo-badge-misc';
+                }
+                ?>
+                
+                <div class="tipo-producto-display">
+                    <div class="tipo-badge <?= $tipoClass ?>">
+                        <span class="tipo-badge-icon"><?= $tipoIcon ?></span>
+                        <span class="tipo-badge-text"><?= $tipoLabel ?></span>
+                    </div>
+                    
+                    <?php if ($tipoActual === 'UNIDAD'): ?>
+                        <a href="<?= url('/admin/productos/' . $producto['id'] . '/series') ?>" class="btn-series">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            Ver Series del Producto
+                        </a>
+                    <?php endif; ?>
                 </div>
+                
+                <!-- Campo oculto para mantener el tipo actual -->
+                <input type="hidden" name="tipo_producto" value="<?= $tipoActual ?>">
             </div>
 
             <div class="form-grid">
@@ -545,31 +648,6 @@ $marcaText = $marcaId && isset($mapMar[$marcaId]) ? $mapMar[$marcaId] : '';
                         value="<?= htmlspecialchars($producto['nombre'] ?? '') ?>"
                         placeholder="Nombre descriptivo del producto">
                 </div>
-            </div>
-
-            <div class="section-title">Tipo de Producto</div>
-
-            <div class="tipo-producto-grid">
-                <?php
-                $tipoActual = strtoupper($producto['tipo_producto'] ?? 'UNIDAD');
-                $tipos = [
-                    'UNIDAD' => ['icon' => '📦', 'desc' => 'Productos individuales'],
-                    'PESO' => ['icon' => '⚖️', 'desc' => 'Productos por peso'],
-                    'LONGITUD' => ['icon' => '📏', 'desc' => 'Productos por longitud'],
-                    'VOLUMEN' => ['icon' => '🪣', 'desc' => 'Productos por volumen'],
-                    'MISC' => ['icon' => '🔧', 'desc' => 'Otros productos']
-                ];
-
-                foreach ($tipos as $tipo => $info):
-                    $selected = ($tipoActual === $tipo) ? 'selected' : '';
-                ?>
-                    <div class="tipo-card <?= $selected ?>" onclick="selectTipo(this, '<?= $tipo ?>')">
-                        <input type="radio" name="tipo_producto" value="<?= $tipo ?>" <?= $selected ? 'checked' : '' ?>>
-                        <span class="tipo-icon"><?= $info['icon'] ?></span>
-                        <div class="tipo-label"><?= ucfirst(strtolower($tipo)) ?></div>
-                        <div class="tipo-description"><?= $info['desc'] ?></div>
-                    </div>
-                <?php endforeach; ?>
             </div>
 
             <div class="section-title">Clasificación</div>

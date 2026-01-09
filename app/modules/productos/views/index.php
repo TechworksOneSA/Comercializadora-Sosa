@@ -8,7 +8,7 @@ $kpis = $kpis ?? [];
 ?>
 
 <!-- CSS del módulo -->
-<link rel="stylesheet" href="<?= url('/assets/css/productos.css') ?>">
+<link rel="stylesheet" href="<?= url('/assets/css/productos.css?v=' . time()) ?>">
 
 <!-- JavaScript del módulo -->
 <script>

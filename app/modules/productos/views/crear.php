@@ -12,9 +12,9 @@ $marcasLista = $marcasModel->listarActivas();
 ?>
 
 <!-- CSS del módulo -->
-<link rel="stylesheet" href="<?= url('/assets/css/crear-productos.css') ?>"
+<link rel="stylesheet" href="<?= url('/assets/css/crear-productos.css') ?>">
 
-    <div class="inventario-crear-container <?= $isModal ? 'bm-embed' : '' ?>">
+<div class="inventario-crear-container <?= $isModal ? 'bm-embed' : '' ?>">
 <div class="inventario-header">
     <div>
         <h1>Nuevo Producto - Inventario</h1>
@@ -49,215 +49,29 @@ $marcasLista = $marcasModel->listarActivas();
                 <div class="tipo-card selected" onclick="selectTipo(this, 'UNIDAD')">
                     <input type="radio" name="tipo_producto" value="UNIDAD" id="tipo_unidad" checked>
                     <div class="tipo-icon">📦</div>
-                    <div class="tipo-label">Por Unidad</div>
-                    <div class="tipo-description">Con código de barras</div>
-                </div>
-
-                <div class="tipo-card" onclick="selectTipo(this, 'PESO')">
-                    <input type="radio" name="tipo_producto" value="PESO" id="tipo_peso">
-                    <div class="tipo-icon">⚖️</div>
-                    <div class="tipo-label">Por Peso</div>
-                    <div class="tipo-description">Libras / Kilos</div>
-                </div>
-
-                <div class="tipo-card" onclick="selectTipo(this, 'LONGITUD')">
-                    <input type="radio" name="tipo_producto" value="LONGITUD" id="tipo_longitud">
-                    <div class="tipo-icon">📏</div>
-                    <div class="tipo-label">Por Longitud</div>
-                    <div class="tipo-description">Metros / Pies</div>
-                </div>
-
-                <div class="tipo-card" onclick="selectTipo(this, 'VOLUMEN')">
-                    <input type="radio" name="tipo_producto" value="VOLUMEN" id="tipo_volumen">
-                    <div class="tipo-icon">🪣</div>
-                    <div class="tipo-label">Por Volumen</div>
-                    <div class="tipo-description">Litros / Galones</div>
+                    <div class="tipo-label">Aplica Serie</div>
+                    <div class="tipo-description">Productos con inventario controlado</div>
                 </div>
 
                 <div class="tipo-card" onclick="selectTipo(this, 'MISC')">
                     <input type="radio" name="tipo_producto" value="MISC" id="tipo_misc">
                     <div class="tipo-icon">🔩</div>
                     <div class="tipo-label">Misceláneo</div>
-                    <div class="tipo-description">Clavos, tornillos</div>
+                    <div class="tipo-description">Productos sin código de barras</div>
                 </div>
             </div>
         </div>
 
-        <!-- FORMULARIO TIPO UNIDAD -->
+        <!-- FORMULARIO TIPO UNIDAD (APLICA SERIE) -->
         <div id="form_unidad" class="tipo-form-section">
-            <div class="section-title">Producto por Unidad</div>
+            <div class="section-title">Producto con Serie</div>
 
             <div class="form-grid">
-                <div class="form-group">
-                    <label class="form-label">SKU <span class="required">*</span></label>
-                    <input type="text" name="sku" class="form-input" required
-                        placeholder="Ej: MART-16OZ" value="<?= htmlspecialchars($old['sku'] ?? '') ?>">
-                    <span class="form-help">Código único del producto</span>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Código de Barras / QR</label>
-                    <input type="text" name="codigo_barra" class="form-input"
-                        placeholder="Escanee el código" value="<?= htmlspecialchars($old['codigo_barra'] ?? '') ?>">
-                </div>
-
                 <div class="form-group form-grid-full">
                     <label class="form-label">Nombre del Producto <span class="required">*</span></label>
-                    <input type="text" name="nombre" class="form-input" required
-                        placeholder="Ej: Martillo 16oz Mango de Fibra" value="<?= htmlspecialchars($old['nombre'] ?? '') ?>">
-                </div>
-            </div>
-        </div>
-
-        <!-- FORMULARIO TIPO PESO -->
-        <div id="form_peso" class="tipo-form-section" style="display: none;">
-            <div class="section-title">Producto por Peso</div>
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label class="form-label">SKU <span class="required">*</span></label>
-                    <input type="text" name="sku" class="form-input" required placeholder="Ej: CLAVOS-2LB" disabled>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Descripción del Producto <span class="required">*</span></label>
-                    <input type="text" name="nombre" class="form-input" required placeholder="Ej: Clavos de 2 pulgadas" disabled>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Peso por Unidad</label>
-                    <div class="inline-flex-gap">
-                        <input type="number" id="peso_cantidad" class="form-input"
-                            step="0.01" placeholder="1.0" oninput="calcularPrecioPeso()">
-                        <select id="peso_unidad" class="form-select" onchange="calcularPrecioPeso()">
-                            <option value="lb">Libras</option>
-                            <option value="kg">Kilos</option>
-                        </select>
-                    </div>
-                    <span class="form-help">Peso que se vende por unidad</span>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Precio por Libra/Kilo <span class="required">*</span></label>
-                    <div class="input-with-icon">
-                        <span class="input-icon">Q</span>
-                        <input type="number" id="precio_peso_unitario" class="form-input"
-                            step="0.01" placeholder="5.00"
-                            oninput="calcularPrecioPeso()" onchange="calcularPrecioPeso()">
-                    </div>
-                    <span class="form-help">Precio que cobra por cada libra/kilo</span>
-                </div>
-            </div>
-
-            <div class="precio-calculado-box">
-                <div class="precio-calculado-label">Precio Total Calculado:</div>
-                <div class="precio-calculado-value">
-                    Q <span id="precio_peso_total">0.00</span>
-                </div>
-                <div class="precio-calculado-detalle">
-                    (<span id="peso_calculo_detalle">0 lb × Q 0.00</span>)
-                </div>
-            </div>
-        </div>
-
-        <!-- FORMULARIO TIPO LONGITUD -->
-        <div id="form_longitud" class="tipo-form-section" style="display: none;">
-            <div class="section-title">Producto por Longitud</div>
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label class="form-label">SKU <span class="required">*</span></label>
-                    <input type="text" name="sku" class="form-input" required placeholder="Ej: CANAL-8IN" disabled>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Descripción del Producto <span class="required">*</span></label>
-                    <input type="text" name="nombre" class="form-input" required placeholder="Ej: Canales de 8 pulgadas para cielo falso" disabled>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Cantidad de Longitud</label>
-                    <div class="inline-flex-gap">
-                        <input type="number" id="longitud_cantidad" class="form-input"
-                            step="0.01" placeholder="12" oninput="calcularPrecioLongitud()">
-                        <select id="longitud_unidad" class="form-select" onchange="calcularPrecioLongitud()">
-                            <option value="pie">Pies</option>
-                            <option value="m">Metros</option>
-                        </select>
-                    </div>
-                    <span class="form-help">Ejemplo: 12 pies</span>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Precio por Pie/Metro <span class="required">*</span></label>
-                    <div class="input-with-icon">
-                        <span class="input-icon">Q</span>
-                        <input type="number" id="precio_longitud_unitario" class="form-input"
-                            step="0.01" placeholder="15.00"
-                            oninput="calcularPrecioLongitud()" onchange="calcularPrecioLongitud()">
-                    </div>
-                    <span class="form-help">Precio que cobra por cada pie/metro</span>
-                </div>
-            </div>
-
-            <div class="precio-calculado-box">
-                <div class="precio-calculado-label">Precio Total Calculado:</div>
-                <div class="precio-calculado-value">
-                    Q <span id="precio_longitud_total">0.00</span>
-                </div>
-                <div class="precio-calculado-detalle">
-                    (<span id="longitud_calculo_detalle">0 pies × Q 0.00</span>)
-                </div>
-            </div>
-        </div>
-
-        <!-- FORMULARIO TIPO VOLUMEN -->
-        <div id="form_volumen" class="tipo-form-section" style="display: none;">
-            <div class="section-title">Producto por Volumen</div>
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label class="form-label">SKU <span class="required">*</span></label>
-                    <input type="text" name="sku" class="form-input" required placeholder="Ej: PINTURA-5GAL" disabled>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Descripción del Producto <span class="required">*</span></label>
-                    <input type="text" name="nombre" class="form-input" required placeholder="Ej: Pintura latex blanca" disabled>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Cantidad de Volumen</label>
-                    <div class="inline-flex-gap">
-                        <input type="number" id="volumen_cantidad" class="form-input"
-                            step="0.01" placeholder="5" oninput="calcularPrecioVolumen()">
-                        <select id="volumen_unidad" class="form-select" onchange="calcularPrecioVolumen()">
-                            <option value="gal">Galones</option>
-                            <option value="L">Litros</option>
-                        </select>
-                    </div>
-                    <span class="form-help">Ejemplo: 5 galones</span>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Precio por Galón/Litro <span class="required">*</span></label>
-                    <div class="input-with-icon">
-                        <span class="input-icon">Q</span>
-                        <input type="number" id="precio_volumen_unitario" class="form-input"
-                            step="0.01" placeholder="45.00"
-                            oninput="calcularPrecioVolumen()" onchange="calcularPrecioVolumen()">
-                    </div>
-                    <span class="form-help">Precio que cobra por cada galón/litro</span>
-                </div>
-            </div>
-
-            <div class="precio-calculado-box">
-                <div class="precio-calculado-label">Precio Total Calculado:</div>
-                <div class="precio-calculado-value">
-                    Q <span id="precio_volumen_total">0.00</span>
-                </div>
-                <div class="precio-calculado-detalle">
-                    (<span id="volumen_calculo_detalle">0 gal × Q 0.00</span>)
+                    <input type="text" name="nombre" id="nombre_unidad" class="form-input" required
+                        placeholder="Ej: Martillo 16oz Mango de Fibra" value="<?= htmlspecialchars($old['nombre'] ?? '') ?>" autofocus>
+                    <span class="form-help">El SKU se generará automáticamente</span>
                 </div>
             </div>
         </div>
@@ -267,14 +81,11 @@ $marcasLista = $marcasModel->listarActivas();
             <div class="section-title">Producto Misceláneo</div>
 
             <div class="form-grid">
-                <div class="form-group">
-                    <label class="form-label">SKU <span class="required">*</span></label>
-                    <input type="text" name="sku" class="form-input" required placeholder="Ej: TORN-1/2" disabled>
-                </div>
-
-                <div class="form-group">
+                <div class="form-group form-grid-full">
                     <label class="form-label">Nombre del Producto <span class="required">*</span></label>
-                    <input type="text" name="nombre" class="form-input" required placeholder="Ej: Tornillos 1/2 pulgada (caja 100 unidades)" disabled>
+                    <input type="text" name="nombre" id="nombre_misc" class="form-input" required 
+                        placeholder="Ej: Tornillos 1/2 pulgada (caja 100 unidades)" disabled>
+                    <span class="form-help">El SKU se generará automáticamente (no requiere código de barras)</span>
                 </div>
             </div>
         </div>
@@ -344,11 +155,11 @@ $marcasLista = $marcasModel->listarActivas();
                 <div class="input-with-icon">
                     <span class="input-icon">Q</span>
                     <input type="number" name="costo" id="costo_compra" class="form-input" required
-                        min="0" step="1" placeholder="0"
+                        min="0" step="any" placeholder="0.00"
                         value="<?= htmlspecialchars($old['costo'] ?? '0') ?>"
                         onchange="calcularPrecioVenta()">
                 </div>
-                <span class="form-help">Precio al que compra</span>
+                <span class="form-help">Precio al que compra (puede usar decimales como 15.50)</span>
             </div>
 
             <div class="form-group">
@@ -356,18 +167,18 @@ $marcasLista = $marcasModel->listarActivas();
                 <div class="input-with-icon">
                     <span class="input-icon">Q</span>
                     <input type="number" name="precio" id="precio_venta" class="form-input" required
-                        min="0" step="1" placeholder="0"
+                        min="0" step="any" placeholder="0.00"
                         value="<?= htmlspecialchars($old['precio'] ?? '0') ?>">
                 </div>
-                <span class="form-help" id="margen_info">Precio al que vende</span>
+                <span class="form-help" id="margen_info">Precio al que vende (puede usar decimales como 25.99)</span>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Stock Mínimo <span class="required">*</span></label>
                 <input type="number" name="stock_minimo" class="form-input" required
-                    min="0" step="1" placeholder="5"
+                    min="0" step="any" placeholder="5"
                     value="<?= htmlspecialchars($old['stock_minimo'] ?? '5') ?>">
-                <span class="form-help">Alerta cuando el stock baje de este número</span>
+                <span class="form-help">Alerta cuando el stock baje de este número (puede usar decimales como 3.5)</span>
             </div>
 
             <div class="form-group">
@@ -460,25 +271,35 @@ $marcasLista = $marcasModel->listarActivas();
             section.style.display = 'none';
             section.querySelectorAll('input, select, textarea').forEach(input => {
                 input.disabled = true;
+                input.removeAttribute('required');
             });
         });
 
         // Mostrar y habilitar el formulario correspondiente
         const formMap = {
             'UNIDAD': 'form_unidad',
-            'PESO': 'form_peso',
-            'LONGITUD': 'form_longitud',
-            'VOLUMEN': 'form_volumen',
             'MISC': 'form_misc'
         };
 
         const formId = formMap[tipo];
         if (formId) {
             const selectedForm = document.getElementById(formId);
-            selectedForm.style.display = 'block';
-            selectedForm.querySelectorAll('input, select, textarea').forEach(input => {
-                input.disabled = false;
-            });
+            if (selectedForm) {
+                selectedForm.style.display = 'block';
+                selectedForm.querySelectorAll('input, select, textarea').forEach(input => {
+                    input.disabled = false;
+                    // El nombre siempre es required
+                    if (input.name === 'nombre') {
+                        input.setAttribute('required', 'required');
+                    }
+                });
+            }
+        }
+
+        // Actualizar el radio button correspondiente
+        const radioButton = document.getElementById('tipo_' + tipo.toLowerCase());
+        if (radioButton) {
+            radioButton.checked = true;
         }
     }
 

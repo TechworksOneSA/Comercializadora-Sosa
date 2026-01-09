@@ -7,11 +7,12 @@
         <table class="table-productos-modern">
             <thead>
                 <tr>
+                    <th style="width: 100px;">Imagen</th>
                     <th>SKU</th>
                     <th>Producto</th>
                     <th>Categoría</th>
                     <th>Marca</th>
-                    <th>Código Barra</th>
+                    <th>Tipo de Producto</th>
                     <th>Precio Venta</th>
                     <th>Stock</th>
                     <th>Fecha Registro</th>
@@ -21,7 +22,7 @@
             <tbody>
                 <?php if (empty($productos)): ?>
                     <tr>
-                        <td colspan="9" class="empty-state">
+                        <td colspan="10" class="empty-state">
                             <div class="empty-state-icon"></div>
                             <p>No se encontraron productos con esos filtros</p>
                         </td>
@@ -35,9 +36,32 @@
                         } elseif (($p['stock'] ?? 0) <= ($p['stock_minimo'] ?? 5)) {
                             $stockClase = 'badge-stock-bajo';
                         }
+                        
+                        // Manejar imagen del producto
+                        $imagenPath = $p['imagen_path'] ?? null;
+                        $imagenUrl = null;
+                        if ($imagenPath) {
+                            // Si es JSON con array de imágenes
+                            $imagenes = json_decode($imagenPath, true);
+                            if (is_array($imagenes) && !empty($imagenes)) {
+                                $imagenUrl = url('/uploads/productos/' . $imagenes[0]);
+                            } else {
+                                $imagenUrl = url('/uploads/productos/' . $imagenPath);
+                            }
+                        }
                         ?>
 
                         <tr class="<?= (($p['estado'] ?? 'ACTIVO') === 'INACTIVO') ? 'row-inactivo' : '' ?>">
+                            <td class="producto-imagen-cell">
+                                <?php if ($imagenUrl): ?>
+                                    <img src="<?= $imagenUrl ?>" alt="<?= htmlspecialchars($p['nombre']) ?>" class="producto-thumbnail" onerror="this.src='<?= url('/assets/img/no-image.png') ?>'">
+                                <?php else: ?>
+                                    <div class="producto-sin-imagen">
+                                        <span>📦</span>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
+                            
                             <td class="producto-sku">
                                 <?= htmlspecialchars($p['sku']) ?>
                                 <?php if (($p['estado'] ?? 'ACTIVO') === 'INACTIVO'): ?>
@@ -63,7 +87,18 @@
                                 <?php endif; ?>
                             </td>
 
-                            <td><?= htmlspecialchars($p['codigo_barra'] ?? '-') ?></td>
+                            <td>
+                                <?php 
+                                $tipoProducto = strtoupper($p['tipo_producto'] ?? 'UNIDAD');
+                                if ($tipoProducto === 'UNIDAD'): 
+                                ?>
+                                    <span class="badge-tipo-serie">📦 Aplica Serie</span>
+                                <?php elseif ($tipoProducto === 'MISC'): ?>
+                                    <span class="badge-tipo-misc">🔩 Misceláneo</span>
+                                <?php else: ?>
+                                    <span class="text-muted"><?= htmlspecialchars($tipoProducto) ?></span>
+                                <?php endif; ?>
+                            </td>
 
                             <td class="producto-precio">Q <?= number_format($p['precio_venta'], 2) ?></td>
 

@@ -110,14 +110,13 @@ class ProductosController extends Controller
         RoleMiddleware::requireAdminOrVendedor();
 
         $data   = $this->sanitizar($_POST);
+        
+        // Generar SKU automáticamente
+        $tipoProducto = strtoupper(trim($data["tipo_producto"] ?? "UNIDAD"));
+        $skuGenerado = $this->generarSKU($tipoProducto);
+        $data["sku"] = $skuGenerado;
+        
         $errors = $this->validar($data);
-
-        if ($this->model->skuExiste($data["sku"])) {
-            $errors[] = "El SKU ya existe.";
-        }
-        if (!empty($data["codigo_barra"]) && $this->model->codigoExiste($data["codigo_barra"])) {
-            $errors[] = "El código de barras/QR ya existe.";
-        }
 
         if ($errors) {
             $categoriasModel = new CategoriasModel();
@@ -142,13 +141,19 @@ class ProductosController extends Controller
             $imagenesGuardadas = $this->procesarImagenes($_FILES['fotos']);
         }
 
-        $codigoBarra = trim($data["codigo_barra"] ?? "");
+        // Para UNIDAD (código de barras), guardar el código de barras
+        // Para MISC, no hay código de barras
+        $codigoBarra = null;
+        if ($tipoProducto === "UNIDAD") {
+            $codigoBarra = trim($data["codigo_barra"] ?? "");
+            $codigoBarra = empty($codigoBarra) ? null : $codigoBarra;
+        }
 
         $payload = [
-            "sku"              => trim($data["sku"] ?? ""),
-            "codigo_barra"     => empty($codigoBarra) ? null : $codigoBarra,
+            "sku"              => $skuGenerado,
+            "codigo_barra"     => $codigoBarra,
             "nombre"           => trim($data["nombre"] ?? ""),
-            "tipo_producto"    => strtoupper(trim($data["tipo_producto"] ?? "UNIDAD")),
+            "tipo_producto"    => $tipoProducto,
             "categoria_id"     => (int)($data["categoria_id"] ?? 1),
             "marca_id"         => (int)($data["marca_id"] ?? 1),
             "unidad_medida_id" => 1,
@@ -330,8 +335,8 @@ class ProductosController extends Controller
     private function validar(array $data): array
     {
         $errors = [];
-        if ($data["sku"] === "") $errors[] = "SKU es obligatorio.";
-        if ($data["nombre"] === "") $errors[] = "Nombre es obligatorio.";
+        // El SKU ya no es obligatorio porque se genera automáticamente
+        if (empty($data["nombre"])) $errors[] = "Nombre es obligatorio.";
         if ($data["precio"] < $data["costo"]) $errors[] = "Precio no puede ser menor al costo.";
         if ($data["categoria_id"] <= 0) $errors[] = "Categoría es obligatoria.";
         if ($data["marca_id"] <= 0) $errors[] = "Marca es obligatoria.";
@@ -383,5 +388,30 @@ class ProductosController extends Controller
 
         header("Location: " . url('/admin/productos'));
         exit;
+    }
+
+    /**
+     * Genera un SKU único automáticamente
+     * Formato: Comer_sosa_[número aleatorio de 5 dígitos]
+     */
+    private function generarSKU($tipoProducto = "UNIDAD")
+    {
+        $intentos = 0;
+        $maxIntentos = 10;
+        
+        do {
+            $numeroAleatorio = mt_rand(10000, 99999);
+            $skuGenerado = "Comer_sosa_" . $numeroAleatorio;
+            
+            // Verificar si ya existe
+            if (!$this->model->skuExiste($skuGenerado)) {
+                return $skuGenerado;
+            }
+            
+            $intentos++;
+        } while ($intentos < $maxIntentos);
+        
+        // Si después de 10 intentos no se genera uno único, agregar timestamp
+        return "Comer_sosa_" . mt_rand(10000, 99999) . "_" . time();
     }
 }

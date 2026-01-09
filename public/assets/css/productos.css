@@ -82,15 +82,14 @@ body {
    HEADER
 ========================================================= */
 .productos-header-modern {
-  background: linear-gradient(135deg, #0a2463 0%, #0f3a7a 35%, #1565c0 70%, #0284c7 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 18px;
   padding: 28px 32px;
   margin-bottom: 16px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 25px 60px rgba(10, 61, 145, 0.4), 0 12px 25px rgba(10, 61, 145, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
   backdrop-filter: blur(20px);
 }
 
@@ -100,10 +99,10 @@ body {
   inset: 0;
   background-image: radial-gradient(
       circle at 85% 15%,
-      rgba(255, 255, 255, 0.12) 0%,
+      rgba(59, 130, 246, 0.05) 0%,
       transparent 50%
     ),
-    radial-gradient(circle at 15% 85%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+    radial-gradient(circle at 15% 85%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
   animation: pulseGlow 8s ease-in-out infinite;
 }
 
@@ -115,8 +114,8 @@ body {
     45deg,
     transparent,
     transparent 35px,
-    rgba(255, 255, 255, 0.015) 35px,
-    rgba(255, 255, 255, 0.015) 70px
+    rgba(0, 0, 0, 0.01) 35px,
+    rgba(0, 0, 0, 0.01) 70px
   );
   opacity: 0.6;
 }
@@ -148,7 +147,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  color: #fff;
+  color: #1e293b;
 }
 
 .productos-header-left {
@@ -164,10 +163,9 @@ body {
   border-radius: 18px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.12));
-  border: 2px solid rgba(255, 255, 255, 0.28);
-  box-shadow: 0 15px 35px rgba(2, 8, 23, 0.3), 0 5px 15px rgba(2, 8, 23, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   flex: 0 0 auto;
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
@@ -175,9 +173,8 @@ body {
 
 .productos-header-logo:hover {
   transform: translateY(-3px) scale(1.08) rotate(5deg);
-  box-shadow: 0 20px 45px rgba(2, 8, 23, 0.35), 0 8px 20px rgba(2, 8, 23, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 30px rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+  border-color: rgba(59, 130, 246, 0.5);
 }
 
 .productos-header-logo svg {
@@ -197,24 +194,22 @@ body {
   font-size: 2rem;
   font-weight: 950;
   letter-spacing: -0.8px;
-  color: #ffffff;
-  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 2px 5px rgba(0, 0, 0, 0.2),
-    0 1px 2px rgba(0, 0, 0, 0.15);
+  color: #1e293b;
+  text-shadow: none;
   line-height: 1.05;
-  background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.92) 100%);
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .productos-subtitle-modern {
   margin: 10px 0 0 0;
   font-size: 1.05rem;
   font-weight: 500;
-  color: #ffffff;
+  color: #64748b;
   line-height: 1.4;
-  text-shadow: 0 3px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  text-shadow: none;
   letter-spacing: 0.3px;
   opacity: 0.98;
 }
@@ -227,16 +222,17 @@ body {
   border-radius: 14px;
   font-weight: 900;
   font-size: 1rem;
-  color: #0a2463;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  box-shadow: 0 12px 25px rgba(255, 255, 255, 0.2), 0 12px 35px rgba(2, 8, 23, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  color: #ffffff;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   letter-spacing: 0.3px;
   position: relative;
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  text-decoration: none;
+  display: inline-block;
 }
 
 .btn-nuevo-producto::before {
@@ -246,7 +242,7 @@ body {
   background: linear-gradient(
     135deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.2) 50%,
     transparent 100%
   );
   transform: translateX(-100%);
@@ -721,7 +717,9 @@ body {
 
 /* Badges en la tabla */
 .badge-categoria,
-.badge-marca {
+.badge-marca,
+.badge-tipo-serie,
+.badge-tipo-misc {
   display: inline-block;
   padding: 5px 10px;
   border-radius: 8px;
@@ -741,6 +739,18 @@ body {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(124, 58, 237, 0.08));
   color: #5b21b6;
   border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.badge-tipo-serie {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08));
+  color: #065f46;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.badge-tipo-misc {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.08));
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
 .badge-stock {
@@ -995,4 +1005,162 @@ body {
     width: 24px;
     height: 24px;
   }
+}
+
+/* Estilos para imágenes de productos en tabla */
+.producto-imagen-cell {
+  padding: 0.75rem !important;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.producto-thumbnail {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 3px solid #e2e8f0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  background: white;
+}
+
+.producto-thumbnail:hover {
+  transform: scale(1.15) translateY(-2px);
+  box-shadow: 0 8px 16px rgba(10, 61, 145, 0.2);
+  border-color: #0a3d91;
+}
+
+.producto-sin-imagen {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  border: 2px dashed #cbd5e1;
+  margin: 0 auto;
+  transition: all 0.3s ease;
+}
+
+.producto-sin-imagen:hover {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-color: #94a3b8;
+}
+
+.producto-sin-imagen span {
+  opacity: 0.4;
+}
+
+/* Mejorar tabla de productos */
+.table-productos-modern tbody tr {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.table-productos-modern tbody tr:hover {
+  background: linear-gradient(to right, #fafbfc 0%, #f8fafc 100%);
+  transform: translateX(2px);
+}
+
+.table-productos-modern td {
+  padding: 1rem 0.75rem !important;
+  vertical-align: middle;
+}
+
+/* Mejorar botones de acciones */
+.acciones-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: stretch;
+  padding: 0.5rem 0;
+}
+
+.btn-accion {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.btn-editar {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.btn-editar:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+}
+
+.btn-activar {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  width: 100%;
+}
+
+.btn-activar:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
+}
+
+.btn-desactivar {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  border: none;
+  width: 100%;
+}
+
+.btn-desactivar:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(234, 88, 12, 0.3);
+}
+
+.btn-eliminar {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  width: 100%;
+}
+
+.btn-eliminar:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+}
+
+/* Mejorar info del producto */
+.producto-nombre {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.producto-sku {
+  font-size: 0.825rem;
+  color: #64748b;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+.producto-precio {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #10b981;
 }

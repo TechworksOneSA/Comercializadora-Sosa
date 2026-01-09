@@ -22,9 +22,8 @@ function initFacebookSelectors() {
       }
     }
 
-    // Abrir/cerrar menú
+    // Abrir/cerrar menú solo con click intencional
     input.addEventListener("click", () => toggleMenu(true));
-    input.addEventListener("focus", () => toggleMenu(true));
 
     // Filtrar opciones mientras se escribe
     input.addEventListener("input", () => {

@@ -19,8 +19,42 @@ $alertas = $alertas ?? [
   <!-- Header del Dashboard -->
   <header class="dashboard-header">
     <h1>👋 Bienvenido, <?= htmlspecialchars($user["nombre"]) ?></h1>
-    <p>Panel Ejecutivo - Comercializadora Sosa | <?= date('d/m/Y H:i') ?></p>
+    <p>Panel Ejecutivo - Comercializadora Sosa</p>
+    <div class="datetime-info">
+      <span class="date-badge">
+        📅 <?php 
+          $dias = ['Sunday' => 'Domingo', 'Monday' => 'Lunes', 'Tuesday' => 'Martes', 
+                   'Wednesday' => 'Miércoles', 'Thursday' => 'Jueves', 'Friday' => 'Viernes', 'Saturday' => 'Sábado'];
+          $meses = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', 'April' => 'Abril',
+                    'May' => 'Mayo', 'June' => 'Junio', 'July' => 'Julio', 'August' => 'Agosto',
+                    'September' => 'Septiembre', 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'];
+          $diaEn = date('l'); $mesEn = date('F');
+          echo $dias[$diaEn] . ', ' . date('d') . ' de ' . $meses[$mesEn] . ' de ' . date('Y');
+        ?>
+      </span>
+      <span class="time-badge" id="current-time">
+        🕐 <?= date('h:i:s A') ?>
+      </span>
+    </div>
   </header>
+
+  <script>
+    // Actualizar la hora en tiempo real
+    function updateTime() {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12;
+      
+      document.getElementById('current-time').innerHTML = 
+        `🕐 ${String(displayHours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+    }
+    
+    setInterval(updateTime, 1000);
+    updateTime();
+  </script>
 
   <!-- Sección: Métricas Principales -->
   <section class="dashboard-section">

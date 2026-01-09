@@ -1,0 +1,86 @@
+<?php
+// API para crear nueva marca
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Iniciar la sesión primero
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Cargar configuración de environment primero
+require_once __DIR__ . '/../../../config/env.php';
+require_once __DIR__ . '/../../../config/database.php';
+
+// Verificar autenticación (simplificado - solo revisar sesión)
+if (!isset($_SESSION['user']) || empty($_SESSION['user'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'No autorizado - Sesión no iniciada'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+try {
+    // Obtener y decodificar el input
+    $rawInput = file_get_contents('php://input');
+    $input = json_decode($rawInput, true);
+    
+    // Log para debug
+    error_log("Marcas API - Input recibido: " . $rawInput);
+    
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception('Error al decodificar JSON: ' . json_last_error_msg());
+    }
+    
+    $nombre = trim($input['nombre'] ?? '');
+    
+    if (empty($nombre)) {
+        echo json_encode(['success' => false, 'message' => 'El nombre es requerido'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    
+    $db = Database::connect();
+    
+    // Verificar si ya existe
+    $check = $db->prepare("SELECT id FROM marcas WHERE nombre = :nombre");
+    $check->execute([':nombre' => $nombre]);
+    if ($check->fetch()) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Ya existe una marca con ese nombre'
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    
+    // Insertar nueva marca
+    $sql = "INSERT INTO marcas (nombre, activo) VALUES (:nombre, 1)";
+    $stmt = $db->prepare($sql);
+    $result = $stmt->execute([
+        ':nombre' => $nombre
+    ]);
+    
+    if (!$result) {
+        throw new Exception('Error al insertar en la base de datos');
+    }
+    
+    $id = (int)$db->lastInsertId();
+    
+    echo json_encode([
+        'success' => true,
+        'marca' => [
+            'id' => $id,
+            'nombre' => $nombre,
+            'activo' => 1
+        ]
+    ], JSON_UNESCAPED_UNICODE);
+    
+} catch (Exception $e) {
+    http_response_code(500);
+    error_log("Marcas API Error: " . $e->getMessage());
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error: ' . $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+    ], JSON_UNESCAPED_UNICODE);
+}
