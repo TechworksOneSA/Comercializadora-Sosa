@@ -147,11 +147,12 @@ class ProductosController extends Controller
         }
 
         // ===== Imagen (single) =====
-        $imagen_path = null;
-        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+        $imagenPath = null;
+        if (isset($_FILES['imagen']) && ($_FILES['imagen']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
             $fileName = $this->procesarImagenUnica($_FILES['imagen']);
             if ($fileName) {
-                $imagen_path = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $fileName;
+                // Guardamos ruta pública absoluta (consumida por el navegador)
+                $imagenPath = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $fileName;
             }
         }
 
@@ -181,8 +182,8 @@ class ProductosController extends Controller
             "activo"           => 1,
             "estado"           => "ACTIVO",
 
-            // ✅ Alineado a su controller/BD: imagen_url
-            "imagen_path"       => $imagen_path,
+            // ✅ ÚNICO CAMPO REAL EN DB
+            "imagen_path"      => $imagenPath,
         ];
 
         try {
@@ -255,25 +256,29 @@ class ProductosController extends Controller
             return;
         }
 
-        // Mantener imagen actual
+        // Mantener imagen actual (ruta guardada en DB)
         $imagenPath = $producto['imagen_path'] ?? null;
 
         // Si suben nueva imagen, reemplazar y borrar anterior
-        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+        if (isset($_FILES['imagen']) && ($_FILES['imagen']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
             $nuevo = $this->procesarImagenUnica($_FILES['imagen']);
+
             if ($nuevo) {
-                if (!empty($imagen_path)) {
-                    $anterior = $this->UPLOAD_BASE_DIR . '/productos/' . basename($imagen_path);
+                // borrar anterior si existía
+                if (!empty($imagenPath)) {
+                    $anterior = rtrim($this->UPLOAD_BASE_DIR, '/') . '/productos/' . basename($imagenPath);
                     if (file_exists($anterior)) {
                         @unlink($anterior);
                     }
                 }
-                $imagen_path = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $nuevo;
+
+                // guardar nueva ruta pública
+                $imagenPath = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $nuevo;
             }
         }
 
         $payload = [
-            // Mantenga coherencia: si su Model actualiza SKU/codigo_barra también, agréguelo aquí
+            // coherencia básica
             "sku"              => $producto["sku"] ?? null,
             "codigo_barra"     => $producto["codigo_barra"] ?? null,
             "nombre"           => trim($data["nombre"]),
@@ -291,8 +296,8 @@ class ProductosController extends Controller
             "descripcion"      => $producto["descripcion"] ?? "",
             "estado"           => $producto["estado"] ?? "ACTIVO",
 
-            // ✅ clave
-            "imagen_path"       => $imagen_path,
+            // ✅ ÚNICO CAMPO REAL EN DB
+            "imagen_path"      => $imagenPath,
         ];
 
         try {
@@ -318,7 +323,7 @@ class ProductosController extends Controller
             @mkdir($dir, 0775, true);
         }
 
-        // Límite 5MB para ir alineado a su helper de usuarios
+        // Límite 5MB
         if (($file['size'] ?? 0) > 5 * 1024 * 1024) {
             return null;
         }
@@ -369,7 +374,6 @@ class ProductosController extends Controller
             $sku = "Comer_sosa_" . mt_rand(10000, 99999);
             $intentos++;
             if ($intentos > 20) {
-                // fallback
                 return "Comer_sosa_" . mt_rand(10000, 99999) . "_" . time();
             }
         } while ($this->model->skuExiste($sku));
