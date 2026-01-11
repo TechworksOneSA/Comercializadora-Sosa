@@ -654,10 +654,11 @@ $marcaText = $marcaId && isset($mapMar[$marcaId]) ? $mapMar[$marcaId] : '';
                 <div class="form-group">
                     <label class="form-label">Imagen del Producto</label>
                     <input type="file" name="imagen" class="form-input" accept="image/jpeg,image/png,image/webp">
-                    <?php if (!empty($producto['imagen_url'])): ?>
+                    <?php if (!empty($producto['imagen_path'])): ?>
                         <div style="margin-top: 10px;">
                             <p style="font-size: 0.9rem; color: #666; margin-bottom: 8px;">Imagen actual:</p>
-                            <img src="<?= htmlspecialchars($producto['imagen_url']) ?>"
+                            <img
+                                src="<?= htmlspecialchars($producto['imagen_path']) ?>"
                                 alt="Imagen del producto"
                                 style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 2px solid #e2e8f0; object-fit: cover;">
                             <p style="font-size: 0.85rem; color: #888; margin-top: 5px;">
