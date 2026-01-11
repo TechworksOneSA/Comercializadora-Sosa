@@ -147,11 +147,11 @@ class ProductosController extends Controller
         }
 
         // ===== Imagen (single) =====
-        $imagenUrl = null;
+        $imagen_path = null;
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
             $fileName = $this->procesarImagenUnica($_FILES['imagen']);
             if ($fileName) {
-                $imagenUrl = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $fileName;
+                $imagen_path = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $fileName;
             }
         }
 
@@ -182,7 +182,7 @@ class ProductosController extends Controller
             "estado"           => "ACTIVO",
 
             // ✅ Alineado a su controller/BD: imagen_url
-            "imagen_path"       => $imagenUrl,
+            "imagen_path"       => $imagen_path,
         ];
 
         try {
