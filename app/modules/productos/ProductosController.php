@@ -262,13 +262,13 @@ class ProductosController extends Controller
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
             $nuevo = $this->procesarImagenUnica($_FILES['imagen']);
             if ($nuevo) {
-                if (!empty($imagenUrl)) {
-                    $anterior = $this->UPLOAD_BASE_DIR . '/productos/' . basename($imagenUrl);
+                if (!empty($imagen_path)) {
+                    $anterior = $this->UPLOAD_BASE_DIR . '/productos/' . basename($imagen_path);
                     if (file_exists($anterior)) {
                         @unlink($anterior);
                     }
                 }
-                $imagenUrl = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $nuevo;
+                $imagen_path = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $nuevo;
             }
         }
 
@@ -292,7 +292,7 @@ class ProductosController extends Controller
             "estado"           => $producto["estado"] ?? "ACTIVO",
 
             // ✅ clave
-            "imagen_path"       => $imagenUrl,
+            "imagen_path"       => $imagen_path,
         ];
 
         try {
