@@ -24,16 +24,6 @@ class ProductosModel extends Model
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Buscar con filtros:
-     * $filters = [
-     *  categoria_id (int),
-     *  marca_id (int),
-     *  stock: all|bajo|cero,
-     *  estado: ALL|ACTIVO|INACTIVO,
-     *  tipo: ALL|NORMAL|SERIE  (SERIE = requiere_serie=1)
-     * ]
-     */
     public function buscar(string $q = "", array $filters = [])
     {
         $where  = [];
@@ -145,7 +135,6 @@ class ProductosModel extends Model
     public function crear(array $data): bool
     {
         try {
-            // ✅ SOLO imagen_path (campo real en su DB)
             $imagenPath = $data["imagen_path"] ?? null;
 
             $sql = "INSERT INTO {$this->table}
@@ -172,7 +161,7 @@ class ProductosModel extends Model
                 ":descripcion"      => $data["descripcion"] ?? null,
                 ":imagen_path"      => $imagenPath,
                 ":activo"           => $data["activo"] ?? 1,
-                ":estado"           => $data["estado"] ?? 'ACTIVO',
+                ":estado"           => $data["estado"] ?? "ACTIVO",
             ]);
 
             if (!$result) {
@@ -189,7 +178,6 @@ class ProductosModel extends Model
 
     public function actualizar(int $id, array $data): bool
     {
-        // ✅ SOLO imagen_path (campo real en su DB)
         $imagenPath = $data["imagen_path"] ?? null;
 
         $sql = "UPDATE {$this->table}
@@ -222,8 +210,8 @@ class ProductosModel extends Model
             ':unidad_medida_id' => $data['unidad_medida_id'] ?? 1,
             ':precio_venta'     => $data['precio_venta'],
             ':costo_actual'     => $data['costo_actual'],
-            ':stock'            => $data['stock'] ?? 0,
-            ':stock_minimo'     => $data['stock_minimo'] ?? 0,
+            ':stock'            => $data['stock'],
+            ':stock_minimo'     => $data['stock_minimo'],
             ':descripcion'      => $data['descripcion'] ?? null,
             ':estado'           => $data['estado'] ?? 'ACTIVO',
             ':imagen_path'      => $imagenPath,
@@ -257,12 +245,10 @@ class ProductosModel extends Model
 
     public function listarActivos(): array
     {
-        // ✅ cambiar imagen_url -> imagen_path
         $sql = "SELECT id, sku, nombre, tipo_producto, precio_venta, stock, imagen_path
-                FROM {$this->table}
+                FROM productos
                 WHERE estado = 'ACTIVO'
                 ORDER BY nombre ASC";
-
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

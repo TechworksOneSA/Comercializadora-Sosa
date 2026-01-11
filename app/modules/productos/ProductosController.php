@@ -256,26 +256,23 @@ class ProductosController extends Controller
             return;
         }
 
-        // Mantener imagen actual (ruta guardada en DB)
-        $imagenPath = $producto['imagen_path'] ?? null;
+       // Mantener imagen actual
+    $imagen_path = $producto['imagen_path'] ?? null;
 
-        // Si suben nueva imagen, reemplazar y borrar anterior
-        if (isset($_FILES['imagen']) && ($_FILES['imagen']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-            $nuevo = $this->procesarImagenUnica($_FILES['imagen']);
-
-            if ($nuevo) {
-                // borrar anterior si existía
-                if (!empty($imagenPath)) {
-                    $anterior = rtrim($this->UPLOAD_BASE_DIR, '/') . '/productos/' . basename($imagenPath);
-                    if (file_exists($anterior)) {
-                        @unlink($anterior);
-                    }
+    // Si suben nueva imagen, reemplazar y borrar anterior
+    if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+        $nuevo = $this->procesarImagenUnica($_FILES['imagen']);
+        if ($nuevo) {
+            // borrar anterior si existía
+            if (!empty($imagen_path)) {
+                $anterior = $this->UPLOAD_BASE_DIR . '/productos/' . basename($imagen_path);
+                if (file_exists($anterior)) {
+                    @unlink($anterior);
                 }
-
-                // guardar nueva ruta pública
-                $imagenPath = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $nuevo;
             }
+            $imagen_path = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $nuevo;
         }
+    }
 
         $payload = [
             // coherencia básica
@@ -297,7 +294,7 @@ class ProductosController extends Controller
             "estado"           => $producto["estado"] ?? "ACTIVO",
 
             // ✅ ÚNICO CAMPO REAL EN DB
-            "imagen_path"      => $imagenPath,
+            "imagen_path" => $imagen_path,
         ];
 
         try {
