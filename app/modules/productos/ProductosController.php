@@ -182,7 +182,7 @@ class ProductosController extends Controller
             "estado"           => "ACTIVO",
 
             // ✅ Alineado a su controller/BD: imagen_url
-            "imagen_url"       => $imagenUrl,
+            "imagen_path"       => $imagenUrl,
         ];
 
         try {
@@ -256,7 +256,7 @@ class ProductosController extends Controller
         }
 
         // Mantener imagen actual
-        $imagenUrl = $producto['imagen_url'] ?? null;
+        $imagenPath = $producto['imagen_path'] ?? null;
 
         // Si suben nueva imagen, reemplazar y borrar anterior
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
@@ -292,7 +292,7 @@ class ProductosController extends Controller
             "estado"           => $producto["estado"] ?? "ACTIVO",
 
             // ✅ clave
-            "imagen_url"       => $imagenUrl,
+            "imagen_path"       => $imagenUrl,
         ];
 
         try {
