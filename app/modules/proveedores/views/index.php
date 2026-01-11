@@ -34,7 +34,7 @@ $proveedores = $proveedores ?? [];
 
   .btn-nuevo-proveedor {
     background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-    color: #ffffff;
+    color: #ffffff !important;
     padding: 14px 28px;
     border-radius: 12px;
     text-decoration: none;
@@ -401,8 +401,8 @@ $proveedores = $proveedores ?? [];
       <p>Catálogo de proveedores para gestión de compras</p>
     </div>
     <a href="<?= url('/admin/proveedores/crear') ?>" class="btn-nuevo-proveedor">
-      <span>+</span>
-      <span>Nuevo Proveedor</span>
+      <span style="color: #ffffff !important;">+</span>
+      <span style="color: #ffffff !important;">Nuevo Proveedor</span>
     </a>
   </div>
 
@@ -448,8 +448,7 @@ $proveedores = $proveedores ?? [];
           id="searchProveedores"
           class="search-input"
           placeholder="Buscar por nombre, NIT, teléfono o correo..."
-          autocomplete="off"
-        >
+          autocomplete="off">
       </div>
     </div>
   <?php endif; ?>
@@ -461,13 +460,20 @@ $proveedores = $proveedores ?? [];
       <p>Comienza agregando tu primer proveedor al sistema</p>
     </div>
   <?php else: ?>
+    <!-- Mensaje cuando no hay resultados -->
+    <div id="noResultsMessage" class="proveedores-empty" style="display: none;">
+      <div class="proveedores-empty-icon">🔍</div>
+      <h3>No se encontraron proveedores</h3>
+      <p>Intenta cambiar los filtros o el término de búsqueda</p>
+    </div>
+
     <div class="proveedores-grid">
       <?php foreach ($proveedores as $p): ?>
-        <div class="proveedor-card" data-status="<?= !empty($p['activo']) ? 'activo' : 'inactivo' ?>">
+        <div class="proveedor-card" data-status="<?= (isset($p['activo']) && $p['activo'] == 1) ? 'activo' : 'inactivo' ?>">
           <div class="proveedor-header">
             <div class="proveedor-id">#<?= (int)$p['id'] ?></div>
-            <div class="proveedor-status <?= !empty($p['activo']) ? 'activo' : 'inactivo' ?>">
-              <?= !empty($p['activo']) ? 'Activo' : 'Inactivo' ?>
+            <div class="proveedor-status <?= (isset($p['activo']) && $p['activo'] == 1) ? 'activo' : 'inactivo' ?>">
+              <?= (isset($p['activo']) && $p['activo'] == 1) ? 'Activo' : 'Inactivo' ?>
             </div>
           </div>
 
@@ -517,66 +523,77 @@ $proveedores = $proveedores ?? [];
 </div>
 
 <script>
-// Filtros y búsqueda de proveedores
-const searchInput = document.getElementById('searchProveedores');
-const filterButtons = document.querySelectorAll('.filter-btn');
-const proveedorCards = document.querySelectorAll('.proveedor-card');
+  // Filtros y búsqueda de proveedores
+  const searchInput = document.getElementById('searchProveedores');
+  const filterButtons = document.querySelectorAll('.filter-btn');
+  const proveedorCards = document.querySelectorAll('.proveedor-card');
 
-let currentFilter = 'todos';
+  let currentFilter = 'todos';
 
-// Función para aplicar filtros
-function aplicarFiltros() {
-  const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  // Función para aplicar filtros
+  function aplicarFiltros() {
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    let visibleCount = 0;
 
-  proveedorCards.forEach(card => {
-    const status = card.getAttribute('data-status');
+    proveedorCards.forEach(card => {
+      const status = card.getAttribute('data-status');
 
-    // Filtro por estado
-    const matchesStatus = currentFilter === 'todos' || status === currentFilter;
+      // Filtro por estado
+      const matchesStatus = currentFilter === 'todos' || status === currentFilter;
 
-    // Filtro por búsqueda
-    const nombre = card.querySelector('.proveedor-nombre')?.textContent.toLowerCase() || '';
-    const nit = card.querySelector('.proveedor-nit')?.textContent.toLowerCase() || '';
+      // Filtro por búsqueda
+      const nombre = card.querySelector('.proveedor-nombre')?.textContent.toLowerCase() || '';
+      const nit = card.querySelector('.proveedor-nit')?.textContent.toLowerCase() || '';
 
-    const infoItems = card.querySelectorAll('.proveedor-info-text');
-    let telefono = '';
-    let correo = '';
-    let direccion = '';
+      const infoItems = card.querySelectorAll('.proveedor-info-text');
+      let telefono = '';
+      let correo = '';
+      let direccion = '';
 
-    infoItems.forEach((item) => {
-      const text = item.textContent.toLowerCase();
-      const icon = item.previousElementSibling?.textContent || '';
+      infoItems.forEach((item) => {
+        const text = item.textContent.toLowerCase();
+        const icon = item.previousElementSibling?.textContent || '';
 
-      if (icon.includes('📞')) telefono = text;
-      if (icon.includes('✉️')) correo = text;
-      if (icon.includes('📍')) direccion = text;
+        if (icon.includes('📞')) telefono = text;
+        if (icon.includes('✉️')) correo = text;
+        if (icon.includes('📍')) direccion = text;
+      });
+
+      const matchesSearch = !searchTerm ||
+        nombre.includes(searchTerm) ||
+        nit.includes(searchTerm) ||
+        telefono.includes(searchTerm) ||
+        correo.includes(searchTerm) ||
+        direccion.includes(searchTerm);
+
+      // Mostrar solo si cumple ambos filtros
+      const shouldShow = matchesStatus && matchesSearch;
+      card.style.display = shouldShow ? '' : 'none';
+
+      if (shouldShow) {
+        visibleCount++;
+      }
     });
 
-    const matchesSearch = !searchTerm ||
-                         nombre.includes(searchTerm) ||
-                         nit.includes(searchTerm) ||
-                         telefono.includes(searchTerm) ||
-                         correo.includes(searchTerm) ||
-                         direccion.includes(searchTerm);
+    // Mostrar/ocultar mensaje de "no resultados"
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    if (noResultsMessage) {
+      noResultsMessage.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+  }
 
-    // Mostrar solo si cumple ambos filtros
-    card.style.display = (matchesStatus && matchesSearch) ? '' : 'none';
+  // Event listeners para filtros de estado
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      filterButtons.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentFilter = this.getAttribute('data-filter');
+      aplicarFiltros();
+    });
   });
-}
 
-// Event listeners para filtros de estado
-filterButtons.forEach(btn => {
-  btn.addEventListener('click', function() {
-    filterButtons.forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    currentFilter = this.getAttribute('data-filter');
-    aplicarFiltros();
-  });
-});
-
-// Event listener para búsqueda
-if (searchInput) {
-  searchInput.addEventListener('input', aplicarFiltros);
-}
+  // Event listener para búsqueda
+  if (searchInput) {
+    searchInput.addEventListener('input', aplicarFiltros);
+  }
 </script>
-

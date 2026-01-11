@@ -7,7 +7,79 @@
     <title><?php echo $title ?? 'POS - Sistema Ventas'; ?></title>
     <link rel="stylesheet" href="<?= url('/assets/css/app.css') ?>">
     <link rel="stylesheet" href="<?= url('/assets/css/layout_vendedor.css') ?>">
+    <script>
+        // Suprimir warning de Tailwind CDN
+        const originalWarn = console.warn;
+        console.warn = function(...args) {
+            if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com should not be used in production')) {
+                return; // Suprimir este warning específico
+            }
+            originalWarn.apply(console, args);
+        };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* HAMBURGER BUTTON IN NAVBAR */
+        .mobile-menu-toggle {
+            display: none;
+            background: #0a3d91;
+            color: #ffffff;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 12px;
+            min-width: 36px;
+            height: 36px;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: #083875;
+            transform: scale(1.05);
+        }
+
+        .mobile-menu-toggle svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+        }
+
+        @media screen and (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: flex !important;
+            }
+
+            .sidebar {
+                transform: translateX(-100%) !important;
+                transition: transform 0.3s ease !important;
+            }
+
+            .sidebar.sidebar-open {
+                transform: translateX(0) !important;
+            }
+
+            .sidebar-overlay {
+                display: block !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                background: rgba(0, 0, 0, 0.5) !important;
+                z-index: 999 !important;
+                opacity: 0 !important;
+                transition: opacity 0.3s ease !important;
+            }
+
+            .sidebar-overlay.overlay-active {
+                opacity: 1 !important;
+            }
+        }
+    </style>
     <script>
         // Suprimir warning de producción de Tailwind CSS
         window.tailwind = {
@@ -29,8 +101,11 @@
 
 <body>
     <div class="layout-vendedor">
+        <!-- Overlay para cerrar sidebar en móvil -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- Sidebar simplificado para vendedor -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <?php include 'sidebar_vendedor.php'; ?>
         </aside>
 
@@ -61,14 +136,52 @@
     <script>
         // Configuración global para vendedor/POS
         document.addEventListener('DOMContentLoaded', function() {
-            // TODO: Inicializar componentes de POS
-            // Escáner, atajos de teclado, etc.
             console.log('Layout Vendedor/POS cargado');
 
             // Inicializar escáner si está disponible
             if (POS && POS.scanner) {
                 POS.scanner.startListening();
             }
+
+            // Funcionalidad responsive de sidebar
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            // Toggle sidebar en móvil
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('sidebar-open');
+                    sidebarOverlay.classList.toggle('overlay-active');
+                });
+            }
+
+            // Cerrar sidebar al hacer click en overlay
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('sidebar-open');
+                    sidebarOverlay.classList.remove('overlay-active');
+                });
+            }
+
+            // Cerrar sidebar al redimensionar a pantalla grande
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('sidebar-open');
+                    sidebarOverlay.classList.remove('overlay-active');
+                }
+            });
+
+            // Cerrar sidebar al hacer click en un enlace (solo en móvil)
+            const sidebarLinks = sidebar.querySelectorAll('.sidebar-link');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('sidebar-open');
+                        sidebarOverlay.classList.remove('overlay-active');
+                    }
+                });
+            });
         });
     </script>
 

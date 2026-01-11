@@ -1,13 +1,15 @@
 <?php
 
-class UsuariosModel extends Model {
+class UsuariosModel extends Model
+{
 
     /**
      * Listar todos los usuarios
      */
-    public function listar() {
+    public function listar()
+    {
         $stmt = $this->pdo->query(
-            "SELECT id, nombre, email, rol, activo, created_at
+            "SELECT id, nombre, email, foto, rol, activo, created_at
              FROM usuarios
              ORDER BY created_at DESC"
         );
@@ -17,9 +19,10 @@ class UsuariosModel extends Model {
     /**
      * Obtener un usuario por ID
      */
-    public function obtenerPorId($id) {
+    public function obtenerPorId($id)
+    {
         $stmt = $this->pdo->prepare(
-            "SELECT id, nombre, email, rol, activo, created_at
+            "SELECT id, nombre, email, foto, rol, activo, created_at
              FROM usuarios
              WHERE id = ?"
         );
@@ -30,15 +33,17 @@ class UsuariosModel extends Model {
     /**
      * Verificar si un email ya existe
      */
-    public function emailExiste($email, $exceptoId = null) {
+    public function emailExiste($email, $exceptoId = null)
+    {
+        $email = mb_strtolower(trim($email));
         if ($exceptoId) {
             $stmt = $this->pdo->prepare(
-                "SELECT COUNT(*) FROM usuarios WHERE email = ? AND id != ?"
+                "SELECT COUNT(*) FROM usuarios WHERE LOWER(email) = ? AND id != ?"
             );
             $stmt->execute([$email, $exceptoId]);
         } else {
             $stmt = $this->pdo->prepare(
-                "SELECT COUNT(*) FROM usuarios WHERE email = ?"
+                "SELECT COUNT(*) FROM usuarios WHERE LOWER(email) = ?"
             );
             $stmt->execute([$email]);
         }
@@ -48,70 +53,70 @@ class UsuariosModel extends Model {
     /**
      * Crear un nuevo usuario
      */
-    public function crear($data) {
-        $stmt = $this->pdo->prepare(
-            "INSERT INTO usuarios (nombre, email, password_hash, rol, activo)
-             VALUES (:nombre, :email, :password_hash, :rol, :activo)"
-        );
-
-        return $stmt->execute([
+    public function crear($data)
+    {
+        $campos = ['nombre', 'email', 'password_hash', 'rol', 'activo'];
+        $valores = [':nombre', ':email', ':password_hash', ':rol', ':activo'];
+        $parametros = [
             ':nombre'   => $data['nombre'],
-            ':email'    => $data['email'],
+            ':email'    => mb_strtolower(trim($data['email'])),
             ':password_hash' => password_hash($data['password'], PASSWORD_DEFAULT),
             ':rol'      => $data['rol'],
             ':activo'   => $data['activo'] ?? 1
-        ]);
+        ];
+
+        // Agregar foto si está presente
+        if (!empty($data['foto'])) {
+            $campos[] = 'foto';
+            $valores[] = ':foto';
+            $parametros[':foto'] = $data['foto'];
+        }
+
+        $sql = "INSERT INTO usuarios (" . implode(', ', $campos) . ") VALUES (" . implode(', ', $valores) . ")";
+        $stmt = $this->pdo->prepare($sql);
+        if ($stmt->execute($parametros)) {
+            return $this->pdo->lastInsertId();
+        }
+        return false;
     }
 
     /**
      * Actualizar un usuario existente
      */
-    public function actualizar($id, $data) {
+    public function actualizar($id, $data)
+    {
+        $campos = ['nombre = :nombre', 'email = :email', 'rol = :rol', 'activo = :activo'];
+        $parametros = [
+            ':id'       => $id,
+            ':nombre'   => $data['nombre'],
+            ':email'    => mb_strtolower(trim($data['email'])),
+            ':rol'      => $data['rol'],
+            ':activo'   => $data['activo']
+        ];
+
+        // Agregar contraseña si está presente
         if (!empty($data['password'])) {
-            // Si se proporciona nueva contraseña
-            $stmt = $this->pdo->prepare(
-                "UPDATE usuarios
-                 SET nombre = :nombre,
-                     email = :email,
-                     password_hash = :password_hash,
-                     rol = :rol,
-                     activo = :activo
-                 WHERE id = :id"
-            );
-
-            return $stmt->execute([
-                ':id'       => $id,
-                ':nombre'   => $data['nombre'],
-                ':email'    => $data['email'],
-                ':password_hash' => password_hash($data['password'], PASSWORD_DEFAULT),
-                ':rol'      => $data['rol'],
-                ':activo'   => $data['activo']
-            ]);
-        } else {
-            // Si NO se cambia la contraseña
-            $stmt = $this->pdo->prepare(
-                "UPDATE usuarios
-                 SET nombre = :nombre,
-                     email = :email,
-                     rol = :rol,
-                     activo = :activo
-                 WHERE id = :id"
-            );
-
-            return $stmt->execute([
-                ':id'       => $id,
-                ':nombre'   => $data['nombre'],
-                ':email'    => $data['email'],
-                ':rol'      => $data['rol'],
-                ':activo'   => $data['activo']
-            ]);
+            $campos[] = 'password_hash = :password_hash';
+            $parametros[':password_hash'] = password_hash($data['password'], PASSWORD_DEFAULT);
         }
+
+        // Agregar foto si está en el array data (puede ser valor o NULL)
+        if (array_key_exists('foto', $data)) {
+            $campos[] = 'foto = :foto';
+            $parametros[':foto'] = $data['foto']; // Puede ser una URL o NULL
+        }
+
+        $sql = "UPDATE usuarios SET " . implode(', ', $campos) . " WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+
+        return $stmt->execute($parametros);
     }
 
     /**
      * Cambiar estado (activo/inactivo)
      */
-    public function cambiarEstado($id, $activo) {
+    public function cambiarEstado($id, $activo)
+    {
         $stmt = $this->pdo->prepare(
             "UPDATE usuarios SET activo = :activo WHERE id = :id"
         );
@@ -124,7 +129,8 @@ class UsuariosModel extends Model {
     /**
      * Obtener estadísticas de usuarios
      */
-    public function obtenerEstadisticas() {
+    public function obtenerEstadisticas()
+    {
         $stmt = $this->pdo->query(
             "SELECT
                 COUNT(*) as total,

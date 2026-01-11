@@ -17,6 +17,140 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Mobile Menu Toggle Global - In Navbar */
+.mobile-menu-toggle {
+  display: none;
+  background: #0a3d91;
+  color: #ffffff;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 12px;
+  min-width: 36px;
+  height: 36px;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-toggle:hover {
+  background: #083875;
+  transform: scale(1.05);
+}
+
+.mobile-menu-toggle:active {
+  transform: scale(0.95);
+}
+
+.mobile-menu-toggle svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+}
+
+/* Sidebar Overlay Global */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.overlay-active {
+  opacity: 1;
+}
+
+/* Sidebar Open State Global */
+.sidebar.sidebar-open {
+  transform: translateX(0) !important;
+}
+
+/* Show mobile controls on small screens */
+@media screen and (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+
+  .sidebar-overlay {
+    display: block !important;
+  }
+
+  /* Force sidebar to be hidden initially on mobile */
+  .sidebar {
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s ease !important;
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0) !important;
+  }
+
+  /* Responsive navbar - remove extra padding since hamburger is inline */
+  .navbar-responsive {
+    padding-left: 1rem !important;
+  }
+
+  .navbar-title {
+    flex: 1;
+  }
+
+  .navbar-heading {
+    font-size: 1.125rem !important;
+  }
+
+  .navbar-breadcrumb {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .mobile-menu-toggle {
+    display: flex !important;
+    top: 0.75rem !important;
+    left: 0.75rem !important;
+  }
+
+  .navbar-responsive {
+    padding-left: 4.5rem !important;
+  }
+
+  .navbar-heading {
+    font-size: 1rem !important;
+  }
+
+  /* Simplificar acciones de navbar en móvil */
+  .navbar-actions {
+    gap: 0.5rem !important;
+  }
+
+  .navbar-user-info {
+    display: none; /* Ocultar info detallada del usuario en móvil pequeño */
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+
+  .navbar-responsive {
+    padding-left: 4rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  .navbar-heading {
+    font-size: 0.875rem !important;
+  }
+}
+
 /* Beautiful Custom Scrollbar for WebKit browsers */
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,

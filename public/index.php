@@ -30,12 +30,14 @@ require_once __DIR__ . "/../app/modules/ventas/VentasController.php";
 require_once __DIR__ . "/../app/modules/clientes/ClientesController.php";
 require_once __DIR__ . "/../app/modules/deudores/DeudoresController.php";
 
-require_once __DIR__ . "/../app/modules/inventario_avanzado/InventarioAvanzadoController.php";
-require_once __DIR__ . "/../app/modules/inventario_avanzado/InventarioAvanzadoModel.php";
+
 
 require_once __DIR__ . "/../app/modules/reportes/ReportesController.php";
 
 require_once __DIR__ . "/../app/modules/pos/PosController.php";
+
+require_once __DIR__ . "/../app/modules/caja/CajaController.php";
+require_once __DIR__ . "/../app/modules/caja/CajaModel.php";
 
 require_once __DIR__ . "/../app/modules/usuarios/UsuariosController.php";
 
@@ -58,6 +60,7 @@ $router->get("/admin/productos/tabla", "ProductosController@tabla");
 $router->post("/admin/productos/guardar",       "ProductosController@guardar");
 $router->get("/admin/productos/editar/{id}",    "ProductosController@editar");
 $router->post("/admin/productos/actualizar/{id}", "ProductosController@actualizar");
+$router->get("/admin/productos/{id}/series",    "ProductosController@series");
 $router->post("/admin/productos/desactivar/{id}", "ProductosController@desactivar");
 $router->post("/admin/productos/activar/{id}",    "ProductosController@activar");
 $router->post("/admin/productos/eliminarPermanente/{id}", "ProductosController@eliminarPermanente");
@@ -142,9 +145,7 @@ $router->get("/admin/deudores/debug-clientes", "DeudoresController@debugClientes
 $router->get("/admin/clientes/buscar", "ClientesController@buscar");
 $router->post("/admin/clientes/crear-rapido", "ClientesController@crearRapido");
 
-// INVENTARIO AVANZADO (KARDEX)
-$router->get("/admin/inventario-avanzado", "InventarioAvanzadoController@index");
-$router->get("/admin/inventario-avanzado/kardex", "InventarioAvanzadoController@kardex"); // JSON
+
 
 // REPORTES
 $router->get("/admin/reportes", "ReportesController@index");
@@ -154,14 +155,17 @@ $router->get("/admin/reportes/inventario", "ReportesController@inventario");
 $router->get("/admin/reportes/productos", "ReportesController@productos");
 $router->get("/admin/reportes/balance", "ReportesController@balance");
 
-// POS - PUNTO DE VENTA / CAJA
+// POS - PUNTO DE VENTA
 $router->get("/admin/pos", "PosController@index");
 $router->get("/admin/pos/cobrar/{id}", "PosController@cobrar");
 $router->post("/admin/pos/registrar-cobro", "PosController@registrarCobro");
-$router->get("/admin/pos/gastos", "PosController@gastos");
-$router->get("/admin/pos/nuevo-gasto", "PosController@nuevoGasto");
-$router->post("/admin/pos/guardar-gasto", "PosController@guardarGasto");
-$router->post("/admin/pos/eliminar-gasto/{id}", "PosController@eliminarGasto");
+
+// CAJA - GESTIÓN DE MOVIMIENTOS Y GASTOS
+$router->get("/admin/caja", "CajaController@index");
+$router->get("/admin/caja/movimientos", "CajaController@movimientos");
+$router->get("/admin/caja/nuevo-movimiento", "CajaController@nuevoMovimiento");
+$router->post("/admin/caja/guardar-movimiento", "CajaController@guardarMovimiento");
+$router->post("/admin/caja/eliminar-movimiento/{id}", "CajaController@eliminarMovimiento");
 
 // API - Mantener sesión activa
 $router->post("/api/mantener-sesion", "AuthController@mantenerSesion");

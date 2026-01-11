@@ -237,25 +237,132 @@
   padding: 1.5rem;
 }
 
-/* Responsive Design */
+/* RESPONSIVE DESIGN Y MOBILE MENU VENDEDOR */
+
+/* Botón hamburger para móvil */
+.layout-vendedor .mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 999;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.layout-vendedor .mobile-menu-toggle:hover {
+  background: var(--primary-dark);
+  transform: scale(1.05);
+}
+
+.layout-vendedor .mobile-menu-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Overlay para cerrar sidebar en móvil */
+.layout-vendedor .sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.layout-vendedor .sidebar-overlay.overlay-active {
+  opacity: 1;
+}
+
+/* Layout base responsivo */
+.layout-vendedor {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Tablet - pantallas medianas */
+@media (max-width: 1024px) {
+  .layout-vendedor .sidebar {
+    width: 220px;
+  }
+
+  .layout-vendedor .main-content {
+    margin-left: 220px;
+  }
+}
+
+/* Tablet pequeño */
 @media (max-width: 768px) {
+  .layout-vendedor .mobile-menu-toggle {
+    display: block;
+  }
+
   .layout-vendedor .sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     width: 260px;
+    z-index: 100;
   }
 
-  .layout-vendedor .sidebar.open {
+  .layout-vendedor .sidebar.sidebar-open {
     transform: translateX(0);
+  }
+
+  .layout-vendedor .sidebar-overlay {
+    display: block;
   }
 
   .layout-vendedor .main-content {
     margin-left: 0;
+    padding-top: 5rem; /* Espacio para el botón hamburger */
+  }
+
+  .layout-vendedor .content-wrapper {
+    padding: 1.25rem;
   }
 }
 
+/* Móvil */
 @media (max-width: 640px) {
   .layout-vendedor .content-wrapper {
     padding: 1rem;
+  }
+
+  .layout-vendedor .sidebar {
+    width: 280px; /* Más ancho en móvil para mejor usabilidad */
+  }
+
+  .layout-vendedor .navbar {
+    padding: 0.875rem 1rem;
+  }
+}
+
+/* Móvil pequeño */
+@media (max-width: 480px) {
+  .layout-vendedor .content-wrapper {
+    padding: 0.75rem;
+  }
+
+  .layout-vendedor .mobile-menu-toggle {
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.625rem;
+  }
+
+  .layout-vendedor .main-content {
+    padding-top: 4.5rem;
+  }
+
+  .layout-vendedor .navbar {
+    padding: 0.75rem 0.875rem;
   }
 }

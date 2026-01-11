@@ -92,8 +92,8 @@ class ClientesModel extends Model
     public function crear(array $data): int
     {
         $sql = "INSERT INTO {$this->table}
-                (nombre, apellido, telefono, direccion, preferencia_metodo_pago, nit, total_gastado, created_at)
-                VALUES (:nombre, :apellido, :telefono, :direccion, :preferencia_metodo_pago, :nit, :total_gastado, NOW())";
+            (nombre, apellido, telefono, direccion, preferencia_metodo_pago, nit, total_gastado, created_at)
+            VALUES (:nombre, :apellido, :telefono, :direccion, :preferencia_metodo_pago, :nit, :total_gastado, NOW())";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -101,7 +101,7 @@ class ClientesModel extends Model
             ":apellido"     => $data["apellido"],
             ":telefono"     => $data["telefono"],
             ":direccion"    => $data["direccion"] ?? "",
-            ":preferencia_metodo_pago"  => $data["metodo_pago"],
+            ":preferencia_metodo_pago"  => $data["preferencia_metodo_pago"],
             ":nit"          => $data["nit"] ?? "",
             ":total_gastado" => $data["total_gastado"] ?? 0.00,
         ]);
@@ -131,7 +131,7 @@ class ClientesModel extends Model
             ":apellido"    => $data["apellido"],
             ":telefono"    => $data["telefono"],
             ":direccion"   => $data["direccion"] ?? "",
-            ":preferencia_metodo_pago" => $data["metodo_pago"],
+            ":preferencia_metodo_pago" => $data["preferencia_metodo_pago"],
             ":nit"         => $data["nit"] ?? "",
         ]);
     }

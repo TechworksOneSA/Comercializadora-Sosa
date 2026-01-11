@@ -61,9 +61,8 @@
             <th style="padding: 1rem; text-align: left; font-weight: 600; color: #495057;">Nombre Completo</th>
             <th style="padding: 1rem; text-align: left; font-weight: 600; color: #495057;">Teléfono</th>
             <th style="padding: 1rem; text-align: left; font-weight: 600; color: #495057;">Dirección</th>
-            <th style="padding: 1rem; text-align: left; font-weight: 600; color: #495057;">Método de Pago</th>
+            <th style="padding: 1rem; text-align: left; font-weight: 600; color: #495057;">Método de Pago Favorito</th>
             <th style="padding: 1rem; text-align: left; font-weight: 600; color: #495057;">NIT</th>
-            <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Total Gastado</th>
             <th style="padding: 1rem; text-align: center; font-weight: 600; color: #495057;">Acciones</th>
           </tr>
         </thead>
@@ -101,9 +100,6 @@
                 <td style="padding: 1rem; color: #6c757d; font-family: monospace;">
                   <?= e($c['nit']) ?: '<span style="color: #adb5bd;">—</span>' ?>
                 </td>
-                <td style="padding: 1rem; text-align: right; font-weight: 700; color: #28a745; font-size: 1rem;">
-                  Q <?= number_format($c['total_gastado'] ?? 0, 2) ?>
-                </td>
                 <td style="padding: 1rem; text-align: center;">
                   <div style="display: flex; gap: 0.5rem; justify-content: center;">
                     <a
@@ -118,7 +114,7 @@
             <?php endforeach; ?>
           <?php else: ?>
             <tr>
-              <td colspan="8" style="padding: 3rem; text-align: center; color: #6c757d;">
+              <td colspan="7" style="padding: 3rem; text-align: center; color: #6c757d;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
                 <p style="font-size: 1.1rem; margin: 0;">No hay clientes registrados aún.</p>
                 <a href="<?= url('/admin/clientes/crear') ?>" style="display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: #667eea; color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 600;">

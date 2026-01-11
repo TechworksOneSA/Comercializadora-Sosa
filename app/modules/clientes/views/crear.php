@@ -22,17 +22,16 @@
   <?php endif; ?>
 
   <!-- FORMULARIO -->
-  <form 
-    method="POST" 
-    action="<?= url('/admin/clientes/guardar') ?>" 
-    style="padding: 2rem;"
-  >
-    
+  <form
+    method="POST"
+    action="<?= url('/admin/clientes/guardar') ?>"
+    style="padding: 2rem;">
+
     <div style="display: grid; gap: 1.5rem;">
-      
+
       <!-- NOMBRE Y APELLIDO (Grid 2 columnas) -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-        
+
         <!-- NOMBRE -->
         <div>
           <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem; font-size: 0.95rem;">
@@ -46,8 +45,7 @@
             required
             style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; transition: border-color 0.3s;"
             onfocus="this.style.borderColor='#667eea'"
-            onblur="this.style.borderColor='#e9ecef'"
-          >
+            onblur="this.style.borderColor='#e9ecef'">
         </div>
 
         <!-- APELLIDO -->
@@ -63,14 +61,13 @@
             required
             style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; transition: border-color 0.3s;"
             onfocus="this.style.borderColor='#667eea'"
-            onblur="this.style.borderColor='#e9ecef'"
-          >
+            onblur="this.style.borderColor='#e9ecef'">
         </div>
       </div>
 
       <!-- TELÉFONO Y MÉTODO DE PAGO (Grid 2 columnas) -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-        
+
         <!-- TELÉFONO -->
         <div>
           <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem; font-size: 0.95rem;">
@@ -84,22 +81,20 @@
             required
             style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; transition: border-color 0.3s;"
             onfocus="this.style.borderColor='#667eea'"
-            onblur="this.style.borderColor='#e9ecef'"
-          >
+            onblur="this.style.borderColor='#e9ecef'">
         </div>
 
         <!-- MÉTODO DE PAGO -->
         <div>
           <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem; font-size: 0.95rem;">
-            Método de Pago <span style="color: #dc3545;">*</span>
+            Método de Pago Favorito <span style="color: #dc3545;">*</span>
           </label>
           <select
             name="metodo_pago"
             required
             style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; transition: border-color 0.3s; background: white;"
             onfocus="this.style.borderColor='#667eea'"
-            onblur="this.style.borderColor='#e9ecef'"
-          >
+            onblur="this.style.borderColor='#e9ecef'">
             <option value="">-- Selecciona --</option>
             <option value="Efectivo" <?= (($old['metodo_pago'] ?? '') === 'Efectivo') ? 'selected' : '' ?>>💵 Efectivo</option>
             <option value="Transferencia" <?= (($old['metodo_pago'] ?? '') === 'Transferencia') ? 'selected' : '' ?>>🏦 Transferencia</option>
@@ -120,8 +115,7 @@
           placeholder="Ej: Zona 1, 5ta Avenida 10-50, Ciudad de Guatemala"
           style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; font-family: inherit; resize: vertical; transition: border-color 0.3s;"
           onfocus="this.style.borderColor='#667eea'"
-          onblur="this.style.borderColor='#e9ecef'"
-        ><?= e($old['direccion'] ?? '') ?></textarea>
+          onblur="this.style.borderColor='#e9ecef'"><?= e($old['direccion'] ?? '') ?></textarea>
       </div>
 
       <!-- NIT -->
@@ -136,8 +130,7 @@
           placeholder="Ej: 12345678-9"
           style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; transition: border-color 0.3s;"
           onfocus="this.style.borderColor='#667eea'"
-          onblur="this.style.borderColor='#e9ecef'"
-        >
+          onblur="this.style.borderColor='#e9ecef'">
         <small style="display: block; margin-top: 0.5rem; color: #6c757d; font-size: 0.85rem;">
           💡 El campo "Total Gastado" se inicializará automáticamente en Q 0.00 y se actualizará con futuras ventas.
         </small>
@@ -147,20 +140,18 @@
 
     <!-- BOTONES -->
     <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e9ecef;">
-      <a 
-        href="<?= url('/admin/clientes') ?>" 
+      <a
+        href="<?= url('/admin/clientes') ?>"
         style="padding: 0.75rem 1.5rem; background: #6c757d; color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 600; transition: all 0.3s;"
         onmouseover="this.style.background='#5a6268'"
-        onmouseout="this.style.background='#6c757d'"
-      >
+        onmouseout="this.style.background='#6c757d'">
         ← Cancelar
       </a>
-      <button 
+      <button
         type="submit"
         style="padding: 0.75rem 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3); transition: all 0.3s;"
         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(102, 126, 234, 0.4)'"
-        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(102, 126, 234, 0.3)'"
-      >
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(102, 126, 234, 0.3)'">
         💾 Guardar Cliente
       </button>
     </div>
@@ -179,6 +170,7 @@
       opacity: 0;
       transform: translateY(20px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -186,7 +178,9 @@
   }
 
   /* Focus visible para accesibilidad */
-  input:focus, textarea:focus, select:focus {
+  input:focus,
+  textarea:focus,
+  select:focus {
     outline: none;
   }
 

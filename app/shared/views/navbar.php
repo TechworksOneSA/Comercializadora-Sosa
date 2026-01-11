@@ -1,31 +1,30 @@
 <!-- Navbar superior -->
-<div class="flex justify-between items-center">
+<div class="flex justify-between items-center navbar-responsive">
     <!-- Info de la página actual -->
-    <div class="flex items-center">
-        <h1 class="text-xl font-semibold text-text-primary">
+    <div class="flex items-center navbar-title">
+        <!-- Botón hamburger para móvil - MÁS VISIBLE -->
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" style="background: #dc2626 !important; border: 2px solid #fff !important; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.6) !important; min-width: 44px !important; height: 44px !important;">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="stroke-width: 3;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+
+        <h1 class="text-xl font-semibold text-text-primary navbar-heading">
             <?php echo $pageTitle ?? 'Dashboard'; ?>
         </h1>
         <?php if (isset($breadcrumb)): ?>
-            <nav class="ml-4 text-sm text-text-secondary">
+            <nav class="ml-4 text-sm text-text-secondary navbar-breadcrumb">
                 <?php echo $breadcrumb; ?>
             </nav>
         <?php endif; ?>
     </div>
 
     <!-- Acciones y usuario -->
-    <div class="flex items-center space-x-4">
-        <!-- Notificaciones -->
-        <button class="p-2 rounded hover:bg-surface-secondary relative">
-            <span class="text-lg">🔔</span>
-            <span class="absolute -top-1 -right-1 bg-error text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                3
-            </span>
-        </button>
-
+    <div class="flex items-center space-x-4 navbar-actions">
         <!-- Info rápida del sistema -->
-        <div class="text-sm text-text-secondary">
+        <div class="text-sm text-text-secondary navbar-user-info">
             <p>Fecha: <?php echo date('d/m/Y'); ?></p>
-            <p>Hora: <span id="current-time"><?php echo date('H:i:s'); ?></span></p>
+            <p>Hora: <span id="current-time"><?php echo date('g:i:s A'); ?></span></p>
         </div>
 
         <!-- Usuario actual -->
@@ -37,39 +36,7 @@
                 ?>
             </div>
             <div class="text-sm">
-                <p class="font-medium">
-                    <?php
-                    // TODO: Obtener nombre del usuario logueado
-                    echo 'Usuario Sistema';
-                    ?>
-                </p>
-                <p class="text-text-secondary">
-                    <?php
-                    // TODO: Obtener rol del usuario logueado
-                    echo 'Administrador';
-                    ?>
-                </p>
-            </div>
-        </div>
-
-        <!-- Menú de usuario -->
-        <div class="relative">
-            <button class="p-2 rounded hover:bg-surface-secondary" onclick="toggleUserMenu()">
-                <span class="text-lg">⚙️</span>
-            </button>
-
-            <!-- Dropdown del menú de usuario -->
-            <div id="user-menu" class="hidden absolute right-0 top-full mt-2 w-48 bg-surface border border-surface-tertiary rounded shadow-lg z-50">
-                <a href="/profile" class="block px-4 py-2 text-sm hover:bg-surface-secondary">
-                    Mi Perfil
-                </a>
-                <a href="/configuracion" class="block px-4 py-2 text-sm hover:bg-surface-secondary">
-                    Configuración
-                </a>
-                <hr class="border-surface-tertiary">
-                <a href="/auth/logout" class="block px-4 py-2 text-sm text-error hover:bg-surface-secondary">
-                    Cerrar Sesión
-                </a>
+                <!-- Usuario y rol removidos por solicitud -->
             </div>
         </div>
     </div>
@@ -80,7 +47,7 @@
     function updateTime() {
         const now = new Date();
         const timeString = now.toLocaleTimeString('es-GT', {
-            hour12: false
+            hour12: true
         });
         const timeElement = document.getElementById('current-time');
         if (timeElement) {
@@ -90,20 +57,4 @@
 
     // Actualizar cada segundo
     setInterval(updateTime, 1000);
-
-    // Toggle del menú de usuario
-    function toggleUserMenu() {
-        const menu = document.getElementById('user-menu');
-        menu.classList.toggle('hidden');
-    }
-
-    // Cerrar menú cuando se hace click fuera
-    document.addEventListener('click', function(event) {
-        const menu = document.getElementById('user-menu');
-        const button = event.target.closest('button');
-
-        if (!button || !button.getAttribute('onclick')) {
-            menu.classList.add('hidden');
-        }
-    });
 </script>

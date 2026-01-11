@@ -22,15 +22,34 @@ $alertas = $alertas ?? [
     <p>Panel Ejecutivo - Comercializadora Sosa</p>
     <div class="datetime-info">
       <span class="date-badge">
-        📅 <?php 
-          $dias = ['Sunday' => 'Domingo', 'Monday' => 'Lunes', 'Tuesday' => 'Martes', 
-                   'Wednesday' => 'Miércoles', 'Thursday' => 'Jueves', 'Friday' => 'Viernes', 'Saturday' => 'Sábado'];
-          $meses = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', 'April' => 'Abril',
-                    'May' => 'Mayo', 'June' => 'Junio', 'July' => 'Julio', 'August' => 'Agosto',
-                    'September' => 'Septiembre', 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'];
-          $diaEn = date('l'); $mesEn = date('F');
-          echo $dias[$diaEn] . ', ' . date('d') . ' de ' . $meses[$mesEn] . ' de ' . date('Y');
-        ?>
+        📅 <?php
+            $dias = [
+              'Sunday' => 'Domingo',
+              'Monday' => 'Lunes',
+              'Tuesday' => 'Martes',
+              'Wednesday' => 'Miércoles',
+              'Thursday' => 'Jueves',
+              'Friday' => 'Viernes',
+              'Saturday' => 'Sábado'
+            ];
+            $meses = [
+              'January' => 'Enero',
+              'February' => 'Febrero',
+              'March' => 'Marzo',
+              'April' => 'Abril',
+              'May' => 'Mayo',
+              'June' => 'Junio',
+              'July' => 'Julio',
+              'August' => 'Agosto',
+              'September' => 'Septiembre',
+              'October' => 'Octubre',
+              'November' => 'Noviembre',
+              'December' => 'Diciembre'
+            ];
+            $diaEn = date('l');
+            $mesEn = date('F');
+            echo $dias[$diaEn] . ', ' . date('d') . ' de ' . $meses[$mesEn] . ' de ' . date('Y');
+            ?>
       </span>
       <span class="time-badge" id="current-time">
         🕐 <?= date('h:i:s A') ?>
@@ -47,11 +66,11 @@ $alertas = $alertas ?? [
       const seconds = String(now.getSeconds()).padStart(2, '0');
       const ampm = hours >= 12 ? 'PM' : 'AM';
       const displayHours = hours % 12 || 12;
-      
-      document.getElementById('current-time').innerHTML = 
+
+      document.getElementById('current-time').innerHTML =
         `🕐 ${String(displayHours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
     }
-    
+
     setInterval(updateTime, 1000);
     updateTime();
   </script>
@@ -151,14 +170,6 @@ $alertas = $alertas ?? [
         </div>
       </a>
 
-      <a href="<?= url('/admin/inventario-avanzado') ?>" class="quick-access-card inventario">
-        <div class="metric-icon">📊</div>
-        <div class="metric-label">Inventario Avanzado</div>
-        <div class="metric-detail">
-          Control de stock y movimientos
-        </div>
-      </a>
-
       <a href="<?= url('/admin/reportes') ?>" class="quick-access-card reportes">
         <div class="metric-icon">📈</div>
         <div class="metric-label">Reportes y Análisis</div>
@@ -190,7 +201,7 @@ $alertas = $alertas ?? [
           </div>
           <div class="alert-content">
             Hay productos agotados que no pueden venderse.
-            <a href="<?= url('/admin/inventario-avanzado') ?>">Revisar inventario →</a>
+            <a href="<?= url('/admin/productos') ?>">Gestionar productos →</a>
           </div>
         </div>
       <?php endif; ?>

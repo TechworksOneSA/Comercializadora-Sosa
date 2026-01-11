@@ -119,10 +119,16 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span class="text-blue-600 font-semibold">
-                                            <?= strtoupper(substr($usuario['nombre'], 0, 2)) ?>
-                                        </span>
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">
+                                        <?php if (!empty($usuario['foto'])): ?>
+                                            <img src="<?= htmlspecialchars($usuario['foto']) ?>" class="w-full h-full object-cover" alt="Foto de <?= htmlspecialchars($usuario['nombre']) ?>">
+                                        <?php else: ?>
+                                            <div class="w-full h-full bg-blue-100 rounded-full flex items-center justify-center">
+                                                <span class="text-blue-600 font-semibold text-sm">
+                                                    <?= strtoupper(substr($usuario['nombre'], 0, 2)) ?>
+                                                </span>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="ml-4">
                                         <div class="text-sm font-medium text-gray-900">

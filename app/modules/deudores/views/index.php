@@ -110,6 +110,7 @@
               $estadoColors = [
                 'ACTIVA' => ['bg' => '#dc3545', 'text' => 'ACTIVA'],
                 'PAGADA' => ['bg' => '#28a745', 'text' => 'PAGADA'],
+                'CONVERTIDA' => ['bg' => '#17a2b8', 'text' => 'CONVERTIDA'],
                 'CANCELADA' => ['bg' => '#6c757d', 'text' => 'CANCELADA']
               ];
               $estadoStyle = $estadoColors[$estadoActual] ?? $estadoColors['ACTIVA'];

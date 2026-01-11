@@ -105,7 +105,7 @@
                 <!-- MÉTODO DE PAGO -->
                 <div>
                     <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem; font-size: 0.95rem;">
-                        Método de Pago <span style="color: #dc3545;">*</span>
+                        Método de Pago Favorito <span style="color: #dc3545;">*</span>
                     </label>
                     <select
                         name="metodo_pago"

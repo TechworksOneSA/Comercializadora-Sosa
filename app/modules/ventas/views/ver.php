@@ -29,10 +29,10 @@
 
   <!-- CONTENIDO DE LA VENTA -->
   <div style="padding: 2rem; background: white;" id="printable-area">
-    
+
     <!-- ENCABEZADO CON LOGO Y DATOS DEL NEGOCIO -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 3px solid #0a3d91;">
-      
+
       <!-- LOGO Y NOMBRE -->
       <div>
         <div style="background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%); color: white; padding: 1.5rem; border-radius: 0.5rem; text-align: center;">
@@ -67,11 +67,11 @@
             <div>
               <strong style="color: #495057;">Estado:</strong>
               <?php
-                $estadoBadge = [
-                  'CONFIRMADA' => ['bg' => '#d4edda', 'color' => '#155724', 'icon' => '✅'],
-                  'ANULADA' => ['bg' => '#f8d7da', 'color' => '#721c24', 'icon' => '❌'],
-                ];
-                $badge = $estadoBadge[$venta['estado']] ?? ['bg' => '#e9ecef', 'color' => '#495057', 'icon' => '❓'];
+              $estadoBadge = [
+                'CONFIRMADA' => ['bg' => '#d4edda', 'color' => '#155724', 'icon' => '✅'],
+                'ANULADA' => ['bg' => '#f8d7da', 'color' => '#721c24', 'icon' => '❌'],
+              ];
+              $badge = $estadoBadge[$venta['estado']] ?? ['bg' => '#e9ecef', 'color' => '#495057', 'icon' => '❓'];
               ?>
               <span style="display: inline-block; margin-left: 0.5rem; padding: 0.25rem 0.75rem; background: <?= $badge['bg'] ?>; color: <?= $badge['color'] ?>; border-radius: 1rem; font-size: 0.85rem; font-weight: 600;">
                 <?= $badge['icon'] ?> <?= e($venta['estado']) ?>
@@ -84,7 +84,7 @@
 
     <!-- INFORMACIÓN DEL CLIENTE Y USUARIO -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-      
+
       <!-- DATOS DEL CLIENTE -->
       <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.5rem;">
         <h3 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 700; border-bottom: 2px solid #dee2e6; padding-bottom: 0.5rem;">
@@ -111,10 +111,20 @@
               <span style="margin-left: 0.5rem; color: #6c757d;"><?= e($venta['cliente_nit']) ?></span>
             </div>
           <?php endif; ?>
-          <?php if (!empty($venta['cliente_metodo_pago'])): ?>
+          <div>
+            <strong style="color: #495057;">Método de Pago:</strong>
+            <span style="margin-left: 0.5rem; color: #6c757d;">💳 <?= e($venta['metodo_pago'] ?? 'No especificado') ?></span>
+          </div>
+          <?php if (!empty($venta['numero_cheque'])): ?>
             <div>
-              <strong style="color: #495057;">Método de Pago:</strong>
-              <span style="margin-left: 0.5rem; color: #6c757d;">💳 <?= e($venta['cliente_metodo_pago']) ?></span>
+              <strong style="color: #495057;">N° de Cheque:</strong>
+              <span style="margin-left: 0.5rem; color: #6c757d;"><?= e($venta['numero_cheque']) ?></span>
+            </div>
+          <?php endif; ?>
+          <?php if (!empty($venta['numero_boleta'])): ?>
+            <div>
+              <strong style="color: #495057;">N° de Boleta:</strong>
+              <span style="margin-left: 0.5rem; color: #6c757d;"><?= e($venta['numero_boleta']) ?></span>
             </div>
           <?php endif; ?>
         </div>
@@ -133,11 +143,11 @@
           <div>
             <strong style="color: #495057;">Rol:</strong>
             <?php
-              $rolBadge = [
-                'admin' => ['bg' => '#0a3d91', 'text' => 'Administrador', 'icon' => '👨‍💼'],
-                'vendedor' => ['bg' => '#28a745', 'text' => 'Vendedor', 'icon' => '🛍️'],
-              ];
-              $rol = $rolBadge[$user['rol'] ?? 'vendedor'] ?? ['bg' => '#6c757d', 'text' => 'Usuario', 'icon' => '👤'];
+            $rolBadge = [
+              'admin' => ['bg' => '#0a3d91', 'text' => 'Administrador', 'icon' => '👨‍💼'],
+              'vendedor' => ['bg' => '#28a745', 'text' => 'Vendedor', 'icon' => '🛍️'],
+            ];
+            $rol = $rolBadge[$user['rol'] ?? 'vendedor'] ?? ['bg' => '#6c757d', 'text' => 'Usuario', 'icon' => '👤'];
             ?>
             <span style="display: inline-block; margin-left: 0.5rem; padding: 0.25rem 0.75rem; background: <?= $rol['bg'] ?>; color: white; border-radius: 0.375rem; font-size: 0.85rem; font-weight: 600;">
               <?= $rol['icon'] ?> <?= $rol['text'] ?>
@@ -155,7 +165,7 @@
       <h3 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 700;">
         📦 Detalle de Productos
       </h3>
-      
+
       <div style="border: 2px solid #e9ecef; border-radius: 0.5rem; overflow: hidden;">
         <table style="width: 100%; border-collapse: collapse;">
           <thead style="background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%); color: white;">
@@ -210,9 +220,9 @@
           <span style="color: #495057; font-weight: 700; font-size: 1.25rem;">TOTAL:</span>
           <span style="color: #28a745; font-weight: 700; font-size: 1.5rem;">Q <?= number_format($venta['total'], 2) ?></span>
         </div>
-        <?php 
-          $totalPagado = (float)($venta['total_pagado'] ?? 0);
-          $saldo = $venta['total'] - $totalPagado;
+        <?php
+        $totalPagado = (float)($venta['total_pagado'] ?? 0);
+        $saldo = $venta['total'] - $totalPagado;
         ?>
         <div style="display: flex; justify-content: space-between; margin-top: 0.75rem; padding-top: 0.75rem;">
           <span style="color: #0a3d91; font-weight: 600;">Pagado:</span>
@@ -239,21 +249,22 @@
   .no-print {
     display: block;
   }
-  
+
   @media print {
     @page {
       margin: 0.3cm;
       size: letter;
     }
-    
+
     /* Preservar todos los colores */
     * {
       -webkit-print-color-adjust: exact !important;
       color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
-    
-    html, body {
+
+    html,
+    body {
       margin: 0 !important;
       padding: 0 !important;
       width: 100% !important;
@@ -261,7 +272,7 @@
       overflow: visible !important;
       font-size: 11px !important;
     }
-    
+
     /* Ocultar sidebar, navbar y elementos del layout */
     .sidebar,
     .admin-sidebar,
@@ -277,19 +288,19 @@
       display: none !important;
       visibility: hidden !important;
     }
-    
+
     /* Ocultar el header con los botones */
-    .card > div:first-child {
+    .card>div:first-child {
       display: none !important;
     }
-    
+
     /* Ocultar botones y links de acción */
     button,
     a[href],
     form[onsubmit] {
       display: none !important;
     }
-    
+
     /* El contenedor principal debe ocupar todo el ancho */
     .main-content,
     .content-wrapper,
@@ -300,7 +311,7 @@
       width: 100% !important;
       max-width: 100% !important;
     }
-    
+
     /* Asegurar que el contenido principal se vea */
     .card {
       box-shadow: none !important;
@@ -310,7 +321,7 @@
       max-width: 100% !important;
       page-break-inside: avoid;
     }
-    
+
     #printable-area {
       display: block !important;
       width: 100% !important;
@@ -319,95 +330,99 @@
       margin: 0 !important;
       page-break-inside: avoid;
     }
-    
+
     /* Reducir espaciado drásticamente */
-    #printable-area > div {
+    #printable-area>div {
       margin-bottom: 0.5rem !important;
       padding-bottom: 0.5rem !important;
     }
-    
+
     /* Encabezado más compacto */
-    #printable-area > div:first-child {
+    #printable-area>div:first-child {
       margin-bottom: 0.5rem !important;
       padding-bottom: 0.5rem !important;
       border-bottom-width: 2px !important;
     }
-    
-    h1, h2, h3 {
+
+    h1,
+    h2,
+    h3 {
       margin: 0.25rem 0 !important;
       font-size: 1rem !important;
     }
-    
+
     p {
       margin: 0.25rem 0 !important;
       font-size: 0.85rem !important;
     }
-    
+
     /* Asegurar que las tablas se vean bien */
     table {
       page-break-inside: avoid;
       width: 100%;
       font-size: 0.8rem !important;
     }
-    
+
     tr {
       page-break-inside: avoid;
       page-break-after: auto;
     }
-    
-    td, th {
+
+    td,
+    th {
       padding: 0.35rem !important;
       font-size: 0.8rem !important;
     }
-    
+
     thead {
       display: table-header-group;
     }
-    
+
     tbody {
       display: table-row-group;
     }
-    
+
     /* Logo mucho más pequeño */
     img[alt="Comercializadora Sosa"] {
       max-width: 120px !important;
       padding: 0.25rem !important;
     }
-    
+
     /* Reducir todos los paddings */
     [style*="padding: 2rem"],
     [style*="padding: 1.5rem"],
     [style*="padding: 1rem"] {
       padding: 0.5rem !important;
     }
-    
+
     /* Reducir gap de grids */
     [style*="grid-template-columns"] {
       gap: 0.5rem !important;
     }
-    
+
     /* Secciones más compactas */
     [style*="background: #f8f9fa"] {
       padding: 0.75rem !important;
     }
-    
+
     /* Ajustar el área de totales */
-    #printable-area > div:last-child {
+    #printable-area>div:last-child {
       margin-top: 0.5rem !important;
       padding-top: 0.5rem !important;
     }
-    
+
     /* Pie de página más compacto */
     [style*="border-top: 2px solid #e9ecef"] {
       margin-top: 0.75rem !important;
       padding-top: 0.5rem !important;
     }
-    
+
     /* Reducir tamaño de fuente en general */
-    div, span {
+    div,
+    span {
       font-size: 0.85rem !important;
     }
-    
+
     strong {
       font-size: 0.85rem !important;
     }

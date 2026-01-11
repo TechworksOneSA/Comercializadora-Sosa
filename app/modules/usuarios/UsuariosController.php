@@ -1,22 +1,26 @@
 <?php
 
 require_once __DIR__ . "/UsuariosModel.php";
+require_once __DIR__ . "/../../core/ImageUploadHelper.php";
 
-class UsuariosController extends Controller {
+class UsuariosController extends Controller
+{
     private UsuariosModel $model;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->model = new UsuariosModel();
     }
 
     // =========================
     // LISTADO
     // =========================
-    public function index() {
+    public function index()
+    {
         RoleMiddleware::requireAdmin();
 
         $usuarios = $this->model->listar();
-        $stats = $this->model->obtenerEstadisticas();
+        $stats    = $this->model->obtenerEstadisticas();
 
         $this->viewWithLayout("usuarios/views/index", [
             "title"    => "Gestión de Usuarios",
@@ -29,7 +33,8 @@ class UsuariosController extends Controller {
     // =========================
     // CREAR
     // =========================
-    public function crear() {
+    public function crear()
+    {
         RoleMiddleware::requireAdmin();
 
         $errors = $_SESSION['usuarios_errors'] ?? [];
@@ -38,43 +43,55 @@ class UsuariosController extends Controller {
         unset($_SESSION['usuarios_errors'], $_SESSION['usuarios_old']);
 
         $this->viewWithLayout("usuarios/views/crear", [
-            "title"   => "Crear Usuario",
-            "user"    => $_SESSION["user"],
-            "errors"  => $errors,
-            "old"     => $old,
+            "title"  => "Crear Usuario",
+            "user"   => $_SESSION["user"],
+            "errors" => $errors,
+            "old"    => $old,
         ]);
     }
 
-    public function guardar() {
+    public function guardar()
+    {
         RoleMiddleware::requireAdmin();
 
         $data = $_POST;
 
         // Validaciones
         $errors = $this->validarUsuario($data);
-
         if (!empty($errors)) {
             $_SESSION['usuarios_errors'] = $errors;
-            $_SESSION['usuarios_old'] = $data;
+            $_SESSION['usuarios_old']    = $data;
             redirect('/admin/usuarios/crear');
             return;
         }
 
-        // Preparar payload
+        // Payload base
         $payload = [
-            "nombre"   => trim($data["nombre"] ?? ""),
-            "email"    => trim($data["email"] ?? ""),
+            "nombre"   => trim($data["nombre"]),
+            "email"    => mb_strtolower(trim($data["email"])),
             "password" => $data["password"],
             "rol"      => $data["rol"] ?? "VENDEDOR",
             "activo"   => isset($data["activo"]) ? 1 : 0,
         ];
 
-        // Crear usuario
-        if ($this->model->crear($payload)) {
+        // Foto
+        if (!empty($data["foto_base64"])) {
+            $fotoUrl = $this->procesarFoto($data["foto_base64"]);
+            if ($fotoUrl) {
+                $payload["foto"] = $fotoUrl;
+            }
+        }
+
+        // Crear
+        $nuevoId = $this->model->crear($payload);
+
+        if ($nuevoId && is_numeric($nuevoId)) {
             $_SESSION['success'] = 'Usuario creado exitosamente';
-            redirect('/admin/usuarios');
+            redirect('/admin/usuarios/editar/' . $nuevoId);
         } else {
-            $_SESSION['usuarios_errors'] = ['general' => 'Error al crear el usuario'];
+            $_SESSION['usuarios_errors'] = [
+                'general' => 'Error al crear el usuario. Verifique que el correo no esté duplicado.'
+            ];
             $_SESSION['usuarios_old'] = $data;
             redirect('/admin/usuarios/crear');
         }
@@ -83,11 +100,11 @@ class UsuariosController extends Controller {
     // =========================
     // EDITAR
     // =========================
-    public function editar($id) {
+    public function editar($id)
+    {
         RoleMiddleware::requireAdmin();
 
         $usuario = $this->model->obtenerPorId($id);
-
         if (!$usuario) {
             $_SESSION['error'] = 'Usuario no encontrado';
             redirect('/admin/usuarios');
@@ -108,41 +125,48 @@ class UsuariosController extends Controller {
         ]);
     }
 
-    public function actualizar($id) {
+    public function actualizar($id)
+    {
         RoleMiddleware::requireAdmin();
 
         $data = $_POST;
 
-        // Validaciones
         $errors = $this->validarUsuario($data, $id);
-
         if (!empty($errors)) {
             $_SESSION['usuarios_errors'] = $errors;
-            $_SESSION['usuarios_old'] = $data;
+            $_SESSION['usuarios_old']    = $data;
             redirect("/admin/usuarios/editar/$id");
             return;
         }
 
-        // Preparar payload
         $payload = [
-            "nombre"   => trim($data["nombre"] ?? ""),
-            "email"    => trim($data["email"] ?? ""),
-            "rol"      => $data["rol"] ?? "VENDEDOR",
-            "activo"   => isset($data["activo"]) ? 1 : 0,
+            "nombre" => trim($data["nombre"]),
+            "email"  => mb_strtolower(trim($data["email"])),
+            "rol"    => $data["rol"] ?? "VENDEDOR",
+            "activo" => isset($data["activo"]) ? 1 : 0,
         ];
 
-        // Solo incluir password si se proporciona
         if (!empty($data["password"])) {
             $payload["password"] = $data["password"];
         }
 
-        // Actualizar usuario
+        // Foto
+        if (!empty($data["foto_base64"])) {
+            $fotoUrl = $this->procesarFoto($data["foto_base64"]);
+            if ($fotoUrl) {
+                $payload["foto"] = $fotoUrl;
+            }
+        } elseif (array_key_exists("foto_base64", $data) && empty($data["foto_base64"])) {
+            // Limpiar foto
+            $payload["foto"] = null;
+        }
+
         if ($this->model->actualizar($id, $payload)) {
             $_SESSION['success'] = 'Usuario actualizado exitosamente';
             redirect('/admin/usuarios');
         } else {
             $_SESSION['usuarios_errors'] = ['general' => 'Error al actualizar el usuario'];
-            $_SESSION['usuarios_old'] = $data;
+            $_SESSION['usuarios_old']    = $data;
             redirect("/admin/usuarios/editar/$id");
         }
     }
@@ -150,31 +174,29 @@ class UsuariosController extends Controller {
     // =========================
     // CAMBIAR ESTADO
     // =========================
-    public function cambiarEstado($id) {
+    public function cambiarEstado($id)
+    {
         RoleMiddleware::requireAdmin();
 
-        // No permitir desactivar al usuario actual
         if ($id == $_SESSION['user']['id']) {
-            $_SESSION['error'] = 'No puedes desactivar tu propia cuenta';
+            $_SESSION['error'] = 'No puede desactivar su propia cuenta';
             redirect('/admin/usuarios');
             return;
         }
 
         $usuario = $this->model->obtenerPorId($id);
-
         if (!$usuario) {
             $_SESSION['error'] = 'Usuario no encontrado';
             redirect('/admin/usuarios');
             return;
         }
 
-        $nuevoEstado = $usuario['activo'] == 1 ? 0 : 1;
+        $nuevoEstado = $usuario['activo'] ? 0 : 1;
 
         if ($this->model->cambiarEstado($id, $nuevoEstado)) {
-            $mensaje = $nuevoEstado == 1 ? 'Usuario activado' : 'Usuario desactivado';
-            $_SESSION['success'] = $mensaje;
+            $_SESSION['success'] = $nuevoEstado ? 'Usuario activado' : 'Usuario desactivado';
         } else {
-            $_SESSION['error'] = 'Error al cambiar el estado del usuario';
+            $_SESSION['error'] = 'Error al cambiar estado del usuario';
         }
 
         redirect('/admin/usuarios');
@@ -183,55 +205,67 @@ class UsuariosController extends Controller {
     // =========================
     // VALIDACIONES
     // =========================
-    private function validarUsuario($data, $id = null) {
+    private function validarUsuario($data, $id = null): array
+    {
         $errors = [];
 
-        // Validar nombre
-        if (empty($data['nombre'])) {
-            $errors['nombre'] = 'El nombre es requerido';
-        } elseif (strlen($data['nombre']) < 3) {
+        if (empty($data['nombre']) || strlen($data['nombre']) < 3) {
             $errors['nombre'] = 'El nombre debe tener al menos 3 caracteres';
         }
 
-        // Validar email
-        if (empty($data['email'])) {
-            $errors['email'] = 'El email es requerido';
-        } elseif (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'El email no es válido';
-        } elseif ($this->model->emailExiste($data['email'], $id)) {
-            $errors['email'] = 'Este email ya está registrado';
+        if (empty($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Email inválido';
+        } else {
+            $email = mb_strtolower(trim($data['email']));
+            if ($this->model->emailExiste($email, $id)) {
+                $errors['email'] = 'El email ya está registrado';
+            }
         }
 
-        // Validar password (solo si es nuevo usuario o si se está cambiando)
         if (!$id) {
-            // Usuario nuevo - password obligatorio
-            if (empty($data['password'])) {
-                $errors['password'] = 'La contraseña es requerida';
-            } elseif (strlen($data['password']) < 6) {
+            if (empty($data['password']) || strlen($data['password']) < 6) {
                 $errors['password'] = 'La contraseña debe tener al menos 6 caracteres';
             }
-
-            if (!empty($data['password']) && $data['password'] !== ($data['password_confirmacion'] ?? '')) {
+            if (($data['password'] ?? '') !== ($data['password_confirmacion'] ?? '')) {
                 $errors['password_confirmacion'] = 'Las contraseñas no coinciden';
             }
-        } else {
-            // Usuario existente - password opcional
-            if (!empty($data['password'])) {
-                if (strlen($data['password']) < 6) {
-                    $errors['password'] = 'La contraseña debe tener al menos 6 caracteres';
-                }
-
-                if ($data['password'] !== ($data['password_confirmacion'] ?? '')) {
-                    $errors['password_confirmacion'] = 'Las contraseñas no coinciden';
-                }
+        } elseif (!empty($data['password'])) {
+            if (strlen($data['password']) < 6) {
+                $errors['password'] = 'La contraseña debe tener al menos 6 caracteres';
+            }
+            if ($data['password'] !== ($data['password_confirmacion'] ?? '')) {
+                $errors['password_confirmacion'] = 'Las contraseñas no coinciden';
             }
         }
 
-        // Validar rol
         if (empty($data['rol']) || !in_array($data['rol'], ['ADMIN', 'VENDEDOR'])) {
-            $errors['rol'] = 'El rol es requerido y debe ser ADMIN o VENDEDOR';
+            $errors['rol'] = 'Rol inválido';
         }
 
         return $errors;
+    }
+
+    // =========================
+    // FOTO
+    // =========================
+    private function procesarFoto(string $base64Data): ?string
+    {
+        try {
+            if (extension_loaded('gd')) {
+                $base64Data = ImageUploadHelper::optimizeBase64Image($base64Data);
+            }
+
+            $result = ImageUploadHelper::processBase64Image($base64Data, 'usuarios');
+
+            if ($result['success']) {
+                return $result['url'];
+            }
+
+            error_log("Error imagen usuario: " . ($result['error'] ?? 'desconocido'));
+            return null;
+        } catch (Throwable $e) {
+            error_log("UsuariosController::procesarFoto ERROR: " . $e->getMessage());
+            return null;
+        }
     }
 }

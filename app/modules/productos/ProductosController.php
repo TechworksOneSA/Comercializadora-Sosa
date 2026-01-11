@@ -8,6 +8,10 @@ class ProductosController extends Controller
 {
     private ProductosModel $model;
 
+    // ===== Storage persistente (FUERA del repo) =====
+    private string $UPLOAD_BASE_DIR   = '/srv/storage/comercializadora/uploads';
+    private string $UPLOAD_PUBLIC_DIR = '/uploads';
+
     public function __construct()
     {
         $this->model = new ProductosModel();
@@ -25,22 +29,26 @@ class ProductosController extends Controller
         $filters = [
             "categoria_id" => (int)($_GET["categoria_id"] ?? 0),
             "marca_id"     => (int)($_GET["marca_id"] ?? 0),
-            "stock"        => $_GET["stock"] ?? "all",     // all | bajo | cero
-            "estado"       => $_GET["estado"] ?? "ALL",    // ALL | ACTIVO | INACTIVO
-            "tipo"         => $_GET["tipo"] ?? "ALL",      // ALL | NORMAL | SERIE
+            "stock"        => $_GET["stock"] ?? "all",   // all | bajo | cero
+            "estado"       => $_GET["estado"] ?? "ALL",  // ALL | ACTIVO | INACTIVO
+            "tipo"         => $_GET["tipo"] ?? "ALL",    // ALL | NORMAL | SERIE
         ];
 
         $productos = $this->model->buscar($q, $filters);
         $kpis      = $this->model->getKpis();
 
-        // catálogos para filtros
         $categoriasModel = new CategoriasModel();
         $marcasModel     = new MarcasModel();
 
         $categorias = $categoriasModel->listarActivas();
         $marcas     = $marcasModel->listarActivas();
 
-        $this->viewWithLayout("productos/views/index", [
+        $vistaIndex = "productos/views/index";
+        if (($_SESSION['user']['rol'] ?? '') === 'VENDEDOR') {
+            $vistaIndex = "productos/views/index_vendedor";
+        }
+
+        $this->viewWithLayout($vistaIndex, [
             "title"      => "Inventario",
             "user"       => $_SESSION["user"],
             "productos"  => $productos,
@@ -53,7 +61,7 @@ class ProductosController extends Controller
     }
 
     // =========================
-    // TABLA (AJAX - BÚSQUEDA EN VIVO + FILTROS)
+    // TABLA (AJAX)
     // =========================
     public function tabla()
     {
@@ -71,13 +79,18 @@ class ProductosController extends Controller
 
         $productos = $this->model->buscar($q, $filters);
 
-        $this->viewOnly("productos/views/tabla", [
+        $vistaTabla = "productos/views/tabla";
+        if (($_SESSION['user']['rol'] ?? '') === 'VENDEDOR') {
+            $vistaTabla = "productos/views/tabla_vendedor";
+        }
+
+        $this->viewOnly($vistaTabla, [
             "productos" => $productos
         ]);
     }
 
     // =========================
-    // CREAR
+    // CREAR (FORM)
     // =========================
     public function crear()
     {
@@ -87,7 +100,7 @@ class ProductosController extends Controller
         $clasificacionModel = new ClasificacionModel();
         $categorias = $clasificacionModel->listarCategorias();
 
-        if (isset($_GET['modal']) && $_GET['modal'] == '1') {
+        if (($_GET['modal'] ?? null) == '1') {
             $this->viewOnly("productos/views/crear", [
                 "errors"     => [],
                 "old"        => [],
@@ -105,48 +118,48 @@ class ProductosController extends Controller
         ]);
     }
 
+    // =========================
+    // GUARDAR (POST)
+    // =========================
     public function guardar()
     {
         RoleMiddleware::requireAdminOrVendedor();
 
-        $data   = $this->sanitizar($_POST);
-        
-        // Generar SKU automáticamente
-        $tipoProducto = strtoupper(trim($data["tipo_producto"] ?? "UNIDAD"));
-        $skuGenerado = $this->generarSKU($tipoProducto);
-        $data["sku"] = $skuGenerado;
-        
-        $errors = $this->validar($data);
+        $data = $this->sanitizar($_POST);
 
-        if ($errors) {
+        $tipoProducto = strtoupper(trim($data["tipo_producto"] ?? "UNIDAD"));
+        $skuGenerado  = $this->generarSKU();
+
+        $errors = $this->validar($data);
+        if (!empty($errors)) {
             $categoriasModel = new CategoriasModel();
             $marcasModel     = new MarcasModel();
-
-            $categorias = $categoriasModel->listarActivas();
-            $marcas     = $marcasModel->listarActivas();
 
             $this->viewWithLayout("productos/views/crear", [
                 "title"      => "Crear Producto",
                 "user"       => $_SESSION["user"],
                 "errors"     => $errors,
                 "old"        => $data,
-                "categorias" => $categorias,
-                "marcas"     => $marcas,
+                "categorias" => $categoriasModel->listarActivas(),
+                "marcas"     => $marcasModel->listarActivas(),
             ]);
             return;
         }
 
-        $imagenesGuardadas = [];
-        if (isset($_FILES['fotos']) && !empty($_FILES['fotos']['name'][0])) {
-            $imagenesGuardadas = $this->procesarImagenes($_FILES['fotos']);
+        // ===== Imagen (single) =====
+        $imagenUrl = null;
+        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+            $fileName = $this->procesarImagenUnica($_FILES['imagen']);
+            if ($fileName) {
+                $imagenUrl = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $fileName;
+            }
         }
 
-        // Para UNIDAD (código de barras), guardar el código de barras
-        // Para MISC, no hay código de barras
+        // Código de barra solo para UNIDAD
         $codigoBarra = null;
         if ($tipoProducto === "UNIDAD") {
-            $codigoBarra = trim($data["codigo_barra"] ?? "");
-            $codigoBarra = empty($codigoBarra) ? null : $codigoBarra;
+            $cb = trim($data["codigo_barra"] ?? "");
+            $codigoBarra = $cb !== "" ? $cb : null;
         }
 
         $payload = [
@@ -154,43 +167,39 @@ class ProductosController extends Controller
             "codigo_barra"     => $codigoBarra,
             "nombre"           => trim($data["nombre"] ?? ""),
             "tipo_producto"    => $tipoProducto,
-            "categoria_id"     => (int)($data["categoria_id"] ?? 1),
-            "marca_id"         => (int)($data["marca_id"] ?? 1),
+            "categoria_id"     => (int)$data["categoria_id"],
+            "marca_id"         => (int)$data["marca_id"],
             "unidad_medida_id" => 1,
 
-            "precio_venta"     => (float)($data["precio"] ?? 0),
-            "costo_actual"     => (float)($data["costo"] ?? 0),
+            "precio_venta"     => (float)$data["precio"],
+            "costo_actual"     => (float)$data["costo"],
 
             "stock"            => 0,
-            "stock_minimo"     => (int)($data["stock_minimo"] ?? 5),
+            "stock_minimo"     => (int)$data["stock_minimo"],
 
             "descripcion"      => "",
             "activo"           => 1,
             "estado"           => "ACTIVO",
+
+            // ✅ Alineado a su controller/BD: imagen_url
+            "imagen_url"       => $imagenUrl,
         ];
 
         try {
-            $resultado = $this->model->crear($payload);
-
-            if (!$resultado) {
-                error_log("Error al crear producto: modelo retornó false");
-                redirect('/admin/productos/crear?error=Error al crear el producto');
+            $ok = $this->model->crear($payload);
+            if (!$ok) {
+                redirect('/admin/productos/crear?error=No se pudo crear el producto');
                 return;
             }
-
-            if (!empty($imagenesGuardadas)) {
-                error_log("Producto creado con imágenes: " . implode(', ', $imagenesGuardadas));
-            }
-
             redirect('/admin/productos?ok=creado');
         } catch (Exception $e) {
-            error_log("Excepción al crear producto: " . $e->getMessage());
-            redirect('/admin/productos/crear?error=Error interno: ' . $e->getMessage());
+            error_log("Error creando producto: " . $e->getMessage());
+            redirect('/admin/productos/crear?error=Error interno');
         }
     }
 
     // =========================
-    // EDITAR
+    // EDITAR (FORM)
     // =========================
     public function editar($id)
     {
@@ -198,220 +207,173 @@ class ProductosController extends Controller
 
         $producto = $this->model->obtenerPorId((int)$id);
         if (!$producto) {
-            header("Location: /admin/productos?err=noexiste");
-            exit;
+            redirect("/admin/productos?err=noexiste");
+            return;
         }
 
         $categoriasModel = new CategoriasModel();
         $marcasModel     = new MarcasModel();
 
-        $categorias = $categoriasModel->listarActivas();
-        $marcas     = $marcasModel->listarActivas();
-
-        if (isset($_GET['modal']) && $_GET['modal'] == '1') {
-            $this->viewOnly("productos/views/editar", [
-                "errors"     => [],
-                "producto"   => $producto,
-                "categorias" => $categorias,
-                "marcas"     => $marcas,
-            ]);
-            return;
-        }
-
         $this->viewWithLayout("productos/views/editar", [
             "title"      => "Editar Producto",
             "user"       => $_SESSION["user"],
-            "errors"     => [],
             "producto"   => $producto,
-            "categorias" => $categorias,
-            "marcas"     => $marcas,
+            "categorias" => $categoriasModel->listarActivas(),
+            "marcas"     => $marcasModel->listarActivas(),
+            "errors"     => [],
         ]);
     }
 
+    // =========================
+    // ACTUALIZAR (POST)
+    // =========================
     public function actualizar($id)
     {
         RoleMiddleware::requireAdminOrVendedor();
 
         $producto = $this->model->obtenerPorId((int)$id);
         if (!$producto) {
-            header("Location: /admin/productos?err=noexiste");
-            exit;
+            redirect("/admin/productos?err=noexiste");
+            return;
         }
 
         $data   = $this->sanitizar($_POST);
         $errors = $this->validar($data);
 
-        if ($this->model->skuExiste($data["sku"], (int)$id)) {
-            $errors[] = "El SKU ya existe en otro producto.";
-        }
-        if (!empty($data["codigo_barra"]) && $this->model->codigoExiste($data["codigo_barra"], (int)$id)) {
-            $errors[] = "El código de barras/QR ya existe en otro producto.";
-        }
-
-        if ($errors) {
+        if (!empty($errors)) {
             $categoriasModel = new CategoriasModel();
             $marcasModel     = new MarcasModel();
-
-            $categorias = $categoriasModel->listarActivas();
-            $marcas     = $marcasModel->listarActivas();
 
             $this->viewWithLayout("productos/views/editar", [
                 "title"      => "Editar Producto",
                 "user"       => $_SESSION["user"],
                 "errors"     => $errors,
                 "producto"   => array_merge($producto, $data),
-                "categorias" => $categorias,
-                "marcas"     => $marcas,
+                "categorias" => $categoriasModel->listarActivas(),
+                "marcas"     => $marcasModel->listarActivas(),
             ]);
             return;
         }
 
+        // Mantener imagen actual
+        $imagenUrl = $producto['imagen_url'] ?? null;
+
+        // Si suben nueva imagen, reemplazar y borrar anterior
+        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+            $nuevo = $this->procesarImagenUnica($_FILES['imagen']);
+            if ($nuevo) {
+                if (!empty($imagenUrl)) {
+                    $anterior = $this->UPLOAD_BASE_DIR . '/productos/' . basename($imagenUrl);
+                    if (file_exists($anterior)) {
+                        @unlink($anterior);
+                    }
+                }
+                $imagenUrl = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $nuevo;
+            }
+        }
+
         $payload = [
-            "sku"              => $data["sku"],
-            "codigo_barra"     => $data["codigo_barra"],
-            "nombre"           => $data["nombre"],
-            "tipo_producto"    => $data["tipo_producto"] ?? "UNIDAD",
-            "categoria_id"     => $data["categoria_id"],
-            "marca_id"         => $data["marca_id"],
+            // Mantenga coherencia: si su Model actualiza SKU/codigo_barra también, agréguelo aquí
+            "sku"              => $producto["sku"] ?? null,
+            "codigo_barra"     => $producto["codigo_barra"] ?? null,
+            "nombre"           => trim($data["nombre"]),
+            "tipo_producto"    => $producto["tipo_producto"] ?? "UNIDAD",
+            "categoria_id"     => (int)$data["categoria_id"],
+            "marca_id"         => (int)$data["marca_id"],
             "unidad_medida_id" => 1,
-            "costo_actual"     => $data["costo"],
-            "precio_venta"     => $data["precio"],
-            "stock"            => $data["stock"],
-            "stock_minimo"     => $data["stock_minimo"],
+
+            "precio_venta"     => (float)$data["precio"],
+            "costo_actual"     => (float)$data["costo"],
+
+            "stock"            => (int)$data["stock"],
+            "stock_minimo"     => (int)$data["stock_minimo"],
+
             "descripcion"      => $producto["descripcion"] ?? "",
             "estado"           => $producto["estado"] ?? "ACTIVO",
+
+            // ✅ clave
+            "imagen_url"       => $imagenUrl,
         ];
-
-        $this->model->actualizar((int)$id, $payload);
-
-        header("Location: /admin/productos?ok=actualizado");
-        exit;
-    }
-
-    public function desactivar($id)
-    {
-        RoleMiddleware::requireAdminOrVendedor();
-
-        $resultado = $this->model->desactivar((int)$id);
-
-        if ($resultado) {
-            header("Location: " . url('/admin/productos?msg=Producto desactivado correctamente'));
-        } else {
-            header("Location: " . url('/admin/productos?error=No se pudo desactivar el producto'));
-        }
-        exit;
-    }
-
-    public function activar($id)
-    {
-        RoleMiddleware::requireAdminOrVendedor();
-
-        $resultado = $this->model->activar((int)$id);
-
-        if ($resultado) {
-            header("Location: " . url('/admin/productos?msg=Producto activado correctamente'));
-        } else {
-            header("Location: " . url('/admin/productos?error=No se pudo activar el producto'));
-        }
-        exit;
-    }
-
-    private function sanitizar(array $input): array
-    {
-        return [
-            "sku"           => strtoupper(trim($input["sku"] ?? "")),
-            "codigo_barra"  => trim($input["codigo_barra"] ?? ""),
-            "nombre"        => trim($input["nombre"] ?? ""),
-            "categoria_id"  => (int)($input["categoria_id"] ?? 0),
-            "marca_id"      => (int)($input["marca_id"] ?? 0),
-            "costo"         => (float)($input["costo"] ?? 0),
-            "precio"        => (float)($input["precio"] ?? 0),
-            "stock"         => (int)($input["stock"] ?? 0),
-            "stock_minimo"  => (int)($input["stock_minimo"] ?? 0),
-            "requiere_serie" => isset($input["requiere_serie"]) ? 1 : 0,
-        ];
-    }
-
-    private function validar(array $data): array
-    {
-        $errors = [];
-        // El SKU ya no es obligatorio porque se genera automáticamente
-        if (empty($data["nombre"])) $errors[] = "Nombre es obligatorio.";
-        if ($data["precio"] < $data["costo"]) $errors[] = "Precio no puede ser menor al costo.";
-        if ($data["categoria_id"] <= 0) $errors[] = "Categoría es obligatoria.";
-        if ($data["marca_id"] <= 0) $errors[] = "Marca es obligatoria.";
-        if ($data["stock"] < 0) $errors[] = "Stock no puede ser negativo.";
-        if ($data["stock_minimo"] < 0) $errors[] = "Stock mínimo no puede ser negativo.";
-        return $errors;
-    }
-
-    private function procesarImagenes($files)
-    {
-        $imagenesGuardadas = [];
-        $uploadDir = __DIR__ . '/../../../public/uploads/productos/';
-
-        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-        if (empty($files['name'][0])) return $imagenesGuardadas;
-
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        $maxFileSize = 5 * 1024 * 1024;
-
-        $totalFiles = count($files['name']);
-        for ($i = 0; $i < $totalFiles && $i < 3; $i++) {
-            if ($files['error'][$i] !== UPLOAD_ERR_OK) continue;
-            if ($files['size'][$i] > $maxFileSize) continue;
-
-            $extension = strtolower(pathinfo($files['name'][$i], PATHINFO_EXTENSION));
-            if (!in_array($extension, $allowedExtensions)) continue;
-
-            $uniqueName = uniqid('prod_', true) . '_' . time() . '.' . $extension;
-            $destino = $uploadDir . $uniqueName;
-
-            if (move_uploaded_file($files['tmp_name'][$i], $destino)) {
-                $imagenesGuardadas[] = $uniqueName;
-            }
-        }
-
-        return $imagenesGuardadas;
-    }
-
-    public function eliminarPermanente($id)
-    {
-        RoleMiddleware::requireAdminOrVendedor();
 
         try {
-            $this->model->eliminar((int)$id);
-            $_SESSION['ok'] = "Producto eliminado permanentemente.";
+            $this->model->actualizar((int)$id, $payload);
+            redirect("/admin/productos?ok=actualizado");
         } catch (Exception $e) {
-            $_SESSION['err'] = "Error al eliminar: " . $e->getMessage();
+            error_log("Error actualizando producto: " . $e->getMessage());
+            redirect("/admin/productos?error=No se pudo actualizar");
         }
-
-        header("Location: " . url('/admin/productos'));
-        exit;
     }
 
-    /**
-     * Genera un SKU único automáticamente
-     * Formato: Comer_sosa_[número aleatorio de 5 dígitos]
-     */
-    private function generarSKU($tipoProducto = "UNIDAD")
+    // =========================
+    // HELPERS
+    // =========================
+    private function procesarImagenUnica(array $file): ?string
+    {
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        $dir = rtrim($this->UPLOAD_BASE_DIR, '/') . '/productos/';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+
+        // Límite 5MB para ir alineado a su helper de usuarios
+        if (($file['size'] ?? 0) > 5 * 1024 * 1024) {
+            return null;
+        }
+
+        $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
+        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+            return null;
+        }
+
+        $name = uniqid('prod_', true) . '_' . time() . '.' . $ext;
+        $dest = $dir . $name;
+
+        return move_uploaded_file($file['tmp_name'], $dest) ? $name : null;
+    }
+
+    private function sanitizar(array $in): array
+    {
+        return [
+            "nombre"        => trim($in["nombre"] ?? ""),
+            "categoria_id"  => (int)($in["categoria_id"] ?? 0),
+            "marca_id"      => (int)($in["marca_id"] ?? 0),
+            "costo"         => (float)($in["costo"] ?? 0),
+            "precio"        => (float)($in["precio"] ?? 0),
+            "stock"         => (int)($in["stock"] ?? 0),
+            "stock_minimo"  => (int)($in["stock_minimo"] ?? 0),
+            "codigo_barra"  => trim($in["codigo_barra"] ?? ""),
+            "tipo_producto" => strtoupper(trim($in["tipo_producto"] ?? "UNIDAD")),
+        ];
+    }
+
+    private function validar(array $d): array
+    {
+        $e = [];
+        if (empty($d["nombre"])) $e[] = "Nombre es obligatorio.";
+        if ($d["precio"] < $d["costo"]) $e[] = "Precio no puede ser menor al costo.";
+        if ($d["categoria_id"] <= 0) $e[] = "Categoría es obligatoria.";
+        if ($d["marca_id"] <= 0) $e[] = "Marca es obligatoria.";
+        if ($d["stock"] < 0) $e[] = "Stock no puede ser negativo.";
+        if ($d["stock_minimo"] < 0) $e[] = "Stock mínimo no puede ser negativo.";
+        return $e;
+    }
+
+    private function generarSKU(): string
     {
         $intentos = 0;
-        $maxIntentos = 10;
-        
+
         do {
-            $numeroAleatorio = mt_rand(10000, 99999);
-            $skuGenerado = "Comer_sosa_" . $numeroAleatorio;
-            
-            // Verificar si ya existe
-            if (!$this->model->skuExiste($skuGenerado)) {
-                return $skuGenerado;
-            }
-            
+            $sku = "Comer_sosa_" . mt_rand(10000, 99999);
             $intentos++;
-        } while ($intentos < $maxIntentos);
-        
-        // Si después de 10 intentos no se genera uno único, agregar timestamp
-        return "Comer_sosa_" . mt_rand(10000, 99999) . "_" . time();
+            if ($intentos > 20) {
+                // fallback
+                return "Comer_sosa_" . mt_rand(10000, 99999) . "_" . time();
+            }
+        } while ($this->model->skuExiste($sku));
+
+        return $sku;
     }
 }

@@ -16,6 +16,70 @@
     <div class="bg-white rounded-lg shadow-md p-6">
         <form method="POST" action="<?= url('/admin/usuarios/guardar') ?>" class="space-y-6">
 
+            <!-- Fotografía -->
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">📷 Fotografía del Usuario</h3>
+
+                <!-- Preview de la foto -->
+                <div class="flex flex-col items-center mb-4">
+                    <div id="photoPreview" class="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center border-2 border-gray-300 mb-3">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </div>
+                    <p class="text-sm text-gray-600 text-center">Toma una foto o sube una imagen</p>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                    <button type="button" id="takePhotoBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Tomar Foto
+                    </button>
+                    <button type="button" id="uploadPhotoBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Subir Archivo
+                    </button>
+                </div>
+
+                <!-- Input de archivo oculto -->
+                <input type="file" id="photoFileInput" accept="image/*" class="hidden">
+                <input type="hidden" id="photoDataInput" name="foto_base64" value="">
+
+                <!-- Botón para limpiar -->
+                <button type="button" id="clearPhotoBtn" class="w-full bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg transition hidden">
+                    🗑️ Limpiar Foto
+                </button>
+            </div>
+
+            <!-- Modal de cámara -->
+            <div id="cameraModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden flex items-center justify-center">
+                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                    <div class="text-center mb-4">
+                        <h3 class="text-lg font-semibold">📷 Tomar Fotografía</h3>
+                    </div>
+
+                    <div class="mb-4">
+                        <video id="cameraVideo" class="w-full h-64 bg-gray-200 rounded-lg" autoplay></video>
+                        <canvas id="cameraCanvas" class="hidden"></canvas>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="button" id="capturePhotoBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                            📸 Capturar
+                        </button>
+                        <button type="button" id="closeCameraBtn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">
+                            ❌ Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Nombre -->
             <div>
                 <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">
@@ -28,8 +92,7 @@
                     value="<?= htmlspecialchars($old['nombre'] ?? '') ?>"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent <?= isset($errors['nombre']) ? 'border-red-500' : '' ?>"
                     placeholder="Ej: Juan Pérez"
-                    required
-                >
+                    required>
                 <?php if (isset($errors['nombre'])): ?>
                     <p class="text-red-500 text-sm mt-1"><?= htmlspecialchars($errors['nombre']) ?></p>
                 <?php endif; ?>
@@ -47,8 +110,7 @@
                     value="<?= htmlspecialchars($old['email'] ?? '') ?>"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent <?= isset($errors['email']) ? 'border-red-500' : '' ?>"
                     placeholder="usuario@ejemplo.com"
-                    required
-                >
+                    required>
                 <?php if (isset($errors['email'])): ?>
                     <p class="text-red-500 text-sm mt-1"><?= htmlspecialchars($errors['email']) ?></p>
                 <?php endif; ?>
@@ -66,12 +128,11 @@
                         name="password"
                         class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent <?= isset($errors['password']) ? 'border-red-500' : '' ?>"
                         placeholder="Mínimo 6 caracteres"
-                        required
-                    >
+                        required>
                     <button type="button" onclick="togglePassword('password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                     </button>
                 </div>
@@ -93,12 +154,11 @@
                         name="password_confirmacion"
                         class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent <?= isset($errors['password_confirmacion']) ? 'border-red-500' : '' ?>"
                         placeholder="Repite la contraseña"
-                        required
-                    >
+                        required>
                     <button type="button" onclick="togglePassword('password_confirmacion')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                     </button>
                 </div>
@@ -116,8 +176,7 @@
                     id="rol"
                     name="rol"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent <?= isset($errors['rol']) ? 'border-red-500' : '' ?>"
-                    required
-                >
+                    required>
                     <option value="">Selecciona un rol</option>
                     <option value="VENDEDOR" <?= ($old['rol'] ?? '') === 'VENDEDOR' ? 'selected' : '' ?>>Vendedor</option>
                     <option value="ADMIN" <?= ($old['rol'] ?? '') === 'ADMIN' ? 'selected' : '' ?>>Administrador</option>
@@ -139,8 +198,7 @@
                     name="activo"
                     value="1"
                     <?= isset($old['activo']) || !isset($old) ? 'checked' : '' ?>
-                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                >
+                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                 <label for="activo" class="ml-2 text-sm font-medium text-gray-700">
                     Usuario activo
                 </label>
@@ -157,14 +215,12 @@
             <div class="flex gap-3 pt-4">
                 <button
                     type="submit"
-                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition"
-                >
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition">
                     Crear Usuario
                 </button>
                 <a
                     href="<?= url('/admin/usuarios') ?>"
-                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg text-center transition"
-                >
+                    class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg text-center transition">
                     Cancelar
                 </a>
             </div>
@@ -173,9 +229,128 @@
 </div>
 
 <script>
-function togglePassword(fieldId) {
-    const field = document.getElementById(fieldId);
-    const type = field.type === 'password' ? 'text' : 'password';
-    field.type = type;
-}
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        const type = field.type === 'password' ? 'text' : 'password';
+        field.type = type;
+    }
+
+    // Funcionalidad de fotografía
+    document.addEventListener('DOMContentLoaded', function() {
+        const takePhotoBtn = document.getElementById('takePhotoBtn');
+        const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
+        const photoFileInput = document.getElementById('photoFileInput');
+        const clearPhotoBtn = document.getElementById('clearPhotoBtn');
+        const photoPreview = document.getElementById('photoPreview');
+        const photoDataInput = document.getElementById('photoDataInput');
+
+        const cameraModal = document.getElementById('cameraModal');
+        const cameraVideo = document.getElementById('cameraVideo');
+        const cameraCanvas = document.getElementById('cameraCanvas');
+        const capturePhotoBtn = document.getElementById('capturePhotoBtn');
+        const closeCameraBtn = document.getElementById('closeCameraBtn');
+
+        let stream = null;
+
+        // Tomar foto con cámara
+        takePhotoBtn.addEventListener('click', async function() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: {
+                            ideal: 640
+                        },
+                        height: {
+                            ideal: 480
+                        },
+                        facingMode: 'user'
+                    }
+                });
+                cameraVideo.srcObject = stream;
+                cameraModal.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('No se pudo acceder a la cámara. Verifica los permisos.');
+            }
+        });
+
+        // Capturar foto
+        capturePhotoBtn.addEventListener('click', function() {
+            const canvas = cameraCanvas;
+            const video = cameraVideo;
+            const context = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+
+            const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+            setPhotoPreview(dataURL);
+            photoDataInput.value = dataURL;
+
+            closeCameraModal();
+        });
+
+        // Cerrar cámara
+        closeCameraBtn.addEventListener('click', closeCameraModal);
+        cameraModal.addEventListener('click', function(e) {
+            if (e.target === cameraModal) {
+                closeCameraModal();
+            }
+        });
+
+        function closeCameraModal() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            cameraModal.classList.add('hidden');
+        }
+
+        // Subir archivo
+        uploadPhotoBtn.addEventListener('click', function() {
+            photoFileInput.click();
+        });
+
+        photoFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const dataURL = e.target.result;
+                    setPhotoPreview(dataURL);
+                    photoDataInput.value = dataURL;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Limpiar foto
+        clearPhotoBtn.addEventListener('click', function() {
+            clearPhoto();
+        });
+
+        function setPhotoPreview(dataURL) {
+            photoPreview.innerHTML = `<img src="${dataURL}" class="w-full h-full object-cover rounded-full" alt="Foto del usuario">`;
+            clearPhotoBtn.classList.remove('hidden');
+        }
+
+        function clearPhoto() {
+            photoPreview.innerHTML = `
+            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+        `;
+            photoDataInput.value = ''; // Campo vacío pero presente en el formulario
+            photoFileInput.value = '';
+            clearPhotoBtn.classList.add('hidden');
+        }
+
+        // Cerrar cámara cuando se cierre la página
+        window.addEventListener('beforeunload', function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    });
 </script>

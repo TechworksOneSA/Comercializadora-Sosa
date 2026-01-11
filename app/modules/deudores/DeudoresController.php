@@ -225,10 +225,13 @@ class DeudoresController extends Controller
             // Verificar si se convirtió automáticamente a venta
             $deudaActualizada = $this->model->getDeudaById($deudaId);
 
-            if ($deudaActualizada && $deudaActualizada['estado'] === 'CONVERTIDA') {
-                $_SESSION['flash_success'] = "🎉 ¡Pago registrado exitosamente! La deuda se ha convertido automáticamente a VENTA #" .
-                    ($deudaActualizada['venta_generada_id'] ?? 'N/A') .
-                    " porque está completamente saldada.";
+            if ($deudaActualizada && $deudaActualizada['estado'] === 'PAGADA') {
+                $ventaId = $deudaActualizada['venta_generada_id'];
+                $_SESSION['flash_success'] = "🎉 ¡Pago registrado exitosamente! La deuda está completamente PAGADA y se generó la VENTA #{$ventaId}.";
+
+                // Redirigir a ver la venta generada
+                redirect('/admin/ventas/ver?id=' . $ventaId);
+                return;
             } else {
                 $_SESSION['flash_success'] = "✅ Pago de Q" . number_format($monto, 2) . " registrado exitosamente con " . htmlspecialchars($metodoPago);
             }

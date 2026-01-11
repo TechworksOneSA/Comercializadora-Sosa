@@ -39,7 +39,6 @@ class ProductosModel extends Model
         $where  = [];
         $params = [];
 
-        // búsqueda por texto
         if ($q !== "") {
             $where[] = "(p.nombre LIKE :q1 OR p.sku LIKE :q2 OR p.codigo_barra LIKE :q3)";
             $searchTerm = "%{$q}%";
@@ -48,7 +47,6 @@ class ProductosModel extends Model
             $params["q3"] = $searchTerm;
         }
 
-        // filtros
         $categoriaId = (int)($filters["categoria_id"] ?? 0);
         if ($categoriaId > 0) {
             $where[] = "p.categoria_id = :categoria_id";
@@ -74,7 +72,6 @@ class ProductosModel extends Model
             $where[] = "p.stock > 0 AND p.stock <= p.stock_minimo";
         }
 
-        // Tipo: usando requiere_serie como “tipo”
         $tipo = strtoupper(trim($filters["tipo"] ?? "ALL"));
         if ($tipo === "SERIE") {
             $where[] = "p.requiere_serie = 1";
@@ -97,12 +94,11 @@ class ProductosModel extends Model
         $sql .= " ORDER BY p.estado DESC, p.created_at DESC";
 
         $stmt = $this->db->prepare($sql);
-        
-        // Bind parameters individually
+
         foreach ($params as $key => $value) {
             $stmt->bindValue(":" . $key, $value);
         }
-        
+
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -149,18 +145,21 @@ class ProductosModel extends Model
     public function crear(array $data): bool
     {
         try {
+            // ✅ Normalizar imagen: soportar imagen_url (nuevo) e imagen_path (viejo)
+            $imagenUrl = $data["imagen_url"] ?? ($data["imagen_path"] ?? null);
+
             $sql = "INSERT INTO {$this->table}
                 (sku, codigo_barra, nombre, tipo_producto, categoria_id, marca_id, unidad_medida_id,
-                 precio_venta, costo_actual, stock, stock_minimo, descripcion, activo, estado)
+                 precio_venta, costo_actual, stock, stock_minimo, descripcion, imagen_url, activo, estado)
                 VALUES
                 (:sku, :codigo_barra, :nombre, :tipo_producto, :categoria_id, :marca_id, :unidad_medida_id,
-                 :precio_venta, :costo_actual, :stock, :stock_minimo, :descripcion, :activo, :estado)";
+                 :precio_venta, :costo_actual, :stock, :stock_minimo, :descripcion, :imagen_url, :activo, :estado)";
 
             $stmt = $this->db->prepare($sql);
 
             $result = $stmt->execute([
                 ":sku"              => $data["sku"],
-                ":codigo_barra"     => $data["codigo_barra"],
+                ":codigo_barra"     => $data["codigo_barra"] ?? null,
                 ":nombre"           => $data["nombre"],
                 ":tipo_producto"    => $data["tipo_producto"] ?? 'UNIDAD',
                 ":categoria_id"     => $data["categoria_id"],
@@ -170,7 +169,8 @@ class ProductosModel extends Model
                 ":costo_actual"     => $data["costo_actual"],
                 ":stock"            => $data["stock"],
                 ":stock_minimo"     => $data["stock_minimo"],
-                ":descripcion"      => $data["descripcion"],
+                ":descripcion"      => $data["descripcion"] ?? null,
+                ":imagen_url"       => $imagenUrl,
                 ":activo"           => $data["activo"],
                 ":estado"           => $data["estado"],
             ]);
@@ -189,10 +189,14 @@ class ProductosModel extends Model
 
     public function actualizar(int $id, array $data): bool
     {
+        // ✅ Normalizar imagen: soportar imagen_url (nuevo) e imagen_path (viejo)
+        $imagenUrl = $data["imagen_url"] ?? ($data["imagen_path"] ?? null);
+
         $sql = "UPDATE {$this->table}
                 SET sku              = :sku,
                     codigo_barra     = :codigo_barra,
                     nombre           = :nombre,
+                    tipo_producto    = :tipo_producto,
                     categoria_id     = :categoria_id,
                     marca_id         = :marca_id,
                     unidad_medida_id = :unidad_medida_id,
@@ -202,6 +206,7 @@ class ProductosModel extends Model
                     stock_minimo     = :stock_minimo,
                     descripcion      = :descripcion,
                     estado           = :estado,
+                    imagen_url       = :imagen_url,
                     updated_at       = NOW()
                 WHERE id = :id";
 
@@ -209,17 +214,19 @@ class ProductosModel extends Model
 
         return $stmt->execute([
             ':sku'              => $data['sku'],
-            ':codigo_barra'     => $data['codigo_barra'],
+            ':codigo_barra'     => $data['codigo_barra'] ?? null,
             ':nombre'           => $data['nombre'],
+            ':tipo_producto'    => $data['tipo_producto'] ?? 'UNIDAD',
             ':categoria_id'     => $data['categoria_id'],
             ':marca_id'         => $data['marca_id'],
-            ':unidad_medida_id' => $data['unidad_medida_id'],
+            ':unidad_medida_id' => $data['unidad_medida_id'] ?? 1,
             ':precio_venta'     => $data['precio_venta'],
             ':costo_actual'     => $data['costo_actual'],
             ':stock'            => $data['stock'],
             ':stock_minimo'     => $data['stock_minimo'],
-            ':descripcion'      => $data['descripcion'],
-            ':estado'           => $data['estado'],
+            ':descripcion'      => $data['descripcion'] ?? null,
+            ':estado'           => $data['estado'] ?? 'ACTIVO',
+            ':imagen_url'       => $imagenUrl,
             ':id'               => $id,
         ]);
     }
@@ -250,7 +257,7 @@ class ProductosModel extends Model
 
     public function listarActivos(): array
     {
-        $sql = "SELECT id, sku, nombre, tipo_producto, precio_venta, stock
+        $sql = "SELECT id, sku, nombre, tipo_producto, precio_venta, stock, imagen_url
                 FROM productos
                 WHERE estado = 'ACTIVO'
                 ORDER BY nombre ASC";

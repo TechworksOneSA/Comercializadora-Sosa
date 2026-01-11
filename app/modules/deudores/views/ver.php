@@ -6,8 +6,8 @@
         <h1 class="card-title" style="color: white; font-size: 1.75rem; font-weight: 700; margin: 0;">
           🧾 Deuda #<?= $deuda['id'] ?>
           <?php
-          $estadoColor = ($deuda['estado'] ?? 'ACTIVA') === 'CONVERTIDA' ? '#ffc107' : (($deuda['saldo'] ?? 0) <= 0 ? '#28a745' : '#dc3545');
-          $estadoTexto = ($deuda['estado'] ?? 'ACTIVA') === 'CONVERTIDA' ? '🔄 CONVERTIDA' : (($deuda['saldo'] ?? 0) <= 0 ? '✅ PAGADA' : '⏳ ACTIVA');
+          $estadoColor = ($deuda['estado'] ?? 'ACTIVA') === 'PAGADA' ? '#28a745' : (($deuda['estado'] ?? 'ACTIVA') === 'CONVERTIDA' ? '#ffc107' : (($deuda['saldo'] ?? 0) <= 0 ? '#28a745' : '#dc3545'));
+          $estadoTexto = ($deuda['estado'] ?? 'ACTIVA') === 'PAGADA' ? '✅ PAGADA' : (($deuda['estado'] ?? 'ACTIVA') === 'CONVERTIDA' ? '🔄 CONVERTIDA' : (($deuda['saldo'] ?? 0) <= 0 ? '✅ PAGADA' : '⏳ ACTIVA'));
           ?>
           <span style="background: <?= $estadoColor ?>; color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.85rem; margin-left: 0.75rem;">
             <?= $estadoTexto ?>
@@ -63,18 +63,32 @@
     </div>
 
     <!-- BOTÓN DESTACADO ABONO -->
-    <?php if (($deuda['saldo'] ?? 0) > 0 && ($deuda['estado'] ?? 'ACTIVA') !== 'CONVERTIDA'): ?>
+    <?php if (($deuda['saldo'] ?? 0) > 0 && !in_array(($deuda['estado'] ?? 'ACTIVA'), ['CONVERTIDA', 'PAGADA'])): ?>
       <div style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div style="color: white;">
             <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 700;">💰 Realizar Abono</h3>
-            <p style="margin: 0; opacity: 0.9;">Registra un pago para reducir el saldo de esta deuda</p>
+            <p style="margin: 0; opacity: 0.9; color: #ffffff !important;">Registra un pago para reducir el saldo de esta deuda</p>
           </div>
           <button
             onclick="document.getElementById('modalAbono').style.display='flex'"
             style="padding: 1rem 2rem; background: white; color: #28a745; border: none; border-radius: 0.5rem; font-weight: 700; cursor: pointer; font-size: 1.1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
             Registrar Pago
           </button>
+        </div>
+      </div>
+    <?php elseif (($deuda['estado'] ?? 'ACTIVA') === 'PAGADA'): ?>
+      <div style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="color: white;">
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 700;">✅ Deuda Pagada</h3>
+            <p style="margin: 0; opacity: 0.9;">Esta deuda ha sido completamente pagada y se generó la venta #<?= $deuda['venta_generada_id'] ?? 'N/A' ?></p>
+          </div>
+          <a
+            href="<?= url('/admin/ventas/ver?id=' . ($deuda['venta_generada_id'] ?? 0)) ?>"
+            style="padding: 1rem 2rem; background: white; color: #28a745; border: none; border-radius: 0.5rem; font-weight: 700; text-decoration: none; font-size: 1.1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+            Ver Venta
+          </a>
         </div>
       </div>
     <?php elseif (($deuda['estado'] ?? 'ACTIVA') === 'CONVERTIDA'): ?>

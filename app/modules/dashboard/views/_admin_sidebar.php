@@ -6,13 +6,14 @@
     </div>
   </div>
 
-<?php
-$currentPath = $_SERVER['REQUEST_URI'] ?? '';
-function isActive($path) {
-  global $currentPath;
-  return strpos($currentPath, $path) !== false ? 'active' : '';
-}
-?>
+  <?php
+  $currentPath = $_SERVER['REQUEST_URI'] ?? '';
+  function isActive($path)
+  {
+    global $currentPath;
+    return strpos($currentPath, $path) !== false ? 'active' : '';
+  }
+  ?>
 
   <nav class="admin-nav">
     <div class="admin-nav-section">Panel Ejecutivo</div>
@@ -25,10 +26,6 @@ function isActive($path) {
     <a href="<?= url('/admin/productos') ?>" class="admin-nav-item <?= isActive('/admin/productos') ?>">
       <span class="admin-nav-icon">📦</span>
       Inventario
-    </a>
-    <a href="<?= url('/admin/inventario-avanzado') ?>" class="admin-nav-item <?= isActive('/admin/inventario-avanzado') ?>">
-      <span class="admin-nav-icon">📥</span>
-      Inventario Avanzado
     </a>
     <a href="<?= url('/admin/compras') ?>" class="admin-nav-item <?= isActive('/admin/compras') ?>">
       <span class="admin-nav-icon">🛒</span>
@@ -69,6 +66,10 @@ function isActive($path) {
     <a href="<?= url('/admin/pos') ?>" class="admin-nav-item <?= isActive('/admin/pos') ?>">
       <span class="admin-nav-icon">💰</span>
       Punto de Venta
+    </a>
+    <a href="<?= url('/admin/caja') ?>" class="admin-nav-item <?= isActive('/admin/caja') ?>">
+      <span class="admin-nav-icon">🏦</span>
+      Gestión de Caja
     </a>
 
     <div class="admin-nav-section">Reportes</div>

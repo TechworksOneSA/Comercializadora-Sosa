@@ -618,7 +618,7 @@ INSERT INTO `unidades_medida` (`id`, `nombre`, `abreviatura`) VALUES
 --
 
 CREATE TABLE `usuarios` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(120) NOT NULL,
   `email` varchar(160) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
@@ -637,6 +637,8 @@ INSERT INTO `usuarios` (`id`, `nombre`, `email`, `password_hash`, `rol`, `activo
 (2, 'Vendedor 1', 'vendedor@comercializadora.com', '$2y$10$qff3kfjQqhVQFDL2BiocLu5mt.y8NfuL/UjBKJvMiQJ/ahFjPMhtG', 'VENDEDOR', 0, '2025-11-24 19:49:05', '2026-01-07 00:55:53'),
 (4, 'preuba', 'nestor123@gmail.com', '$2y$10$k4B9InSI7amXrziUp4p60eObXbhxgzGaj9a/FuWocHrL5PTPtCmlG', 'VENDEDOR', 1, '2025-12-19 03:43:08', '2025-12-19 04:12:24'),
 (5, 'Jose perez', 'admin@demo.com', '$2y$10$PdV7G9yejGOywIbsK9OoHu8CEEsee3BwOVlFw3wGEDCpdwm2sJ7Tm', 'ADMIN', 1, '2025-12-19 04:00:06', '2026-01-06 19:35:37');
+-- Eliminar cualquier usuario con id=0 (si existe)
+DELETE FROM `usuarios` WHERE `id` = 0;
 
 -- --------------------------------------------------------
 

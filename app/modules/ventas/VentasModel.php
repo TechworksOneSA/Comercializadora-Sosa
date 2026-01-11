@@ -18,74 +18,63 @@ class VentasModel extends Model
     private function execChecked(PDOStatement $stmt, array $params, string $tag): void
     {
         $sql = $stmt->queryString;
+
+        // Extraer placeholders del SQL
+        preg_match_all('/:([a-zA-Z0-9_]+)/', $sql, $matches);
+        $sqlPlaceholders = $matches[0]; // Incluye los :
+        $sqlParamNames = $matches[1];   // Solo nombres sin :
+
+        // Obtener keys de los parámetros
+        $paramKeys = array_keys($params);
+
         error_log("🔍 [execChecked] TAG: {$tag}");
         error_log("🔍 [execChecked] SQL: {$sql}");
-        error_log("🔍 [execChecked] Input Params: " . print_r($params, true));
+        error_log("🔍 [execChecked] SQL Placeholders: [" . implode(', ', $sqlPlaceholders) . "]");
+        error_log("🔍 [execChecked] Param Keys: [" . implode(', ', $paramKeys) . "]");
+        error_log("🔍 [execChecked] Params Values: " . json_encode($params, JSON_PRETTY_PRINT));
 
-        // 🔧 NORMALIZAR PARÁMETROS PRIMERO ([:param] -> :param)
-        error_log("🔧 ORIGINAL PARAMS RECEIVED: " . json_encode($params));
+        // Verificar coincidencia de parámetros
+        $missingParams = [];
+        $extraParams = [];
 
-        $normalizedParams = [];
-        foreach ($params as $key => $value) {
-            $originalKey = (string)$key;
-            error_log("🔧 DEBUG: Processing key = '$originalKey' (raw key inspect: " . var_export($key, true) . ")");
-
-            // Si el key tiene formato [:param], convertir a :param
-            if (str_starts_with($originalKey, '[:') && str_ends_with($originalKey, ']')) {
-                // Extraer el nombre del parámetro: [:param] -> param
-                $paramName = substr($originalKey, 2, -1);
-                $finalKey = ':' . $paramName;
-                $normalizedParams[$finalKey] = $value;
-                error_log("🔧 NORMALIZED: '$originalKey' -> '$finalKey'");
-            } else {
-                $normalizedParams[$originalKey] = $value;
-                error_log("🔧 UNCHANGED: '$originalKey'");
+        foreach ($sqlPlaceholders as $placeholder) {
+            if (!array_key_exists($placeholder, $params)) {
+                $missingParams[] = $placeholder;
             }
         }
 
-        error_log("🔧 BEFORE NORMALIZATION: " . json_encode(array_keys($params)));
-        error_log("🔧 AFTER NORMALIZATION: " . json_encode(array_keys($normalizedParams)));
+        foreach ($paramKeys as $key) {
+            if (!in_array($key, $sqlPlaceholders)) {
+                $extraParams[] = $key;
+            }
+        }
 
-        // Usar parámetros normalizados para todo lo que sigue
-        $params = $normalizedParams;
-        error_log("🔧 [execChecked] After Normalization: " . print_r($params, true));
+        if (!empty($missingParams)) {
+            error_log("❌ [execChecked] MISSING PARAMS: [" . implode(', ', $missingParams) . "]");
+        }
 
-        // Extraer placeholders :nombre
-        preg_match_all('/:([a-zA-Z0-9_]+)/', $sql, $m);
-        $placeholders = array_unique($m[1]);
+        if (!empty($extraParams)) {
+            error_log("⚠️ [execChecked] EXTRA PARAMS: [" . implode(', ', $extraParams) . "]");
+        }
 
-        // Normalizar keys de params (quitar corchetes, dejar solo el nombre)
-        $paramKeys = array_map(function ($k) {
-            $keyStr = (string)$k;
-            // Quitar corchetes [ ] y dos puntos :
-            $keyStr = str_replace(['[', ']', ':'], '', $keyStr);
-            return $keyStr;
-        }, array_keys($params));
-
-        error_log("🔍 [execChecked] Placeholders: " . implode(', ', $placeholders));
-        error_log("🔍 [execChecked] ParamKeys: " . implode(', ', $paramKeys));
-
-        $missing = array_values(array_diff($placeholders, $paramKeys));
-        $extra   = array_values(array_diff($paramKeys, $placeholders));
-
-        if (!empty($missing) || !empty($extra)) {
-            error_log("=== HY093 PRECHECK [$tag] ===");
-            error_log("SQL: " . $sql);
-            error_log("Placeholders: " . implode(', ', $placeholders));
-            error_log("Params: " . implode(', ', $paramKeys));
-            if (!empty($missing)) error_log("MISSING: " . implode(', ', $missing));
-            if (!empty($extra))   error_log("EXTRA: " . implode(', ', $extra));
-            throw new Exception("HY093 precheck falló en [$tag]. Revise log.");
+        if (!empty($missingParams)) {
+            throw new Exception("Missing required parameters for SQL: " . implode(', ', $missingParams) . " in query: {$tag}");
         }
 
         try {
-            $stmt->execute($normalizedParams);
+            $result = $stmt->execute($params);
+            if (!$result) {
+                $errorInfo = $stmt->errorInfo();
+                error_log("🚨 [execChecked] SQL EXECUTE FAILED: " . implode(", ", $errorInfo));
+                throw new Exception("SQL Execute failed: " . implode(", ", $errorInfo));
+            }
             error_log("✅ [execChecked] SUCCESS: {$tag}");
         } catch (PDOException $e) {
-            error_log("❌ [execChecked] PDO FAIL [$tag] ===");
-            error_log("SQL: " . $sql);
-            error_log("Final Params Used: " . print_r($normalizedParams, true));
-            error_log("PDO Error: " . $e->getMessage());
+            error_log("🚨 [execChecked] PDO EXCEPTION: " . $e->getMessage());
+            error_log("🚨 [execChecked] SQL: {$sql}");
+            error_log("🚨 [execChecked] PARAMS: " . json_encode($params, JSON_PRETTY_PRINT));
+            error_log("🚨 [execChecked] ERROR CODE: " . $e->getCode());
+            error_log("🚨 [execChecked] ERROR FILE: " . $e->getFile() . ":" . $e->getLine());
             throw $e;
         }
     }
@@ -303,7 +292,7 @@ class VentasModel extends Model
             $sqlStock = "UPDATE productos
                          SET stock = stock - :cantidad
                          WHERE id = :producto_id
-                           AND stock >= :cantidad";
+                           AND stock >= :cantidad_check";
             $stmtStock = $this->db->prepare($sqlStock);
 
             $sqlMov = "INSERT INTO movimientos_inventario
@@ -328,8 +317,9 @@ class VentasModel extends Model
 
                 // 4.2 stock
                 $this->execChecked($stmtStock, [
-                    ':cantidad'    => $qty,
-                    ':producto_id' => $pid,
+                    ':cantidad'       => $qty,
+                    ':producto_id'    => $pid,
+                    ':cantidad_check' => $qty,
                 ], "STOCK_UPDATE_PID_{$pid}");
 
                 if ($stmtStock->rowCount() === 0) {
@@ -462,8 +452,14 @@ class VentasModel extends Model
             $sqlStock = "UPDATE productos
                          SET stock = stock - :cantidad
                          WHERE id = :producto_id
-                           AND stock >= :cantidad";
+                           AND stock >= :cantidad_check";
             $stmtStock = $this->db->prepare($sqlStock);
+
+            // 2.1 Statement para movimientos de inventario
+            $sqlMov = "INSERT INTO movimientos_inventario
+                       (producto_id, tipo, cantidad, costo_unitario, origen, origen_id, motivo, usuario_id, created_at)
+                       VALUES (:producto_id, 'SALIDA', :cantidad, :costo_unitario, 'VENTA', :origen_id, :motivo, :usuario_id, NOW())";
+            $stmtMov = $this->db->prepare($sqlMov);
 
             // 3. Procesar cada detalle
             foreach ($detalles as $i => $detalle) {
@@ -487,14 +483,32 @@ class VentasModel extends Model
 
                 // 3.2 Actualizar stock
                 $this->execChecked($stmtStock, [
-                    ':cantidad' => $cantidad,
-                    ':producto_id' => $productoId
+                    ':cantidad'       => $cantidad,
+                    ':producto_id'    => $productoId,
+                    ':cantidad_check' => $cantidad
                 ], "STOCK_UPDATE_MANUAL_PID_{$productoId}");
 
                 // Verificar que se actualizó el stock
                 if ($stmtStock->rowCount() == 0) {
                     throw new Exception("Stock insuficiente para producto ID: {$productoId}");
                 }
+
+                // 3.3 Registrar movimiento de inventario (SALIDA por venta)
+                // Obtener costo del producto para el registro correcto
+                $sqlCosto = "SELECT costo FROM productos WHERE id = :producto_id";
+                $stmtCosto = $this->db->prepare($sqlCosto);
+                $stmtCosto->execute([':producto_id' => $productoId]);
+                $productoCosto = $stmtCosto->fetchColumn();
+                $costoUnitario = $productoCosto !== false ? (float)$productoCosto : $precioUnitario;
+
+                $this->execChecked($stmtMov, [
+                    ':producto_id' => $productoId,
+                    ':cantidad' => $cantidad,
+                    ':costo_unitario' => $costoUnitario,
+                    ':origen_id' => $ventaId,
+                    ':motivo' => "Venta manual #{$ventaId}",
+                    ':usuario_id' => $usuarioId
+                ], "MOV_INVENTARIO_MANUAL_PID_{$productoId}");
             }
 
             // 4. Actualizar totales del cliente (opcional)
@@ -514,6 +528,108 @@ class VentasModel extends Model
         } catch (Exception $e) {
             $this->db->rollBack();
             error_log("❌ [VentasModel] Error al crear venta manual: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Crear venta desde deuda saldada
+     */
+    public function crearVentaDesdeDeuda(array $ventaData): int
+    {
+        error_log("🔍 [VentasModel] Iniciando creación de venta desde deuda saldada");
+        try {
+            $this->db->beginTransaction();
+
+            $clienteId = (int)$ventaData['cliente_id'];
+            $usuarioId = (int)$ventaData['usuario_id'];
+            $total = (float)$ventaData['total'];
+            $metodoPago = $ventaData['metodo_pago'] ?? 'Efectivo';
+            $observaciones = $ventaData['observaciones'] ?? '';
+            $deudaOrigenId = (int)($ventaData['deuda_origen_id'] ?? 0);
+            $detalles = $ventaData['detalles'] ?? [];
+
+            if ($clienteId <= 0) throw new Exception("Cliente ID inválido");
+            if ($usuarioId <= 0) throw new Exception("Usuario ID inválido");
+            if (empty($detalles)) throw new Exception("No hay productos en la venta");
+
+            // Detectar columnas opcionales
+            $colMetodoPago = $this->hasColumn($this->tableVentas, 'metodo_pago');
+            $colObservaciones = $this->hasColumn($this->tableVentas, 'observaciones');
+            $colDeudaOrigen = $this->hasColumn($this->tableVentas, 'deuda_origen_id');
+
+            // 1. Insert venta
+            $cols = ["cliente_id", "usuario_id", "fecha_venta", "estado", "subtotal", "total", "total_pagado"];
+            $vals = [":cliente_id", ":usuario_id", "NOW()", "'CONFIRMADA'", ":subtotal", ":total", ":total_pagado"];
+            $paramsVenta = [
+                ':cliente_id' => $clienteId,
+                ':usuario_id' => $usuarioId,
+                ':subtotal' => $total,
+                ':total' => $total,
+                ':total_pagado' => $total, // Ya está pagada al ser de deuda saldada
+            ];
+
+            if ($colMetodoPago) {
+                $cols[] = "metodo_pago";
+                $vals[] = ":metodo_pago";
+                $paramsVenta[':metodo_pago'] = $metodoPago;
+            }
+
+            if ($colObservaciones) {
+                $cols[] = "observaciones";
+                $vals[] = ":observaciones";
+                $paramsVenta[':observaciones'] = $observaciones;
+            }
+
+            if ($colDeudaOrigen) {
+                $cols[] = "deuda_origen_id";
+                $vals[] = ":deuda_origen_id";
+                $paramsVenta[':deuda_origen_id'] = $deudaOrigenId;
+            }
+
+            $sqlVenta = "INSERT INTO {$this->tableVentas} (" . implode(", ", $cols) . ")
+                         VALUES (" . implode(", ", $vals) . ")";
+            $stmtVenta = $this->db->prepare($sqlVenta);
+            $this->execChecked($stmtVenta, $paramsVenta, "VENTA_DESDE_DEUDA_INSERT");
+
+            $ventaId = (int)$this->db->lastInsertId();
+            if ($ventaId <= 0) {
+                throw new Exception("Error al obtener ID de la nueva venta desde deuda");
+            }
+
+            // 2. Insert detalles (sin descontar stock ya que fue descontado al crear la deuda)
+            $sqlDetVenta = "INSERT INTO {$this->tableDetalle}
+                            (venta_id, producto_id, cantidad, precio_unitario, subtotal)
+                            VALUES (:venta_id, :producto_id, :cantidad, :precio_unitario, :subtotal)";
+            $stmtDetVenta = $this->db->prepare($sqlDetVenta);
+
+            foreach ($detalles as $d) {
+                $this->execChecked($stmtDetVenta, [
+                    ':venta_id' => $ventaId,
+                    ':producto_id' => (int)$d['producto_id'],
+                    ':cantidad' => (float)$d['cantidad'],
+                    ':precio_unitario' => (float)$d['precio_unitario'],
+                    ':subtotal' => (float)$d['subtotal'],
+                ], "VENTA_DETALLE_DESDE_DEUDA_PID_{$d['producto_id']}");
+            }
+
+            // 3. Actualizar total gastado del cliente
+            $sqlCli = "UPDATE clientes
+                       SET total_gastado = total_gastado + :total
+                       WHERE id = :cliente_id";
+            $stmtCli = $this->db->prepare($sqlCli);
+            $this->execChecked($stmtCli, [
+                ':total' => $total,
+                ':cliente_id' => $clienteId,
+            ], "CLIENTE_TOTAL_GASTADO_DESDE_DEUDA_UPD");
+
+            $this->db->commit();
+            error_log("✅ [VentasModel] Venta desde deuda #{$ventaId} creada exitosamente");
+
+            return $ventaId;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("❌ [VentasModel] Error al crear venta desde deuda: " . $e->getMessage());
             throw $e;
         }
     }

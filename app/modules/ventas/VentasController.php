@@ -82,10 +82,6 @@ class VentasController extends Controller
             $errors[] = "Debe seleccionar un cliente";
         }
 
-        if (empty($data['metodo_pago'])) {
-            $errors[] = "Debe seleccionar un método de pago";
-        }
-
         $productosIds = $data['producto_id'] ?? [];
         $cantidades = $data['cantidad'] ?? [];
 
@@ -154,7 +150,7 @@ class VentasController extends Controller
             $ventaData = [
                 'cliente_id' => (int)$data['cliente_id'],
                 'usuario_id' => (int)$_SESSION['user']['id'], // TODO: Verificar que exista sesión
-                'metodo_pago' => $data['metodo_pago'],
+                'metodo_pago' => $data['metodo_pago'] ?? 'PENDIENTE', // Valor por defecto
                 'subtotal' => $subtotal,
                 'total' => $subtotal,
                 'detalles' => $detalles,
@@ -179,9 +175,14 @@ class VentasController extends Controller
 
         $id = (int)($_GET['id'] ?? 0);
 
+        error_log("🔍 [VentasController@ver] ID solicitado: {$id}");
+        error_log("🔍 [VentasController@ver] GET params: " . json_encode($_GET));
+        error_log("🔍 [VentasController@ver] REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
+
         $venta = $this->model->getVentaById($id);
 
         if (!$venta) {
+            error_log("❌ [VentasController@ver] Venta no encontrada para ID: {$id}");
             $_SESSION['flash_error'] = "Venta no encontrada";
             redirect('/admin/ventas');
             return;
@@ -239,19 +240,28 @@ class VentasController extends Controller
         $data = $_POST;
         $cotizacionId = (int)($data['cotizacion_id'] ?? 0);
 
+        error_log("🔍 [VentasController] Iniciando conversión cotización ID: {$cotizacionId}");
+        error_log("🔍 [VentasController] POST data: " . json_encode($_POST, JSON_PRETTY_PRINT));
+
         if ($cotizacionId <= 0) {
+            error_log("❌ [VentasController] ID de cotización inválido: {$cotizacionId}");
             $_SESSION['flash_error'] = "ID de cotización inválido";
             redirect('/admin/cotizaciones');
             return;
         }
 
         try {
-            $usuarioId = (int)$_SESSION['user']['id']; // TODO: Verificar sesión
+            $usuarioId = (int)$_SESSION['user']['id'];
+            error_log("🔍 [VentasController] Usuario ID: {$usuarioId}");
+
             $ventaId = $this->model->convertirCotizacion($cotizacionId, $usuarioId);
 
+            error_log("✅ [VentasController] Conversión exitosa. Venta ID: {$ventaId}");
             $_SESSION['flash_success'] = "Cotización #{$cotizacionId} convertida a Venta #{$ventaId} exitosamente";
             redirect('/admin/ventas/ver?id=' . $ventaId);
         } catch (Exception $e) {
+            error_log("🚨 [VentasController] Error en conversión: " . $e->getMessage());
+            error_log("🚨 [VentasController] Error trace: " . $e->getTraceAsString());
             $_SESSION['flash_error'] = "Error al convertir cotización: " . $e->getMessage();
             redirect('/admin/cotizaciones');
         }

@@ -82,9 +82,9 @@ class DeudoresModel extends Model
                     d.id, d.cliente_id, d.usuario_id, d.fecha, d.total,
                     d.descripcion, d.created_at, d.updated_at,
                     c.nombre, c.apellido, c.telefono" .
-                ($estadoExiste ? ", d.estado" : "") .
-                ($anuladaAtExiste ? ", d.anulada_at" : "") .
-                ($anuladaPorExiste ? ", d.anulada_por" : "") . "
+            ($estadoExiste ? ", d.estado" : "") .
+            ($anuladaAtExiste ? ", d.anulada_at" : "") .
+            ($anuladaPorExiste ? ", d.anulada_por" : "") . "
                 ORDER BY d.created_at DESC";
 
         $stmt = $this->db->prepare($sql);
@@ -144,6 +144,12 @@ class DeudoresModel extends Model
                                AND stock >= :cant_check";
                 $stmtStock = $this->db->prepare($sqlStock);
 
+                // Statement para movimientos de inventario (SALIDA por deuda)
+                $sqlMov = "INSERT INTO movimientos_inventario
+                           (producto_id, tipo, cantidad, costo_unitario, origen, origen_id, motivo, usuario_id, created_at)
+                           VALUES (:producto_id, 'SALIDA', :cantidad, :costo_unitario, 'DEUDA', :origen_id, :motivo, :usuario_id, NOW())";
+                $stmtMov = $this->db->prepare($sqlMov);
+
                 foreach ($data['detalles'] as $detalle) {
                     $productoId = (int)($detalle['producto_id'] ?? 0);
                     $cantidad   = (int)($detalle['cantidad'] ?? 0);
@@ -173,12 +179,28 @@ class DeudoresModel extends Model
                     if ($stmtStock->rowCount() === 0) {
                         throw new Exception("Stock insuficiente para producto ID {$productoId}");
                     }
+
+                    // Registrar movimiento de inventario (SALIDA por deuda)
+                    // Obtener costo del producto para el registro correcto
+                    $sqlCosto = "SELECT costo FROM productos WHERE id = :producto_id";
+                    $stmtCosto = $this->db->prepare($sqlCosto);
+                    $stmtCosto->execute([':producto_id' => $productoId]);
+                    $productoCosto = $stmtCosto->fetchColumn();
+                    $costoUnitario = $productoCosto !== false ? (float)$productoCosto : $precioU;
+
+                    $stmtMov->execute([
+                        ':producto_id' => $productoId,
+                        ':cantidad' => $cantidad,
+                        ':costo_unitario' => $costoUnitario,
+                        ':origen_id' => $deudaId,
+                        ':motivo' => "Deuda creada #{$deudaId}",
+                        ':usuario_id' => (int)$data['usuario_id']
+                    ]);
                 }
             }
 
             $this->db->commit();
             return $deudaId;
-
         } catch (Exception $e) {
             if ($this->db->inTransaction()) $this->db->rollBack();
             error_log("Error crearDeuda: " . $e->getMessage());
@@ -298,7 +320,6 @@ class DeudoresModel extends Model
 
             $this->db->commit();
             return true;
-
         } catch (Exception $e) {
             if ($this->db->inTransaction()) $this->db->rollBack();
             error_log('Error registrarPago: ' . $e->getMessage());
@@ -333,7 +354,7 @@ class DeudoresModel extends Model
             'total'          => $deuda['total'],
             'metodo_pago'    => 'Efectivo',
             'observaciones'  => 'Venta generada automáticamente de Deuda #' . $deudaId,
-            'deuda_origen_id'=> $deudaId,
+            'deuda_origen_id' => $deudaId,
             'detalles'       => array_map(function ($item) {
                 return [
                     'producto_id'     => $item['producto_id'],
@@ -359,7 +380,7 @@ class DeudoresModel extends Model
 
             if ($estadoExiste && $ventaIdExiste) {
                 $sql = "UPDATE {$this->table}
-                        SET estado = 'CONVERTIDA',
+                        SET estado = 'PAGADA',
                             venta_generada_id = :venta_id
                         WHERE id = :deuda_id";
                 $stmt = $this->db->prepare($sql);
@@ -370,7 +391,6 @@ class DeudoresModel extends Model
             }
 
             return true;
-
         } catch (Exception $e) {
             error_log('Error marcando deuda como convertida: ' . $e->getMessage());
             return true;
@@ -382,9 +402,11 @@ class DeudoresModel extends Model
     // =========================================================
     private function ensureTables(): void
     {
-        if ($this->tableExists($this->table) &&
+        if (
+            $this->tableExists($this->table) &&
             $this->tableExists($this->tableDetalle) &&
-            $this->tableExists($this->tablePagos)) {
+            $this->tableExists($this->tablePagos)
+        ) {
             return;
         }
 

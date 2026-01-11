@@ -124,7 +124,6 @@ if (!empty($busqueda)) {
             <th style="padding: 1rem; text-align: center; font-weight: 600; color: #495057;">Estado</th>
             <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Total</th>
             <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Pagado</th>
-            <th style="padding: 1rem; text-align: right; font-weight: 600; color: #495057;">Saldo</th>
             <th style="padding: 1rem; text-align: center; font-weight: 600; color: #495057;">Acciones</th>
           </tr>
         </thead>
@@ -177,9 +176,6 @@ if (!empty($busqueda)) {
                 <td style="padding: 1rem; text-align: right; font-weight: 600; color: #0a3d91;">
                   Q <?= number_format($pagado, 2) ?>
                 </td>
-                <td style="padding: 1rem; text-align: right; font-weight: 600; color: <?= $saldo > 0 ? '#dc3545' : '#28a745' ?>;">
-                  Q <?= number_format($saldo, 2) ?>
-                </td>
                 <td style="padding: 1rem; text-align: center;">
                   <div style="display: flex; gap: 0.5rem; justify-content: center;">
                     <a href="<?= url('/admin/ventas/ver?id=' . $venta['id']) ?>" style="padding: 0.5rem 0.75rem; background: #0a3d91; color: white; text-decoration: none; border-radius: 0.375rem; font-size: 0.85rem; font-weight: 600;" title="Ver Detalle">
@@ -199,7 +195,7 @@ if (!empty($busqueda)) {
             <?php endforeach; ?>
           <?php else: ?>
             <tr>
-              <td colspan="8" style="padding: 3rem; text-align: center; color: #6c757d;">
+              <td colspan="7" style="padding: 3rem; text-align: center; color: #6c757d;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">💰</div>
                 <?php if (!empty($busqueda)): ?>
                   <p style="font-size: 1.1rem; margin: 0;">No se encontraron ventas que coincidan con "<?= htmlspecialchars($busqueda) ?>"</p>
@@ -538,7 +534,6 @@ if (!empty($busqueda)) {
           estado: celdas[3].textContent.trim(),
           total: celdas[4].textContent.trim(),
           pagado: celdas[5].textContent.trim(),
-          saldo: celdas[6].textContent.trim(),
           filaHTML: fila.outerHTML
         };
         todasLasVentas.push(venta);

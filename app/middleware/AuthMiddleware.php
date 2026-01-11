@@ -1,15 +1,17 @@
 <?php
-class AuthMiddleware {
+class AuthMiddleware
+{
 
   /**
    * Tiempo máximo de inactividad en segundos (5 segundos para prueba)
    */
   private const TIMEOUT_INACTIVIDAD = 900; // 15 minutos
 
-  public static function requireLogin() {
+  public static function requireLogin()
+  {
     if (empty($_SESSION["user"])) {
-      header("Location: /login");
-      exit;
+      redirect("/login");
+      return;
     }
 
     // Verificar timeout por inactividad
@@ -22,7 +24,8 @@ class AuthMiddleware {
   /**
    * Verificar si la sesión ha expirado por inactividad
    */
-  private static function verificarTimeout() {
+  private static function verificarTimeout()
+  {
     if (isset($_SESSION['ultima_actividad'])) {
       $tiempoInactivo = time() - $_SESSION['ultima_actividad'];
 
@@ -32,8 +35,8 @@ class AuthMiddleware {
         session_destroy();
         session_start();
         $_SESSION['mensaje_timeout'] = 'Tu sesión ha expirado por inactividad. Por favor, inicia sesión nuevamente.';
-        header("Location: /login");
-        exit;
+        redirect("/login");
+        return;
       }
     }
   }
@@ -41,7 +44,8 @@ class AuthMiddleware {
   /**
    * Actualizar el timestamp de última actividad
    */
-  private static function actualizarUltimaActividad() {
+  private static function actualizarUltimaActividad()
+  {
     $_SESSION['ultima_actividad'] = time();
   }
 }

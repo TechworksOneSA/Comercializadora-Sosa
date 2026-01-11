@@ -53,7 +53,7 @@ class DashboardVendedorModel extends Model
     }
 
     /**
-     * Obtener efectivo en caja
+     * Obtener efectivo en caja (acumulativo histórico)
      */
     public function obtenerEfectivoEnCaja(): float
     {
@@ -63,8 +63,7 @@ class DashboardVendedorModel extends Model
                         WHEN tipo IN ('gasto', 'retiro') THEN -monto
                         ELSE 0
                     END), 0) as efectivo_caja
-                FROM movimientos_caja
-                WHERE DATE(fecha) = CURDATE()";
+                FROM movimientos_caja";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute();

@@ -15,206 +15,206 @@ $marcasLista = $marcasModel->listarActivas();
 <link rel="stylesheet" href="<?= url('/assets/css/crear-productos.css') ?>">
 
 <div class="inventario-crear-container <?= $isModal ? 'bm-embed' : '' ?>">
-<div class="inventario-header">
-    <div>
-        <h1>Nuevo Producto - Inventario</h1>
-        <p>Complete el formulario para registrar un nuevo producto en el sistema</p>
+    <div class="inventario-header">
+        <div>
+            <h1>Nuevo Producto - Inventario</h1>
+            <p>Complete el formulario para registrar un nuevo producto en el sistema</p>
+        </div>
+
+        <?php if (!$isModal): ?>
+            <a href="<?= url('/admin/productos') ?>" class="btn-volver">Volver al Inventario</a>
+        <?php else: ?>
+            <button type="button" class="btn-volver" onclick="window.parent?.BMModal?.close?.()">Cerrar</button>
+        <?php endif; ?>
     </div>
 
-    <?php if (!$isModal): ?>
-        <a href="<?= url('/admin/productos') ?>" class="btn-volver">Volver al Inventario</a>
-    <?php else: ?>
-        <button type="button" class="btn-volver" onclick="window.parent?.BMModal?.close?.()">Cerrar</button>
-    <?php endif; ?>
-</div>
+    <div class="form-container">
+        <?php if ($errors): ?>
+            <div class="alert-errors">
+                <strong>Errores encontrados:</strong>
+                <ul>
+                    <?php foreach ($errors as $e): ?>
+                        <li><?= htmlspecialchars($e) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 
-<div class="form-container">
-    <?php if ($errors): ?>
-        <div class="alert-errors">
-            <strong>Errores encontrados:</strong>
-            <ul>
-                <?php foreach ($errors as $e): ?>
-                    <li><?= htmlspecialchars($e) ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
+        <form method="POST" action="<?= url('/admin/productos/guardar') ?>" enctype="multipart/form-data" id="formProducto">
 
-    <form method="POST" action="<?= url('/admin/productos/guardar') ?>" enctype="multipart/form-data" id="formProducto">
+            <div class="form-section">
+                <div class="section-title">Tipo de Producto</div>
 
-        <div class="form-section">
-            <div class="section-title">Tipo de Producto</div>
+                <div class="tipo-producto-grid">
+                    <div class="tipo-card selected" onclick="selectTipo(this, 'UNIDAD')">
+                        <input type="radio" name="tipo_producto" value="UNIDAD" id="tipo_unidad" checked>
+                        <div class="tipo-icon">📦</div>
+                        <div class="tipo-label">Aplica Serie</div>
+                        <div class="tipo-description">Productos con inventario controlado</div>
+                    </div>
 
-            <div class="tipo-producto-grid">
-                <div class="tipo-card selected" onclick="selectTipo(this, 'UNIDAD')">
-                    <input type="radio" name="tipo_producto" value="UNIDAD" id="tipo_unidad" checked>
-                    <div class="tipo-icon">📦</div>
-                    <div class="tipo-label">Aplica Serie</div>
-                    <div class="tipo-description">Productos con inventario controlado</div>
-                </div>
-
-                <div class="tipo-card" onclick="selectTipo(this, 'MISC')">
-                    <input type="radio" name="tipo_producto" value="MISC" id="tipo_misc">
-                    <div class="tipo-icon">🔩</div>
-                    <div class="tipo-label">Misceláneo</div>
-                    <div class="tipo-description">Productos sin código de barras</div>
+                    <div class="tipo-card" onclick="selectTipo(this, 'MISC')">
+                        <input type="radio" name="tipo_producto" value="MISC" id="tipo_misc">
+                        <div class="tipo-icon">🔩</div>
+                        <div class="tipo-label">Misceláneo</div>
+                        <div class="tipo-description">Productos sin código de barras</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- FORMULARIO TIPO UNIDAD (APLICA SERIE) -->
-        <div id="form_unidad" class="tipo-form-section">
-            <div class="section-title">Producto con Serie</div>
+            <!-- FORMULARIO TIPO UNIDAD (APLICA SERIE) -->
+            <div id="form_unidad" class="tipo-form-section">
+                <div class="section-title">Producto con Serie</div>
+
+                <div class="form-grid">
+                    <div class="form-group form-grid-full">
+                        <label class="form-label">Nombre del Producto <span class="required">*</span></label>
+                        <input type="text" name="nombre" id="nombre_unidad" class="form-input" required
+                            placeholder="Ej: Martillo 16oz Mango de Fibra" value="<?= htmlspecialchars($old['nombre'] ?? '') ?>" autofocus>
+                        <span class="form-help">El SKU se generará automáticamente</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FORMULARIO TIPO MISC -->
+            <div id="form_misc" class="tipo-form-section" style="display: none;">
+                <div class="section-title">Producto Misceláneo</div>
+
+                <div class="form-grid">
+                    <div class="form-group form-grid-full">
+                        <label class="form-label">Nombre del Producto <span class="required">*</span></label>
+                        <input type="text" name="nombre" id="nombre_misc" class="form-input" required
+                            placeholder="Ej: Tornillos 1/2 pulgada (caja 100 unidades)" disabled>
+                        <span class="form-help">El SKU se generará automáticamente (no requiere código de barras)</span>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <div class="section-title">Clasificación del Producto</div>
 
             <div class="form-grid">
-                <div class="form-group form-grid-full">
-                    <label class="form-label">Nombre del Producto <span class="required">*</span></label>
-                    <input type="text" name="nombre" id="nombre_unidad" class="form-input" required
-                        placeholder="Ej: Martillo 16oz Mango de Fibra" value="<?= htmlspecialchars($old['nombre'] ?? '') ?>" autofocus>
-                    <span class="form-help">El SKU se generará automáticamente</span>
+                <div class="categoria-selector">
+                    <div class="form-group">
+                        <label class="form-label">Categoría <span class="required">*</span></label>
+                        <div class="fbselect" data-name="categoria_id" data-required="true">
+                            <input type="text"
+                                placeholder="Buscar categoría..."
+                                class="fbselect-input"
+                                autocomplete="off">
+                            <input type="hidden" name="categoria_id" value="<?= $old['categoria_id'] ?? '' ?>">
+                            <div class="fbselect-menu">
+                                <?php foreach ($categorias as $cat): ?>
+                                    <div class="fbselect-item"
+                                        data-value="<?= (int)$cat['id'] ?>"
+                                        data-search="<?= strtolower($cat['nombre']) ?>">
+                                        <?= htmlspecialchars($cat['nombre']) ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <span class="form-help">Tipo de trabajo: Plomería, Construcción, Electricidad, etc.</span>
+                    </div>
+                    <button type="button" class="btn-add-new" onclick="openModal('modalCategoria')">Nueva Categoría</button>
+                </div>
+
+                <div class="categoria-selector">
+                    <div class="form-group">
+                        <label class="form-label">Marca</label>
+                        <div class="fbselect" data-name="marca_id" data-required="false">
+                            <input type="text"
+                                placeholder="Buscar marca..."
+                                class="fbselect-input"
+                                autocomplete="off">
+                            <input type="hidden" name="marca_id" value="<?= $old['marca_id'] ?? '' ?>">
+                            <div class="fbselect-menu">
+                                <div class="fbselect-item" data-value="" data-search="">Sin marca</div>
+                                <?php foreach ($marcasLista as $marca): ?>
+                                    <div class="fbselect-item"
+                                        data-value="<?= (int)$marca['id'] ?>"
+                                        data-search="<?= strtolower($marca['nombre']) ?>">
+                                        <?= htmlspecialchars($marca['nombre']) ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <span class="form-help">Fabricante o marca del producto (opcional)</span>
+                    </div>
+                    <button type="button" class="btn-add-new" onclick="openModal('modalMarca')">Nueva Marca</button>
                 </div>
             </div>
-        </div>
 
-        <!-- FORMULARIO TIPO MISC -->
-        <div id="form_misc" class="tipo-form-section" style="display: none;">
-            <div class="section-title">Producto Misceláneo</div>
+            <hr class="section-divider">
+
+            <div class="section-title">Precios e Inventario</div>
 
             <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Costo de Compra <span class="required">*</span></label>
+                    <div class="input-with-icon">
+                        <span class="input-icon">Q</span>
+                        <input type="number" name="costo" id="costo_compra" class="form-input" required
+                            min="0" step="any" placeholder="0.00"
+                            value="<?= htmlspecialchars($old['costo'] ?? '0') ?>"
+                            onchange="calcularPrecioVenta()">
+                    </div>
+                    <span class="form-help">Precio al que compra (puede usar decimales como 15.50)</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Precio de Venta <span class="required">*</span></label>
+                    <div class="input-with-icon">
+                        <span class="input-icon">Q</span>
+                        <input type="number" name="precio" id="precio_venta" class="form-input" required
+                            min="0" step="any" placeholder="0.00"
+                            value="<?= htmlspecialchars($old['precio'] ?? '0') ?>">
+                    </div>
+                    <span class="form-help" id="margen_info">Precio al que vende (puede usar decimales como 25.99)</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Stock Mínimo <span class="required">*</span></label>
+                    <input type="number" name="stock_minimo" class="form-input" required
+                        min="0" step="any" placeholder="5"
+                        value="<?= htmlspecialchars($old['stock_minimo'] ?? '5') ?>">
+                    <span class="form-help">Alerta cuando el stock baje de este número (puede usar decimales como 3.5)</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Nota sobre Stock</label>
+                    <div class="stock-note">
+                        <p>
+                            ℹ️ El stock inicial será <strong>0</strong>. Para ingresar productos al inventario,
+                            utilice el módulo de <strong>Compras</strong>.
+                        </p>
+                    </div>
+                </div>
+
                 <div class="form-group form-grid-full">
-                    <label class="form-label">Nombre del Producto <span class="required">*</span></label>
-                    <input type="text" name="nombre" id="nombre_misc" class="form-input" required 
-                        placeholder="Ej: Tornillos 1/2 pulgada (caja 100 unidades)" disabled>
-                    <span class="form-help">El SKU se generará automáticamente (no requiere código de barras)</span>
+                    <label class="form-label">Descripción</label>
+                    <textarea name="descripcion" class="form-textarea" rows="3"
+                        placeholder="Descripción detallada..."><?= htmlspecialchars($old['descripcion'] ?? '') ?></textarea>
                 </div>
-            </div>
-        </div>
 
-        <hr class="section-divider">
-
-        <div class="section-title">Clasificación del Producto</div>
-
-        <div class="form-grid">
-            <div class="categoria-selector">
-                <div class="form-group">
-                    <label class="form-label">Categoría <span class="required">*</span></label>
-                    <div class="fbselect" data-name="categoria_id" data-required="true">
-                        <input type="text"
-                            placeholder="Buscar categoría..."
-                            class="fbselect-input"
-                            autocomplete="off">
-                        <input type="hidden" name="categoria_id" value="<?= $old['categoria_id'] ?? '' ?>">
-                        <div class="fbselect-menu">
-                            <?php foreach ($categorias as $cat): ?>
-                                <div class="fbselect-item"
-                                    data-value="<?= (int)$cat['id'] ?>"
-                                    data-search="<?= strtolower($cat['nombre']) ?>">
-                                    <?= htmlspecialchars($cat['nombre']) ?>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                    <span class="form-help">Tipo de trabajo: Plomería, Construcción, Electricidad, etc.</span>
-                </div>
-                <button type="button" class="btn-add-new" onclick="openModal('modalCategoria')">Nueva Categoría</button>
-            </div>
-
-            <div class="categoria-selector">
-                <div class="form-group">
-                    <label class="form-label">Marca</label>
-                    <div class="fbselect" data-name="marca_id" data-required="false">
-                        <input type="text"
-                            placeholder="Buscar marca..."
-                            class="fbselect-input"
-                            autocomplete="off">
-                        <input type="hidden" name="marca_id" value="<?= $old['marca_id'] ?? '' ?>">
-                        <div class="fbselect-menu">
-                            <div class="fbselect-item" data-value="" data-search="">Sin marca</div>
-                            <?php foreach ($marcasLista as $marca): ?>
-                                <div class="fbselect-item"
-                                    data-value="<?= (int)$marca['id'] ?>"
-                                    data-search="<?= strtolower($marca['nombre']) ?>">
-                                    <?= htmlspecialchars($marca['nombre']) ?>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                    <span class="form-help">Fabricante o marca del producto (opcional)</span>
-                </div>
-                <button type="button" class="btn-add-new" onclick="openModal('modalMarca')">Nueva Marca</button>
-            </div>
-        </div>
-
-        <hr class="section-divider">
-
-        <div class="section-title">Precios e Inventario</div>
-
-        <div class="form-grid">
-            <div class="form-group">
-                <label class="form-label">Costo de Compra <span class="required">*</span></label>
-                <div class="input-with-icon">
-                    <span class="input-icon">Q</span>
-                    <input type="number" name="costo" id="costo_compra" class="form-input" required
-                        min="0" step="any" placeholder="0.00"
-                        value="<?= htmlspecialchars($old['costo'] ?? '0') ?>"
-                        onchange="calcularPrecioVenta()">
-                </div>
-                <span class="form-help">Precio al que compra (puede usar decimales como 15.50)</span>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Precio de Venta <span class="required">*</span></label>
-                <div class="input-with-icon">
-                    <span class="input-icon">Q</span>
-                    <input type="number" name="precio" id="precio_venta" class="form-input" required
-                        min="0" step="any" placeholder="0.00"
-                        value="<?= htmlspecialchars($old['precio'] ?? '0') ?>">
-                </div>
-                <span class="form-help" id="margen_info">Precio al que vende (puede usar decimales como 25.99)</span>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Stock Mínimo <span class="required">*</span></label>
-                <input type="number" name="stock_minimo" class="form-input" required
-                    min="0" step="any" placeholder="5"
-                    value="<?= htmlspecialchars($old['stock_minimo'] ?? '5') ?>">
-                <span class="form-help">Alerta cuando el stock baje de este número (puede usar decimales como 3.5)</span>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Nota sobre Stock</label>
-                <div class="stock-note">
-                    <p>
-                        ℹ️ El stock inicial será <strong>0</strong>. Para ingresar productos al inventario,
-                        utilice el módulo de <strong>Compras</strong>.
-                    </p>
+                <div class="form-group form-grid-full">
+                    <label class="form-label">Imagen del Producto</label>
+                    <input type="file" name="imagen" class="form-input" accept="image/jpeg,image/png,image/webp">
+                    <span class="form-help">JPG, PNG o WEBP - Máximo 2MB</span>
                 </div>
             </div>
 
-            <div class="form-group form-grid-full">
-                <label class="form-label">Descripción</label>
-                <textarea name="descripcion" class="form-textarea" rows="3"
-                    placeholder="Descripción detallada..."><?= htmlspecialchars($old['descripcion'] ?? '') ?></textarea>
+            <div class="form-actions">
+                <?php if (!$isModal): ?>
+                    <a href="<?= url('/admin/productos') ?>" class="btn-secondary">Cancelar</a>
+                <?php else: ?>
+                    <button type="button" class="btn-secondary" onclick="window.parent?.BMModal?.close?.()">Cancelar</button>
+                <?php endif; ?>
+
+                <button type="submit" class="btn-primary">Guardar Producto</button>
             </div>
-
-            <div class="form-group form-grid-full">
-                <label class="form-label">Imagen del Producto</label>
-                <input type="file" name="imagen" class="form-input" accept="image/jpeg,image/png,image/webp">
-                <span class="form-help">JPG, PNG o WEBP - Máximo 2MB</span>
-            </div>
-        </div>
-
-        <div class="form-actions">
-            <?php if (!$isModal): ?>
-                <a href="<?= url('/admin/productos') ?>" class="btn-secondary">Cancelar</a>
-            <?php else: ?>
-                <button type="button" class="btn-secondary" onclick="window.parent?.BMModal?.close?.()">Cancelar</button>
-            <?php endif; ?>
-
-            <button type="submit" class="btn-primary">Guardar Producto</button>
-        </div>
-    </form>
-</div>
+        </form>
+    </div>
 </div>
 
 <!-- Modales internos (categoría / marca) -->
@@ -376,9 +376,8 @@ $marcasLista = $marcasModel->listarActivas();
         if (!nombre) return alert('⚠️ Ingrese un nombre');
 
         try {
-            // Usar la ruta del router principal
-            const baseUrl = window.location.origin;
-            const url = baseUrl + '/admin/catalogos/categorias/guardar';
+            // Usar la función url() de PHP para generar la URL correcta
+            const url = '<?= url('/admin/catalogos/categorias/guardar') ?>';
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -465,9 +464,8 @@ $marcasLista = $marcasModel->listarActivas();
         if (!nombre) return alert('⚠️ Ingrese un nombre');
 
         try {
-            // Usar la ruta del router principal
-            const baseUrl = window.location.origin;
-            const url = baseUrl + '/admin/catalogos/marcas/guardar';
+            // Usar la función url() de PHP para generar la URL correcta
+            const url = '<?= url('/admin/catalogos/marcas/guardar') ?>';
 
             const response = await fetch(url, {
                 method: 'POST',

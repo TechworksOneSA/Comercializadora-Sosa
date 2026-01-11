@@ -71,7 +71,7 @@ class ClientesController extends Controller
             "apellido"     => trim($data["apellido"] ?? ""),
             "telefono"     => trim($data["telefono"] ?? ""),
             "direccion"    => trim($data["direccion"] ?? ""),
-            "metodo_pago"  => trim($data["metodo_pago"] ?? ""),
+            "preferencia_metodo_pago"  => trim($data["metodo_pago"] ?? ""),
             "nit"          => trim($data["nit"] ?? ""),
             "total_gastado" => 0.00, // Inicializado para futura lógica
         ];
@@ -141,7 +141,7 @@ class ClientesController extends Controller
             "apellido"     => trim($data["apellido"] ?? ""),
             "telefono"     => trim($data["telefono"] ?? ""),
             "direccion"    => trim($data["direccion"] ?? ""),
-            "metodo_pago"  => trim($data["metodo_pago"] ?? ""),
+            "preferencia_metodo_pago"  => trim($data["metodo_pago"] ?? ""),
             "nit"          => trim($data["nit"] ?? ""),
         ];
 
@@ -187,7 +187,7 @@ class ClientesController extends Controller
             $errors[] = "Teléfono es obligatorio.";
         }
         if (empty(trim($data["metodo_pago"] ?? ""))) {
-            $errors[] = "Método de pago es obligatorio.";
+            $errors[] = "Método de pago favorito es obligatorio.";
         }
 
         return $errors;
