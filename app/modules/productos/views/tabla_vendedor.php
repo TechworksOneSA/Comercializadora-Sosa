@@ -1,7 +1,6 @@
 <?php
 // recibe: $productos
 ?>
-
 <div class="productos-table-modern">
     <div class="table-container">
         <table class="table-productos-modern">
@@ -37,16 +36,41 @@
                             $stockClase = 'badge-stock-bajo';
                         }
 
-                        // Manejar imagen del producto
+                        // ==============================
+                        // Manejar imagen del producto (ROBUSTO)
+                        // Soporta:
+                        // - JSON array: ["img1.jpg","img2.jpg"]
+                        // - filename: "img1.jpg"
+                        // - ruta absoluta: "/uploads/productos/img1.jpg"
+                        // - URL absoluta: "https://..."
+                        // ==============================
                         $imagenPath = $p['imagen_path'] ?? null;
-                        $imagenUrl = null;
-                        if ($imagenPath) {
-                            // Si es JSON con array de imágenes
-                            $imagenes = json_decode($imagenPath, true);
-                            if (is_array($imagenes) && !empty($imagenes)) {
-                                $imagenUrl = url('/uploads/productos/' . $imagenes[0]);
+                        $imagenUrl  = null;
+
+                        if (!empty($imagenPath)) {
+                            $first = null;
+
+                            // 1) JSON (array de imágenes)
+                            $decoded = json_decode($imagenPath, true);
+                            if (is_array($decoded) && !empty($decoded)) {
+                                $first = (string)$decoded[0];
                             } else {
-                                $imagenUrl = url('/uploads/productos/' . $imagenPath);
+                                $first = (string)$imagenPath;
+                            }
+
+                            $first = trim($first);
+
+                            // 2) URL absoluta
+                            if (preg_match('#^https?://#i', $first)) {
+                                $imagenUrl = $first;
+
+                                // 3) Ruta absoluta desde raíz (/uploads/...)
+                            } elseif (str_starts_with($first, '/')) {
+                                $imagenUrl = url($first);
+
+                                // 4) Solo filename
+                            } else {
+                                $imagenUrl = url('/uploads/productos/' . $first);
                             }
                         }
                         ?>
@@ -54,7 +78,11 @@
                         <tr class="<?= (($p['estado'] ?? 'ACTIVO') === 'INACTIVO') ? 'row-inactivo' : '' ?>">
                             <td class="producto-imagen-cell">
                                 <?php if ($imagenUrl): ?>
-                                    <img src="<?= $imagenUrl ?>" alt="<?= htmlspecialchars($p['nombre']) ?>" class="producto-thumbnail" onerror="this.src='<?= url('/assets/img/no-image.png') ?>'">
+                                    <img
+                                        src="<?= $imagenUrl ?>"
+                                        alt="<?= htmlspecialchars($p['nombre']) ?>"
+                                        class="producto-thumbnail"
+                                        onerror="this.src='<?= url('/assets/img/no-image.png') ?>'">
                                 <?php else: ?>
                                     <div class="producto-sin-imagen">
                                         <span>📦</span>

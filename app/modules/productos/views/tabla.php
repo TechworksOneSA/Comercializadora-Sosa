@@ -1,7 +1,6 @@
 <?php
 // recibe: $productos
 ?>
-
 <div class="productos-table-modern">
     <div class="table-container">
         <table class="table-productos-modern">
@@ -36,17 +35,42 @@
                         } elseif (($p['stock'] ?? 0) <= ($p['stock_minimo'] ?? 5)) {
                             $stockClase = 'badge-stock-bajo';
                         }
-                        
-                        // Manejar imagen del producto
+
+                        // ==============================
+                        // Manejar imagen del producto (ROBUSTO)
+                        // Soporta:
+                        // - JSON array: ["img1.jpg","img2.jpg"]
+                        // - filename: "img1.jpg"
+                        // - ruta absoluta: "/uploads/productos/img1.jpg"
+                        // - URL absoluta: "https://..."
+                        // ==============================
                         $imagenPath = $p['imagen_path'] ?? null;
-                        $imagenUrl = null;
-                        if ($imagenPath) {
-                            // Si es JSON con array de imágenes
-                            $imagenes = json_decode($imagenPath, true);
-                            if (is_array($imagenes) && !empty($imagenes)) {
-                                $imagenUrl = url('/uploads/productos/' . $imagenes[0]);
+                        $imagenUrl  = null;
+
+                        if (!empty($imagenPath)) {
+                            $first = null;
+
+                            // 1) JSON (array de imágenes)
+                            $decoded = json_decode($imagenPath, true);
+                            if (is_array($decoded) && !empty($decoded)) {
+                                $first = (string)$decoded[0];
                             } else {
-                                $imagenUrl = url('/uploads/productos/' . $imagenPath);
+                                $first = (string)$imagenPath;
+                            }
+
+                            $first = trim($first);
+
+                            // 2) URL absoluta
+                            if (preg_match('#^https?://#i', $first)) {
+                                $imagenUrl = $first;
+
+                            // 3) Ruta absoluta desde raíz (/uploads/...)
+                            } elseif (str_starts_with($first, '/')) {
+                                $imagenUrl = url($first);
+
+                            // 4) Solo filename
+                            } else {
+                                $imagenUrl = url('/uploads/productos/' . $first);
                             }
                         }
                         ?>
@@ -54,14 +78,18 @@
                         <tr class="<?= (($p['estado'] ?? 'ACTIVO') === 'INACTIVO') ? 'row-inactivo' : '' ?>">
                             <td class="producto-imagen-cell">
                                 <?php if ($imagenUrl): ?>
-                                    <img src="<?= $imagenUrl ?>" alt="<?= htmlspecialchars($p['nombre']) ?>" class="producto-thumbnail" onerror="this.src='<?= url('/assets/img/no-image.png') ?>'">
+                                    <img
+                                        src="<?= $imagenUrl ?>"
+                                        alt="<?= htmlspecialchars($p['nombre']) ?>"
+                                        class="producto-thumbnail"
+                                        onerror="this.src='<?= url('/assets/img/no-image.png') ?>'">
                                 <?php else: ?>
                                     <div class="producto-sin-imagen">
                                         <span>📦</span>
                                     </div>
                                 <?php endif; ?>
                             </td>
-                            
+
                             <td class="producto-sku">
                                 <?= htmlspecialchars($p['sku']) ?>
                                 <?php if (($p['estado'] ?? 'ACTIVO') === 'INACTIVO'): ?>
@@ -88,9 +116,9 @@
                             </td>
 
                             <td>
-                                <?php 
+                                <?php
                                 $tipoProducto = strtoupper($p['tipo_producto'] ?? 'UNIDAD');
-                                if ($tipoProducto === 'UNIDAD'): 
+                                if ($tipoProducto === 'UNIDAD'):
                                 ?>
                                     <span class="badge-tipo-serie">📦 Aplica Serie</span>
                                 <?php elseif ($tipoProducto === 'MISC'): ?>
@@ -112,40 +140,11 @@
 
                             <td>
                                 <div class="acciones-flex">
-
-                                    <!-- ✅ Link directo a página completa -->
                                     <a
                                         href="<?= url('/admin/productos/editar/' . (int)$p['id']) ?>"
                                         class="btn-accion btn-editar">
                                         Editar
                                     </a>
-
-                                    <?php if (($p['estado'] ?? 'ACTIVO') === 'ACTIVO'): ?>
-                                        <form method="POST"
-                                            action="<?= url('/admin/productos/desactivar/' . (int)$p['id']) ?>"
-                                            class="inline-form">
-                                            <button type="button"
-                                                onclick="mostrarModalEstado('desactivar', <?= (int)$p['id'] ?>, '<?= addslashes($p['nombre'] ?? '') ?>')"
-                                                class="btn-accion btn-desactivar">Desactivar</button>
-                                        </form>
-                                    <?php else: ?>
-                                        <form method="POST"
-                                            action="<?= url('/admin/productos/activar/' . (int)$p['id']) ?>"
-                                            class="inline-form">
-                                            <button type="button"
-                                                onclick="mostrarModalEstado('activar', <?= (int)$p['id'] ?>, '<?= addslashes($p['nombre'] ?? '') ?>')"
-                                                class="btn-accion btn-activar">Activar</button>
-                                        </form>
-                                    <?php endif; ?>
-
-                                    <form method="POST"
-                                        action="<?= url('/admin/productos/eliminarPermanente/' . (int)$p['id']) ?>"
-                                        class="inline-form">
-                                        <button type="button"
-                                            onclick="mostrarModalEliminarProducto(<?= (int)$p['id'] ?>, '<?= addslashes($p['nombre'] ?? '') ?>')"
-                                            class="btn-accion btn-eliminar">Eliminar</button>
-                                    </form>
-
                                 </div>
                             </td>
                         </tr>
@@ -155,3 +154,61 @@
         </table>
     </div>
 </div>
+
+<style>
+    /* Estilos adicionales para la vista de vendedor */
+    .descripcion-corta {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 4px;
+        font-style: italic;
+    }
+
+    .codigo-barras {
+        display: block;
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+
+    .alerta-stock {
+        font-size: 0.75rem;
+        color: #dc3545;
+        margin-top: 2px;
+        font-weight: 500;
+    }
+
+    .badge-estado-activo {
+        background: #d1fae5;
+        color: #065f46;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-estado-inactivo {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .btn-ver {
+        background: #e0e7ff;
+        color: #3730a3;
+        border: 1px solid #c7d2fe;
+    }
+
+    .btn-ver:hover {
+        background: #c7d2fe;
+        border-color: #a5b4fc;
+    }
+
+    .row-inactivo {
+        opacity: 0.6;
+        background-color: #f8f9fa;
+    }
+</style>
