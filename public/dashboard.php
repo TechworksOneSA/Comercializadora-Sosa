@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Sistema POS</title>
-    <link rel="stylesheet" href="/Comercializadora/ferreteria-pos/public/assets/css/app.css">
-    <link rel="stylesheet" href="/Comercializadora/ferreteria-pos/public/assets/css/tailwind.css">
+
+    <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/tailwind.css') ?>">
 </head>
 
 <body>
@@ -17,28 +18,32 @@
                 <h2 class="text-lg font-bold text-primary">Admin Panel</h2>
                 <p class="text-sm text-text-secondary">Sistema POS/ERP</p>
             </div>
+
             <nav class="sidebar-nav p-4">
                 <ul class="space-y-2">
                     <li>
-                        <a href="/dashboard" class="sidebar-link flex items-center p-3 rounded bg-primary text-white">
+                        <a href="<?= url('/dashboard') ?>" class="sidebar-link flex items-center p-3 rounded bg-primary text-white">
                             <span class="icon mr-3">📊</span>
                             <span>Dashboard</span>
                         </a>
                     </li>
+
                     <li>
-                        <a href="#" class="sidebar-link flex items-center p-3 rounded hover:bg-surface-secondary">
+                        <a href="<?= url('/admin/productos') ?>" class="sidebar-link flex items-center p-3 rounded hover:bg-surface-secondary">
                             <span class="icon mr-3">📦</span>
                             <span>Productos</span>
                         </a>
                     </li>
+
                     <li>
-                        <a href="#" class="sidebar-link flex items-center p-3 rounded hover:bg-surface-secondary">
+                        <a href="<?= url('/admin/ventas') ?>" class="sidebar-link flex items-center p-3 rounded hover:bg-surface-secondary">
                             <span class="icon mr-3">💰</span>
                             <span>Punto de Venta</span>
                         </a>
                     </li>
+
                     <li>
-                        <a href="/logout" class="sidebar-link flex items-center p-3 rounded hover:bg-surface-secondary text-error">
+                        <a href="<?= url('/logout') ?>" class="sidebar-link flex items-center p-3 rounded hover:bg-surface-secondary text-error">
                             <span class="icon mr-3">🚪</span>
                             <span>Cerrar Sesión</span>
                         </a>
@@ -65,7 +70,6 @@
             <!-- Contenido -->
             <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <!-- Tarjetas de resumen -->
                     <div class="card">
                         <div class="card-body text-center">
                             <h3 class="text-2xl font-bold text-primary">Q 12,500</h3>
@@ -95,7 +99,6 @@
                     </div>
                 </div>
 
-                <!-- Contenido adicional -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="card">
                         <div class="card-header">
@@ -131,11 +134,9 @@
         </main>
     </div>
 
-    <script src="/Comercializadora/ferreteria-pos/public/assets/js/app.js"></script>
+    <script src="<?= asset('js/app.js') ?>"></script>
     <script>
         console.log('Dashboard cargado correctamente');
-
-        // Simular datos dinámicos
         setInterval(() => {
             const now = new Date().toLocaleTimeString();
             console.log('Sistema activo:', now);
