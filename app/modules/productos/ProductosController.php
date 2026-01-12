@@ -256,23 +256,31 @@ class ProductosController extends Controller
             return;
         }
 
-       // Mantener imagen actual
-    $imagen_path = $producto['imagen_path'] ?? null;
+        // Mantener imagen actual
+        $imagen_path = $producto['imagen_path'] ?? null;
 
-    // Si suben nueva imagen, reemplazar y borrar anterior
-    if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
-        $nuevo = $this->procesarImagenUnica($_FILES['imagen']);
-        if ($nuevo) {
-            // borrar anterior si existía
+        // Si el usuario marcó eliminar imagen
+        if (!empty($_POST['eliminar_imagen']) && $_POST['eliminar_imagen'] == '1') {
             if (!empty($imagen_path)) {
                 $anterior = $this->UPLOAD_BASE_DIR . '/productos/' . basename($imagen_path);
                 if (file_exists($anterior)) {
                     @unlink($anterior);
                 }
             }
-            $imagen_path = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $nuevo;
+            $imagen_path = null;
+        } else if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+            // Si suben nueva imagen, reemplazar y borrar anterior
+            $nuevo = $this->procesarImagenUnica($_FILES['imagen']);
+            if ($nuevo) {
+                if (!empty($imagen_path)) {
+                    $anterior = $this->UPLOAD_BASE_DIR . '/productos/' . basename($imagen_path);
+                    if (file_exists($anterior)) {
+                        @unlink($anterior);
+                    }
+                }
+                $imagen_path = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $nuevo;
+            }
         }
-    }
 
         $payload = [
             // coherencia básica
