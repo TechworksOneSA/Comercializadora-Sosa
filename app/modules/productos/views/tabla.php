@@ -16,63 +16,64 @@
                     <th>Tipo de Producto</th>
                     <th>Precio Venta</th>
                     <th>Stock</th>
-                    <style>
-                        /* Estilos adicionales para la vista de vendedor */
-                        .descripcion-corta {
-                            font-size: 0.85rem;
-                            color: #6c757d;
-                            margin-top: 4px;
-                            font-style: italic;
-                        }
+                            <!-- Mover el bloque de estilos aquí al final para evitar romper la tabla -->
+                            <style>
+                                /* Estilos adicionales para la vista de vendedor */
+                                .descripcion-corta {
+                                    font-size: 0.85rem;
+                                    color: #6c757d;
+                                    margin-top: 4px;
+                                    font-style: italic;
+                                }
 
-                        .codigo-barras {
-                            display: block;
-                            font-size: 0.75rem;
-                            color: #6c757d;
-                            margin-top: 2px;
-                        }
+                                .codigo-barras {
+                                    display: block;
+                                    font-size: 0.75rem;
+                                    color: #6c757d;
+                                    margin-top: 2px;
+                                }
 
-                        .alerta-stock {
-                            font-size: 0.75rem;
-                            color: #dc3545;
-                            margin-top: 2px;
-                            font-weight: 500;
-                        }
+                                .alerta-stock {
+                                    font-size: 0.75rem;
+                                    color: #dc3545;
+                                    margin-top: 2px;
+                                    font-weight: 500;
+                                }
 
-                        .badge-estado-activo {
-                            background: #d1fae5;
-                            color: #065f46;
-                            padding: 4px 8px;
-                            border-radius: 6px;
-                            font-size: 0.75rem;
-                            font-weight: 600;
-                        }
+                                .badge-estado-activo {
+                                    background: #d1fae5;
+                                    color: #065f46;
+                                    padding: 4px 8px;
+                                    border-radius: 6px;
+                                    font-size: 0.75rem;
+                                    font-weight: 600;
+                                }
 
-                        .badge-estado-inactivo {
-                            background: #fee2e2;
-                            color: #991b1b;
-                            padding: 4px 8px;
-                            border-radius: 6px;
-                            font-size: 0.75rem;
-                            font-weight: 600;
-                        }
+                                .badge-estado-inactivo {
+                                    background: #fee2e2;
+                                    color: #991b1b;
+                                    padding: 4px 8px;
+                                    border-radius: 6px;
+                                    font-size: 0.75rem;
+                                    font-weight: 600;
+                                }
 
-                        .btn-ver {
-                            background: #e0e7ff;
-                            color: #3730a3;
-                            border: 1px solid #c7d2fe;
-                        }
+                                .btn-ver {
+                                    background: #e0e7ff;
+                                    color: #3730a3;
+                                    border: 1px solid #c7d2fe;
+                                }
 
-                        .btn-ver:hover {
-                            background: #c7d2fe;
-                            border-color: #a5b4fc;
-                        }
+                                .btn-ver:hover {
+                                    background: #c7d2fe;
+                                    border-color: #a5b4fc;
+                                }
 
-                        .row-inactivo {
-                            opacity: 0.6;
-                            background-color: #f8f9fa;
-                        }
-                    </style>
+                                .row-inactivo {
+                                    opacity: 0.6;
+                                    background-color: #f8f9fa;
+                                }
+                            </style>
                             }
                         }
                         ?>
