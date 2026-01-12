@@ -71,13 +71,6 @@ $kpis = $kpis ?? [];
                     <h1 class="productos-title-modern">Catálogo de Productos</h1>
                     <p class="productos-subtitle-modern">Consulta de productos y disponibilidad de stock</p>
                 </div>
-            </div>
-            <a
-                href="<?= url('/admin/productos/crear') ?>"
-                class="btn-nuevo-producto">
-                Nuevo Producto
-            </a>
-        </div>
     </div>
 
 
