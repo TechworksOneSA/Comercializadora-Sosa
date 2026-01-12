@@ -16,64 +16,63 @@
                     <th>Tipo de Producto</th>
                     <th>Precio Venta</th>
                     <th>Stock</th>
-                            <!-- Mover el bloque de estilos aquí al final para evitar romper la tabla -->
-                            <style>
-                                /* Estilos adicionales para la vista de vendedor */
-                                .descripcion-corta {
-                                    font-size: 0.85rem;
-                                    color: #6c757d;
-                                    margin-top: 4px;
-                                    font-style: italic;
-                                }
+                    <th>Fecha Registro</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($productos)): ?>
+                    <tr>
+                        <td colspan="10" class="empty-state">
+                            <div class="empty-state-icon"></div>
+                            <p>No se encontraron productos con esos filtros</p>
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($productos as $p): ?>
+                        <?php
+                        $stockClase = 'badge-stock-ok';
+                        if (($p['stock'] ?? 0) <= 0) {
+                            $stockClase = 'badge-stock-critico';
+                        } elseif (($p['stock'] ?? 0) <= ($p['stock_minimo'] ?? 5)) {
+                            $stockClase = 'badge-stock-bajo';
+                        }
 
-                                .codigo-barras {
-                                    display: block;
-                                    font-size: 0.75rem;
-                                    color: #6c757d;
-                                    margin-top: 2px;
-                                }
+                        // ==============================
+                        // Manejar imagen del producto (ROBUSTO)
+                        // Soporta:
+                        // - JSON array: ["img1.jpg","img2.jpg"]
+                        // - filename: "img1.jpg"
+                        // - ruta absoluta: "/uploads/productos/img1.jpg"
+                        // - URL absoluta: "https://..."
+                        // ==============================
+                        $imagenPath = $p['imagen_path'] ?? null;
+                        $imagenUrl  = null;
 
-                                .alerta-stock {
-                                    font-size: 0.75rem;
-                                    color: #dc3545;
-                                    margin-top: 2px;
-                                    font-weight: 500;
-                                }
+                        if (!empty($imagenPath)) {
+                            $first = null;
 
-                                .badge-estado-activo {
-                                    background: #d1fae5;
-                                    color: #065f46;
-                                    padding: 4px 8px;
-                                    border-radius: 6px;
-                                    font-size: 0.75rem;
-                                    font-weight: 600;
-                                }
+                            // 1) JSON (array de imágenes)
+                            $decoded = json_decode($imagenPath, true);
+                            if (is_array($decoded) && !empty($decoded)) {
+                                $first = (string)$decoded[0];
+                            } else {
+                                $first = (string)$imagenPath;
+                            }
 
-                                .badge-estado-inactivo {
-                                    background: #fee2e2;
-                                    color: #991b1b;
-                                    padding: 4px 8px;
-                                    border-radius: 6px;
-                                    font-size: 0.75rem;
-                                    font-weight: 600;
-                                }
+                            $first = trim($first);
 
-                                .btn-ver {
-                                    background: #e0e7ff;
-                                    color: #3730a3;
-                                    border: 1px solid #c7d2fe;
-                                }
+                            // 2) URL absoluta
+                            if (preg_match('#^https?://#i', $first)) {
+                                $imagenUrl = $first;
 
-                                .btn-ver:hover {
-                                    background: #c7d2fe;
-                                    border-color: #a5b4fc;
-                                }
+                            // 3) Ruta absoluta desde raíz (/uploads/...)
+                            } elseif (str_starts_with($first, '/')) {
+                                $imagenUrl = url($first);
 
-                                .row-inactivo {
-                                    opacity: 0.6;
-                                    background-color: #f8f9fa;
-                                }
-                            </style>
+                            // 4) Solo filename
+                            } else {
+                                $imagenUrl = url('/uploads/productos/' . $first);
                             }
                         }
                         ?>
