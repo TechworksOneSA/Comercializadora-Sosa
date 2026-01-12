@@ -43,8 +43,8 @@
           COMERCIALIZADORA SOSA
         </h1>
         <div style="color: #495057; font-size: 0.95rem; line-height: 1.4;">
-          <div style="font-weight: 600; margin-bottom: 0.25rem;">📍 Barrio La Flores, Gualán</div>
-          <div style="font-weight: 600; margin-bottom: 0.25rem;">📞 Tel: 4038-7031</div>
+          <div style="font-weight: 600; margin-bottom: 0.25rem;">📍 Barrio La Flores, Entrada Principal hacia Plazuela, Gualán</div>
+          <div style="font-weight: 600; margin-bottom: 0.25rem;">📞 Tel: 4038-7031 | Whatsapp: 4818-8061</div>
         </div>
       </div>
 
@@ -256,7 +256,7 @@
           ¡Gracias por confiar en nosotros!
         </div>
         <p style="margin: 0.5rem 0; font-weight: 600;">
-          Comercializadora Sosa – Abasteciendo calidad, cuando usted la necesita
+          Comercializadora Sosa – !Precios Sin Competencia!
         </p>
         <p style="margin: 0; font-size: 0.85rem;">
           Esta cotización ha sido generada electrónicamente el <?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?><?= date('d/m/Y \a \l\a\s H:i') ?>
@@ -265,10 +265,9 @@
 
       <!-- Información de contacto final -->
       <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.85rem; color: #6c757d;">
-        <div>📞 <strong>Ventas:</strong> 4038-7031</div>
+        <div>📞 <strong>Teléfono:</strong> 4038-7031 <strong>Whatsapp:</strong>4818-8061</div>
       </div>
     </div>
-
   </div>
 </div>
 

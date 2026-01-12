@@ -40,8 +40,8 @@
           <p style="margin: 0.75rem 0 0 0; font-size: 1.25rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">Comercializadora Sosa</p>
         </div>
         <div style="margin-top: 1rem; color: #6c757d; font-size: 0.9rem;">
-          <div style="margin-bottom: 0.5rem;">📍 Barrio La Flores, Gualán</div>
-          <div style="margin-bottom: 0.5rem;">📞 Teléfono: +502 4038-7031</div>
+          <div style="margin-bottom: 0.5rem;">📍 Barrio La Flores, Entrada Principal hacia Plazuela, Gualán</div>
+          <div style="margin-bottom: 0.5rem;">📞 Teléfono: 4038-7031 | Whatsapp: 4818-8061</div>
         </div>
       </div>
 
