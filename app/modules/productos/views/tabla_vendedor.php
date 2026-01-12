@@ -134,6 +134,11 @@
                                     <?= number_format($p['stock']) ?> uds
                                 </span>
                             </td>
+
+                            <td><span class="fecha-registro"><?= htmlspecialchars($p['fecha_registro'] ?? 'N/A') ?></span></td>
+
+                            <td>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
