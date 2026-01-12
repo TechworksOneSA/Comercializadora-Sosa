@@ -240,10 +240,10 @@
     <!-- PIE DE PÁGINA -->
     <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #e9ecef; text-align: center; color: #6c757d; font-size: 0.9rem;">
       <p style="margin: 0 0 0.5rem 0;">Venta realizada el <strong><?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?><?= date('d/m/Y H:i', strtotime($venta['fecha_venta'])) ?></strong></p>
-        <p style="margin: 0.5rem 0; font-weight: 600;">
+      <p style="margin: 0; font-size: 0.85rem;">Gracias por su compra - Comercializadora Sosa</p>
+              <p style="margin: 0.5rem 0; font-weight: 600;">
           Comercializadora Sosa – !Precios Sin Competencia!
         </p>
-      <p style="margin: 0; font-size: 0.85rem;">Gracias por su compra - Comercializadora Sosa</p>
     </div>
 
   </div>
