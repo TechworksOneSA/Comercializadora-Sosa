@@ -55,7 +55,7 @@ $kpis = $kpis ?? [];
 
     <!-- =======================
         HEADER (PRO) - VENDEDOR
-  ======================== -->
+    ======================== -->
     <div class="productos-header-modern">
         <div class="productos-header-flex">
             <div class="productos-header-left">
@@ -71,12 +71,17 @@ $kpis = $kpis ?? [];
                     <h1 class="productos-title-modern">Catálogo de Productos</h1>
                     <p class="productos-subtitle-modern">Consulta de productos y disponibilidad de stock</p>
                 </div>
+            </div>
+
+            <!-- BOTÓN ELIMINADO: Nuevo Producto -->
+
+        </div>
     </div>
 
 
     <!-- =======================
         KPIs PARA VENDEDORES (SIN VALORES SENSIBLES)
-  ======================== -->
+    ======================== -->
     <div class="productos-kpis-grid">
         <div class="kpi-card-producto kpi-total">
             <div class="kpi-icon">📊</div>
@@ -103,7 +108,7 @@ $kpis = $kpis ?? [];
 
     <!-- =======================
         BUSCADOR + FILTROS
-  ======================== -->
+    ======================== -->
     <div class="productos-search-modern">
 
         <div class="search-main-bar">
@@ -184,7 +189,7 @@ $kpis = $kpis ?? [];
 
     <!-- =======================
         TABLA (AJAX)
-  ======================== -->
+    ======================== -->
     <div id="productosTableWrap" class="table-layer">
         <?php require __DIR__ . "/tabla_vendedor.php"; ?>
     </div>
@@ -192,7 +197,7 @@ $kpis = $kpis ?? [];
 
     <!-- =======================
         INFO FILTROS
-  ======================== -->
+    ======================== -->
     <div class="filters-info-bar" id="filtersInfoBar">
         <div class="filters-info-content">
             <span class="filters-info-icon">ℹ️</span>

@@ -14,14 +14,14 @@
                     <th>Tipo de Producto</th>
                     <th>Precio Venta</th>
                     <th>Stock</th>
-                    <th>Fecha Registro</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
+
             <tbody>
                 <?php if (empty($productos)): ?>
                     <tr>
-                        <td colspan="10" class="empty-state">
+                        <td colspan="9" class="empty-state">
                             <div class="empty-state-icon"></div>
                             <p>No se encontraron productos con esos filtros</p>
                         </td>
@@ -37,38 +37,23 @@
                         }
 
                         // ==============================
-                        // Manejar imagen del producto (ROBUSTO)
-                        // Soporta:
-                        // - JSON array: ["img1.jpg","img2.jpg"]
-                        // - filename: "img1.jpg"
-                        // - ruta absoluta: "/uploads/productos/img1.jpg"
-                        // - URL absoluta: "https://..."
+                        // Manejo robusto de imagen
                         // ==============================
                         $imagenPath = $p['imagen_path'] ?? null;
                         $imagenUrl  = null;
 
                         if (!empty($imagenPath)) {
-                            $first = null;
-
-                            // 1) JSON (array de imágenes)
                             $decoded = json_decode($imagenPath, true);
-                            if (is_array($decoded) && !empty($decoded)) {
-                                $first = (string)$decoded[0];
-                            } else {
-                                $first = (string)$imagenPath;
-                            }
+                            $first = is_array($decoded) && !empty($decoded)
+                                ? (string)$decoded[0]
+                                : (string)$imagenPath;
 
                             $first = trim($first);
 
-                            // 2) URL absoluta
                             if (preg_match('#^https?://#i', $first)) {
                                 $imagenUrl = $first;
-
-                                // 3) Ruta absoluta desde raíz (/uploads/...)
                             } elseif (str_starts_with($first, '/')) {
                                 $imagenUrl = url($first);
-
-                                // 4) Solo filename
                             } else {
                                 $imagenUrl = url('/uploads/productos/' . $first);
                             }
@@ -80,7 +65,7 @@
                                 <?php if ($imagenUrl): ?>
                                     <img
                                         src="<?= $imagenUrl ?>"
-                                        alt="<?= htmlspecialchars($p['nombre']) ?>"
+                                        alt="<?= htmlspecialchars($p['nombre'] ?? 'Producto') ?>"
                                         class="producto-thumbnail"
                                         onerror="this.src='<?= url('/assets/img/no-image.png') ?>'">
                                 <?php else: ?>
@@ -91,13 +76,15 @@
                             </td>
 
                             <td class="producto-sku">
-                                <?= htmlspecialchars($p['sku']) ?>
+                                <?= htmlspecialchars($p['sku'] ?? '') ?>
                                 <?php if (($p['estado'] ?? 'ACTIVO') === 'INACTIVO'): ?>
                                     <span class="producto-inactivo-label">INACTIVO</span>
                                 <?php endif; ?>
                             </td>
 
-                            <td><strong><?= htmlspecialchars($p['nombre']) ?></strong></td>
+                            <td>
+                                <strong><?= htmlspecialchars($p['nombre'] ?? '') ?></strong>
+                            </td>
 
                             <td>
                                 <?php if (!empty($p['categoria_nombre'])): ?>
@@ -128,15 +115,15 @@
                                 <?php endif; ?>
                             </td>
 
-                            <td class="producto-precio">Q <?= number_format($p['precio_venta'], 2) ?></td>
+                            <td class="producto-precio">
+                                Q <?= number_format((float)($p['precio_venta'] ?? 0), 2) ?>
+                            </td>
 
                             <td>
                                 <span class="badge-stock <?= $stockClase ?>">
-                                    <?= number_format($p['stock']) ?> uds
+                                    <?= number_format((float)($p['stock'] ?? 0)) ?> uds
                                 </span>
                             </td>
-
-                            <td><span class="fecha-registro"><?= htmlspecialchars($p['fecha_registro'] ?? 'N/A') ?></span></td>
 
                             <td>
                                 <div class="acciones-flex">
@@ -156,59 +143,23 @@
 </div>
 
 <style>
-    /* Estilos adicionales para la vista de vendedor */
-    .descripcion-corta {
-        font-size: 0.85rem;
-        color: #6c757d;
-        margin-top: 4px;
-        font-style: italic;
-    }
-
-    .codigo-barras {
-        display: block;
-        font-size: 0.75rem;
-        color: #6c757d;
-        margin-top: 2px;
-    }
-
-    .alerta-stock {
-        font-size: 0.75rem;
-        color: #dc3545;
-        margin-top: 2px;
-        font-weight: 500;
-    }
-
-    .badge-estado-activo {
-        background: #d1fae5;
-        color: #065f46;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    .badge-estado-inactivo {
-        background: #fee2e2;
-        color: #991b1b;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    .btn-ver {
-        background: #e0e7ff;
-        color: #3730a3;
-        border: 1px solid #c7d2fe;
-    }
-
-    .btn-ver:hover {
-        background: #c7d2fe;
-        border-color: #a5b4fc;
-    }
-
     .row-inactivo {
         opacity: 0.6;
         background-color: #f8f9fa;
+    }
+
+    .btn-editar {
+        background: #e0e7ff;
+        color: #3730a3;
+        border: 1px solid #c7d2fe;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .btn-editar:hover {
+        background: #c7d2fe;
+        border-color: #a5b4fc;
     }
 </style>
