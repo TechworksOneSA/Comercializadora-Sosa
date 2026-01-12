@@ -658,13 +658,24 @@ $marcaText = $marcaId && isset($mapMar[$marcaId]) ? $mapMar[$marcaId] : '';
                         <div style="margin-top: 10px;">
                             <p style="font-size: 0.9rem; color: #666; margin-bottom: 8px;">Imagen actual:</p>
                             <img
+                                id="imgActualProducto"
                                 src="<?= htmlspecialchars($producto['imagen_path']) ?>"
                                 alt="Imagen del producto"
                                 style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 2px solid #e2e8f0; object-fit: cover;">
                             <p style="font-size: 0.85rem; color: #888; margin-top: 5px;">
                                 <em>Seleccione una nueva imagen para cambiarla</em>
                             </p>
+                            <button type="button" id="btnLimpiarImagen" style="margin-top: 8px; background: #f8d7da; color: #c82333; border: 1px solid #f5c6cb; border-radius: 6px; padding: 6px 16px; font-weight: 600; cursor: pointer;">Quitar imagen</button>
+                            <input type="hidden" name="eliminar_imagen" id="eliminar_imagen" value="0">
                         </div>
+                        <script>
+                        document.getElementById('btnLimpiarImagen').onclick = function() {
+                            var img = document.getElementById('imgActualProducto');
+                            if (img) img.style.display = 'none';
+                            document.getElementById('eliminar_imagen').value = '1';
+                            this.style.display = 'none';
+                        };
+                        </script>
                     <?php endif; ?>
                 </div>
             </div>
