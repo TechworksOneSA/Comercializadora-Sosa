@@ -28,7 +28,7 @@ $old = $old ?? [];
         class="auth-logo" />
     </div>
 
-    <h1 class="auth-title">POS Ferretería</h1>
+    <h1 class="auth-title">Login - Comercializadora Sosa</h1>
     <p class="auth-subtitle">Acceso para Administrador y Vendedor</p>
 
     <?php if (!empty($mensaje_timeout)): ?>

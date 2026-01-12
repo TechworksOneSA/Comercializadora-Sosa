@@ -43,8 +43,8 @@
           COMERCIALIZADORA SOSA
         </h1>
         <div style="color: #495057; font-size: 0.95rem; line-height: 1.4;">
-          <div style="font-weight: 600; margin-bottom: 0.25rem;">📍 6ta Avenida 14-21, Zona 1, Ciudad Guatemala</div>
-          <div style="font-weight: 600; margin-bottom: 0.25rem;">📞 Tel: 2251-4567 | 📱 WhatsApp: 5678-9012</div>
+          <div style="font-weight: 600; margin-bottom: 0.25rem;">📍 Barrio La Flores, Gualán</div>
+          <div style="font-weight: 600; margin-bottom: 0.25rem;">📞 Tel: 4038-7031</div>
         </div>
       </div>
 
@@ -259,8 +259,7 @@
 
       <!-- Información de contacto final -->
       <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.85rem; color: #6c757d;">
-        <div>📞 <strong>Ventas:</strong> 2251-4567</div>
-        <div>📱 <strong>WhatsApp:</strong> 5678-9012</div>
+        <div>📞 <strong>Ventas:</strong> 4038-7031</div>
       </div>
     </div>
 
