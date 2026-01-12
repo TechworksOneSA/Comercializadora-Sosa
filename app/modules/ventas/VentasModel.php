@@ -385,6 +385,7 @@ class VentasModel extends Model
             $subtotal = (float)($ventaData['subtotal'] ?? 0);
             $total = (float)($ventaData['total'] ?? 0);
             $detalles = $ventaData['detalles'] ?? [];
+            $fechaVenta = $ventaData['fecha_venta'] ?? null;
 
             if ($clienteId <= 0 || $usuarioId <= 0 || empty($detalles)) {
                 throw new Exception("Datos incompletos para crear la venta");
@@ -393,12 +394,12 @@ class VentasModel extends Model
             // Detectar columnas opcionales en tabla venta
             $colMetodoPago = $this->hasColumn($this->tableVentas, 'metodo_pago');
             $colObservaciones = $this->hasColumn($this->tableVentas, 'observaciones');
+            $colFechaVenta = $this->hasColumn($this->tableVentas, 'fecha_venta');
 
             // 1. Crear encabezado de venta
             $cols = [
                 "cliente_id",
                 "usuario_id",
-                "fecha_venta",
                 "estado",
                 "subtotal",
                 "total",
@@ -407,7 +408,6 @@ class VentasModel extends Model
             $vals = [
                 ":cliente_id",
                 ":usuario_id",
-                "NOW()",
                 "'CONFIRMADA'",
                 ":subtotal",
                 ":total",
@@ -431,6 +431,16 @@ class VentasModel extends Model
                 $cols[] = "observaciones";
                 $vals[] = ":observaciones";
                 $paramsVenta[':observaciones'] = "Venta manual desde formulario";
+            }
+
+            if ($colFechaVenta && !empty($fechaVenta)) {
+                $cols[] = "fecha_venta";
+                $vals[] = ":fecha_venta";
+                $paramsVenta[':fecha_venta'] = $fechaVenta;
+            } else {
+                // Si no existe la columna o no se envió, usar NOW()
+                $cols[] = "fecha_venta";
+                $vals[] = "NOW()";
             }
 
             $sqlVenta = "INSERT INTO {$this->tableVentas} (" . implode(", ", $cols) . ")

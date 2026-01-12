@@ -29,6 +29,13 @@
       <h3 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 700;">📋 Datos Generales</h3>
 
       <div>
+        <!-- FECHA DE LA VENTA -->
+        <div style="margin-bottom: 1rem;">
+          <label for="fecha_venta" style="font-weight: 500; color: #495057;">Fecha de la venta</label>
+          <input type="date" name="fecha_venta" id="fecha_venta" class="form-control" required
+            value="<?= isset($old['fecha_venta']) ? htmlspecialchars($old['fecha_venta']) : date('Y-m-d') ?>"
+            style="max-width: 220px; margin-left: 1rem;">
+        </div>
         <!-- CLIENTE -->
         <div>
           <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">

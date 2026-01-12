@@ -101,6 +101,13 @@ class VentasController extends Controller
         $detalles = [];
         $subtotal = 0;
 
+        // Validar y obtener la fecha de la venta
+        $fechaVenta = !empty($data['fecha_venta']) ? $data['fecha_venta'] : date('Y-m-d');
+        // Validar formato YYYY-MM-DD
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVenta)) {
+            $errors[] = "La fecha de la venta no es válida";
+        }
+
         foreach ($productosIds as $index => $productoId) {
             $cantidad = (int)($cantidades[$index] ?? 0);
 
@@ -154,6 +161,7 @@ class VentasController extends Controller
                 'subtotal' => $subtotal,
                 'total' => $subtotal,
                 'detalles' => $detalles,
+                'fecha_venta' => $fechaVenta,
             ];
 
             $ventaId = $this->model->crearVentaManual($ventaData);
