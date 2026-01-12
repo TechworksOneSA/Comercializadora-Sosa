@@ -14,14 +14,13 @@
                     <th>Tipo de Producto</th>
                     <th>Precio Venta</th>
                     <th>Stock</th>
-                    <th>Acciones</th>
                 </tr>
             </thead>
 
             <tbody>
                 <?php if (empty($productos)): ?>
                     <tr>
-                        <td colspan="9" class="empty-state">
+                        <td colspan="8" class="empty-state">
                             <div class="empty-state-icon"></div>
                             <p>No se encontraron productos con esos filtros</p>
                         </td>
@@ -124,16 +123,6 @@
                                     <?= number_format((float)($p['stock'] ?? 0)) ?> uds
                                 </span>
                             </td>
-
-                            <td>
-                                <div class="acciones-flex">
-                                    <a
-                                        href="<?= url('/admin/productos/editar/' . (int)$p['id']) ?>"
-                                        class="btn-accion btn-editar">
-                                        Editar
-                                    </a>
-                                </div>
-                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -146,20 +135,5 @@
     .row-inactivo {
         opacity: 0.6;
         background-color: #f8f9fa;
-    }
-
-    .btn-editar {
-        background: #e0e7ff;
-        color: #3730a3;
-        border: 1px solid #c7d2fe;
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-weight: 600;
-        text-decoration: none;
-    }
-
-    .btn-editar:hover {
-        background: #c7d2fe;
-        border-color: #a5b4fc;
     }
 </style>
