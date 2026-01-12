@@ -14,7 +14,6 @@
                     <th>Tipo de Producto</th>
                     <th>Precio Venta</th>
                     <th>Stock</th>
-                    <th>Fecha Registro</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -134,18 +133,6 @@
                                 <span class="badge-stock <?= $stockClase ?>">
                                     <?= number_format($p['stock']) ?> uds
                                 </span>
-                            </td>
-
-                            <td><span class="fecha-registro"><?= htmlspecialchars($p['fecha_registro'] ?? 'N/A') ?></span></td>
-
-                            <td>
-                                <div class="acciones-flex">
-                                    <a
-                                        href="<?= url('/admin/productos/editar/' . (int)$p['id']) ?>"
-                                        class="btn-accion btn-editar">
-                                        Editar
-                                    </a>
-                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
