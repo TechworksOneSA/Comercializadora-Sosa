@@ -14,9 +14,11 @@
                     <th>Tipo de Producto</th>
                     <th>Precio Venta</th>
                     <th>Stock</th>
+                    <th>Fecha Registro</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
+
             <tbody>
                 <?php if (empty($productos)): ?>
                     <tr>
@@ -63,11 +65,11 @@
                             if (preg_match('#^https?://#i', $first)) {
                                 $imagenUrl = $first;
 
-                                // 3) Ruta absoluta desde raíz (/uploads/...)
+                            // 3) Ruta absoluta desde raíz (/uploads/...)
                             } elseif (str_starts_with($first, '/')) {
                                 $imagenUrl = url($first);
 
-                                // 4) Solo filename
+                            // 4) Solo filename
                             } else {
                                 $imagenUrl = url('/uploads/productos/' . $first);
                             }
@@ -79,7 +81,7 @@
                                 <?php if ($imagenUrl): ?>
                                     <img
                                         src="<?= $imagenUrl ?>"
-                                        alt="<?= htmlspecialchars($p['nombre']) ?>"
+                                        alt="<?= htmlspecialchars($p['nombre'] ?? 'Producto') ?>"
                                         class="producto-thumbnail"
                                         onerror="this.src='<?= url('/assets/img/no-image.png') ?>'">
                                 <?php else: ?>
@@ -90,13 +92,15 @@
                             </td>
 
                             <td class="producto-sku">
-                                <?= htmlspecialchars($p['sku']) ?>
+                                <?= htmlspecialchars($p['sku'] ?? '') ?>
                                 <?php if (($p['estado'] ?? 'ACTIVO') === 'INACTIVO'): ?>
                                     <span class="producto-inactivo-label">INACTIVO</span>
                                 <?php endif; ?>
                             </td>
 
-                            <td><strong><?= htmlspecialchars($p['nombre']) ?></strong></td>
+                            <td>
+                                <strong><?= htmlspecialchars($p['nombre'] ?? '') ?></strong>
+                            </td>
 
                             <td>
                                 <?php if (!empty($p['categoria_nombre'])): ?>
@@ -127,17 +131,24 @@
                                 <?php endif; ?>
                             </td>
 
-                            <td class="producto-precio">Q <?= number_format($p['precio_venta'], 2) ?></td>
+                            <td class="producto-precio">
+                                Q <?= number_format((float)($p['precio_venta'] ?? 0), 2) ?>
+                            </td>
 
                             <td>
                                 <span class="badge-stock <?= $stockClase ?>">
-                                    <?= number_format($p['stock']) ?> uds
+                                    <?= number_format((float)($p['stock'] ?? 0)) ?> uds
                                 </span>
                             </td>
 
-                            <td><span class="fecha-registro"><?= htmlspecialchars($p['fecha_registro'] ?? 'N/A') ?></span></td>
-
                             <td>
+                                <span class="fecha-registro">
+                                    <?= htmlspecialchars($p['fecha_registro'] ?? 'N/A') ?>
+                                </span>
+                            </td>
+
+                            <td class="acciones">
+                                <a class="btn-ver" href="<?= url('/admin/productos/ver/' . ($p['id'] ?? 0)) ?>">Ver</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -192,6 +203,15 @@
         background: #e0e7ff;
         color: #3730a3;
         border: 1px solid #c7d2fe;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        white-space: nowrap;
     }
 
     .btn-ver:hover {
@@ -202,5 +222,9 @@
     .row-inactivo {
         opacity: 0.6;
         background-color: #f8f9fa;
+    }
+
+    .acciones {
+        white-space: nowrap;
     }
 </style>
