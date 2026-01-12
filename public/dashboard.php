@@ -60,7 +60,7 @@
                     <h1 class="text-xl font-semibold text-text-primary">Dashboard</h1>
                     <div class="flex items-center space-x-4">
                         <div class="text-sm text-text-secondary">
-                            <p>Fecha: <?php echo date('d/m/Y'); ?></p>
+                            <p>Fecha: <?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); echo date('d/m/Y'); ?></p>
                             <p>Usuario: Administrador</p>
                         </div>
                     </div>

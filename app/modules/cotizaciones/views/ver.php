@@ -60,11 +60,17 @@
           </div>
           <div style="display: flex; justify-content: space-between;">
             <strong style="color: #495057;">Fecha:</strong>
-            <span style="color: #6c757d;"><?= date('d/m/Y', strtotime($cotizacion['fecha'])) ?></span>
+            <span style="color: #6c757d;">
+              <?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?>
+              <?= date('d/m/Y', strtotime($cotizacion['fecha'])) ?>
+            </span>
           </div>
           <div style="display: flex; justify-content: space-between;">
             <strong style="color: #495057;">Vencimiento:</strong>
-            <span style="color: #6c757d;"><?= date('d/m/Y', strtotime($cotizacion['fecha_expiracion'])) ?></span>
+            <span style="color: #6c757d;">
+              <?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?>
+              <?= date('d/m/Y', strtotime($cotizacion['fecha_expiracion'])) ?>
+            </span>
           </div>
           <div style="margin-top: 0.5rem; text-align: center;">
             <?php
@@ -139,7 +145,7 @@
             </span>
           </div>
           <div style="font-size: 0.85rem; color: #6c757d; margin-top: 0.25rem;">
-            <strong>Fecha:</strong> <?= date('d/m/Y H:i', strtotime($cotizacion['created_at'])) ?>
+            <strong>Fecha:</strong> <?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?><?= date('d/m/Y H:i', strtotime($cotizacion['created_at'])) ?>
           </div>
         </div>
       </div>
@@ -240,7 +246,7 @@
           ⏰ VALIDEZ DE LA COTIZACIÓN
         </div>
         <div style="color: #dc3545; font-weight: 800; font-size: 1.1rem;">
-          Válida hasta: <?= date('d/m/Y', strtotime($cotizacion['fecha_expiracion'])) ?>
+          Válida hasta: <?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?><?= date('d/m/Y', strtotime($cotizacion['fecha_expiracion'])) ?>
         </div>
       </div>
 
@@ -253,7 +259,7 @@
           Comercializadora Sosa – Abasteciendo calidad, cuando usted la necesita
         </p>
         <p style="margin: 0; font-size: 0.85rem;">
-          Esta cotización ha sido generada electrónicamente el <?= date('d/m/Y \a \l\a\s H:i') ?>
+          Esta cotización ha sido generada electrónicamente el <?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?><?= date('d/m/Y \a \l\a\s H:i') ?>
         </p>
       </div>
 

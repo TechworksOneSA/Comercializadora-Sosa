@@ -14,4 +14,13 @@ define('DB_PASS', getenv('DB_PASS') ?: '');
 // En server: DocumentRoot ya es /public => base ""
 // En XAMPP: probablemente /Comercializadora/ferreteria-pos/public
 // ========================
+
 define('APP_URL', getenv('APP_URL') ?: '');
+
+// ========================
+// Zona horaria de la aplicación
+// ========================
+if (!defined('APP_TIMEZONE')) {
+	define('APP_TIMEZONE', 'America/Guatemala');
+}
+date_default_timezone_set(APP_TIMEZONE);

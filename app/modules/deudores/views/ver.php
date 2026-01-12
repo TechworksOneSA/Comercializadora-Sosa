@@ -133,7 +133,10 @@
         </div>
         <div>
           <div style="font-size: 0.85rem; color: #6c757d; margin-bottom: 0.25rem;">Fecha</div>
-          <div style="font-weight: 600; color: #495057;"><?= htmlspecialchars($deuda['fecha'] ?? '') ?></div>
+          <div style="font-weight: 600; color: #495057;">
+            <?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?>
+            <?= htmlspecialchars($deuda['fecha'] ?? '') ?>
+          </div>
         </div>
         <div>
           <div style="font-size: 0.85rem; color: #6c757d; margin-bottom: 0.25rem;">Descripción</div>
@@ -214,7 +217,10 @@
                     echo ($iconos[$metodo] ?? '💵') . ' ' . htmlspecialchars($metodo);
                     ?>
                   </td>
-                  <td style="padding: 0.75rem; color: #6c757d;"><?= date('d/m/Y H:i', strtotime($pago['fecha'])) ?></td>
+                  <td style="padding: 0.75rem; color: #6c757d;">
+                    <?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?>
+                    <?= date('d/m/Y H:i', strtotime($pago['fecha'])) ?>
+                  </td>
                   <td style="padding: 0.75rem; color: #6c757d;"><?= htmlspecialchars($pago['usuario_nombre'] ?? 'N/A') ?></td>
                 </tr>
               <?php endforeach; ?>

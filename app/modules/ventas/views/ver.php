@@ -55,7 +55,10 @@
             </div>
             <div>
               <strong style="color: #495057;">Fecha:</strong>
-              <span style="margin-left: 0.5rem; color: #6c757d;"><?= date('d/m/Y H:i', strtotime($venta['fecha_venta'])) ?></span>
+              <span style="margin-left: 0.5rem; color: #6c757d;">
+                <?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?>
+                <?= date('d/m/Y H:i', strtotime($venta['fecha_venta'])) ?>
+              </span>
             </div>
             <?php if (!empty($venta['cotizacion_id'])): ?>
               <div>
@@ -153,7 +156,7 @@
             </span>
           </div>
           <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #6c757d;">
-            Creada: <?= date('d/m/Y H:i', strtotime($venta['created_at'])) ?>
+            Creada: <?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?><?= date('d/m/Y H:i', strtotime($venta['created_at'])) ?>
           </div>
         </div>
       </div>
@@ -236,7 +239,7 @@
 
     <!-- PIE DE PÁGINA -->
     <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #e9ecef; text-align: center; color: #6c757d; font-size: 0.9rem;">
-      <p style="margin: 0 0 0.5rem 0;">Venta realizada el <strong><?= date('d/m/Y H:i', strtotime($venta['fecha_venta'])) ?></strong></p>
+      <p style="margin: 0 0 0.5rem 0;">Venta realizada el <strong><?php if(function_exists('date_default_timezone_set')) date_default_timezone_set('America/Guatemala'); ?><?= date('d/m/Y H:i', strtotime($venta['fecha_venta'])) ?></strong></p>
       <p style="margin: 0; font-size: 0.85rem;">Gracias por su compra - Comercializadora Sosa</p>
     </div>
 
