@@ -2,8 +2,10 @@
 // recibe: $productos
 ?>
 <div class="productos-table-modern">
-    <div class="table-container">
-        <table class="table-productos-modern">
+        <div class="table-scroll-navbar-wrapper">
+            <div class="table-scroll-navbar" id="tableScrollNavbar"></div>
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="table-productos-modern">
             <thead>
                 <tr>
                     <th style="width: 100px;">Imagen</th>
@@ -151,11 +153,104 @@
                     <?php endforeach; ?>
                 <?php endif; ?>
             </tbody>
-        </table>
-    </div>
+                </table>
+            </div>
+        </div>
 </div>
 
 <style>
+    /* Barra de desplazamiento visual para tablas en móvil */
+    .table-scroll-navbar-wrapper {
+        position: relative;
+    }
+    .table-scroll-navbar {
+        display: none;
+        height: 8px;
+        background: #e3eafc;
+        border-radius: 4px;
+        margin-bottom: 6px;
+        position: relative;
+        overflow: hidden;
+    }
+    .table-scroll-navbar.active {
+        display: block;
+    }
+    .table-scroll-navbar-thumb {
+        height: 100%;
+        background: linear-gradient(90deg, #0a3d91 0%, #1565c0 100%);
+        border-radius: 4px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 40%;
+        transition: left 0.15s;
+    }
+    @media (max-width: 900px) {
+        .table-scroll-navbar {
+            display: block;
+        }
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-productos-modern {
+            min-width: 800px;
+        }
+    }
+    </style>
+    <script>
+    // Barra de desplazamiento visual para tablas en móvil
+    document.addEventListener('DOMContentLoaded', function() {
+        var tableContainer = document.querySelector('.table-container');
+        var navbar = document.getElementById('tableScrollNavbar');
+        if (!tableContainer || !navbar) return;
+
+        // Crear el thumb
+        var thumb = document.createElement('div');
+        thumb.className = 'table-scroll-navbar-thumb';
+        navbar.appendChild(thumb);
+
+        function updateThumb() {
+            var scrollW = tableContainer.scrollWidth;
+            var clientW = tableContainer.clientWidth;
+            if (scrollW <= clientW) {
+                navbar.style.display = 'none';
+                return;
+            }
+            navbar.style.display = 'block';
+            var ratio = clientW / scrollW;
+            var thumbW = Math.max(40, ratio * 100) + '%';
+            thumb.style.width = thumbW;
+            var left = (tableContainer.scrollLeft / (scrollW - clientW)) * (100 - parseFloat(thumb.style.width));
+            thumb.style.left = left + '%';
+        }
+
+        tableContainer.addEventListener('scroll', updateThumb);
+        window.addEventListener('resize', updateThumb);
+        updateThumb();
+
+        // Permitir arrastrar el thumb
+        let dragging = false;
+        let startX = 0;
+        let startScroll = 0;
+        thumb.addEventListener('touchstart', function(e) {
+            dragging = true;
+            startX = e.touches[0].clientX;
+            startScroll = tableContainer.scrollLeft;
+            e.preventDefault();
+        });
+        document.addEventListener('touchmove', function(e) {
+            if (!dragging) return;
+            var dx = e.touches[0].clientX - startX;
+            var scrollW = tableContainer.scrollWidth;
+            var clientW = tableContainer.clientWidth;
+            var maxScroll = scrollW - clientW;
+            var percent = dx / navbar.offsetWidth;
+            tableContainer.scrollLeft = startScroll + percent * maxScroll;
+        });
+        document.addEventListener('touchend', function() { dragging = false; });
+    });
+    </script>
     /* Estilos adicionales para la vista de vendedor */
     .descripcion-corta {
         font-size: 0.85rem;
