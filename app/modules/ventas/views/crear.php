@@ -3,207 +3,23 @@
   <div class="card-header" style="background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%); padding: 2rem;">
     <h1 class="card-title" style="color: white; font-size: 1.75rem; font-weight: 700; margin: 0;">
       💰 Nueva Venta
-    <style>
-      .card {
-        animation: fadeIn 0.3s ease-in;
-        box-shadow: 0 4px 24px rgba(10, 61, 145, 0.08), 0 1.5px 6px rgba(0,0,0,0.04);
-        border-radius: 1rem;
-        background: #fff;
-        border: none;
-      }
+    </h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0 0; font-size: 0.95rem;">
+      Registra una venta seleccionando cliente y productos
+    </p>
+  </div>
 
-      .card-header {
-        background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%);
-        padding: 2.5rem 2rem 2rem 2rem;
-        border-radius: 1rem 1rem 0 0;
-        box-shadow: 0 2px 8px rgba(10, 61, 145, 0.08);
-        margin-bottom: 0;
-      }
-
-      .card-title {
-        color: #fff;
-        font-size: 2.1rem;
-        font-weight: 800;
-        margin: 0;
-        letter-spacing: 0.5px;
-        text-shadow: 0 2px 8px rgba(10, 61, 145, 0.10);
-      }
-
-      .card-header p {
-        color: rgba(255,255,255,0.92);
-        font-size: 1.05rem;
-        margin-top: 0.7rem;
-        margin-bottom: 0;
-      }
-
-      /* Sección de datos generales */
-      .card form > div:first-of-type {
-        background: linear-gradient(90deg, #f8f9fa 80%, #e3eafc 100%);
-        border-radius: 0.7rem;
-        box-shadow: 0 1px 4px rgba(10, 61, 145, 0.04);
-        margin-bottom: 2rem;
-        padding: 2rem 1.5rem 1.5rem 1.5rem;
-        border: 1.5px solid #e3eafc;
-      }
-
-      label {
-        font-weight: 600;
-        color: #0a3d91;
-        margin-bottom: 0.4rem;
-        display: block;
-        letter-spacing: 0.2px;
-      }
-
-      input[type="date"],
-      input[type="text"],
-      input[type="number"],
-      select {
-        width: 100%;
-        padding: 0.7rem 1rem;
-        border: 2px solid #e3eafc;
-        border-radius: 0.5rem;
-        font-size: 1rem;
-        background: #fafdff;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        margin-bottom: 0.7rem;
-        box-shadow: 0 1px 2px rgba(10, 61, 145, 0.03);
-      }
-
-      input[type="date"]:focus,
-      input[type="text"]:focus,
-      input[type="number"]:focus,
-      select:focus {
-        border-color: #0a3d91;
-        box-shadow: 0 0 0 2px rgba(10, 61, 145, 0.10);
-        outline: none;
-      }
-
-      /* Buscadores */
-      #resultadosClientes, #resultadosProductos {
-        background: #fff;
-        border: 2px solid #0a3d91;
-        border-top: none;
-        border-radius: 0 0 0.5rem 0.5rem;
-        box-shadow: 0 4px 12px rgba(10, 61, 145, 0.10);
-        z-index: 1000;
-        max-height: 300px;
-        overflow-y: auto;
-        font-size: 1rem;
-      }
-
-      #resultadosClientes div,
-      #resultadosProductos div {
-        padding: 0.7rem 1rem;
-        cursor: pointer;
-        border-bottom: 1px solid #e3eafc;
-        transition: background 0.15s;
-      }
-      #resultadosClientes div:last-child,
-      #resultadosProductos div:last-child {
-        border-bottom: none;
-      }
-      #resultadosClientes div:hover,
-      #resultadosProductos div:hover {
-        background: #e3eafc;
-      }
-
-      /* Tabla de productos */
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        background: #fff;
-        border-radius: 0.5rem;
-        overflow: hidden;
-        box-shadow: 0 1px 4px rgba(10, 61, 145, 0.04);
-      }
-      thead {
-        background: linear-gradient(90deg, #f8f9fa 80%, #e3eafc 100%);
-      }
-      th, td {
-        padding: 0.85rem 1rem;
-        text-align: left;
-        font-size: 1rem;
-        color: #495057;
-      }
-      th {
-        font-weight: 700;
-        color: #0a3d91;
-        border-bottom: 2px solid #e3eafc;
-      }
-      td {
-        border-bottom: 1px solid #e3eafc;
-      }
-      tr:last-child td {
-        border-bottom: none;
-      }
-
-      /* Totales */
-      .totales-box {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 1rem;
-        padding: 1.2rem;
-        background: linear-gradient(90deg, #f8f9fa 80%, #e3eafc 100%);
-        border-radius: 0.5rem;
-        box-shadow: 0 1px 4px rgba(10, 61, 145, 0.04);
-      }
-      .totales-box div {
-        text-align: right;
-      }
-      .totales-box .total-label {
-        font-size: 1.1rem;
-        color: #6c757d;
-        margin-bottom: 0.5rem;
-      }
-      .totales-box .total-valor {
-        font-size: 1.7rem;
-        font-weight: 800;
-        color: #28a745;
-        letter-spacing: 0.5px;
-      }
-
-      /* Botones */
-      .btn {
-        padding: 0.85rem 2rem;
-        border-radius: 0.5rem;
-        font-weight: 700;
-        font-size: 1rem;
-        border: none;
-        cursor: pointer;
-        transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-        box-shadow: 0 2px 8px rgba(10, 61, 145, 0.08);
-      }
-      .btn-primary {
-        background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%);
-        color: #fff;
-      }
-      .btn-primary:hover {
-        background: linear-gradient(135deg, #1565c0 0%, #0a3d91 100%);
-        transform: translateY(-2px);
-      }
-      .btn-secondary {
-        background: #f8f9fa;
-        color: #0a3d91;
-        border: 2px solid #e3eafc;
-      }
-      .btn-secondary:hover {
-        background: #e3eafc;
-        color: #0a3d91;
-        transform: translateY(-1px);
-      }
-
-      /* Animación de fadeIn */
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    </style>
+  <!-- ERRORES -->
+  <?php if (!empty($errors)): ?>
+    <div style="margin: 1.5rem; padding: 1rem 1.5rem; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 0.5rem; color: #721c24;">
+      <strong>⚠️ Errores:</strong>
+      <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
+        <?php foreach ($errors as $error): ?>
+          <li><?= e($error) ?></li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+  <?php endif; ?>
 
   <!-- FORMULARIO -->
   <form method="POST" action="<?= url('/admin/ventas/guardar') ?>" id="formVenta" style="padding: 2rem;">
@@ -697,7 +513,6 @@
       opacity: 0;
       transform: translateY(20px);
     }
-
     to {
       opacity: 1;
       transform: translateY(0);
@@ -707,5 +522,25 @@
   input:focus,
   select:focus {
     outline: none;
+  }
+
+  /* --- SOLO FECHA DE LA VENTA --- */
+  #fecha_venta {
+    background: #fafdff;
+    border: 2px solid #e3eafc;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    color: #0a3d91;
+    padding: 0.7rem 1rem;
+    box-shadow: 0 1px 2px rgba(10, 61, 145, 0.03);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-left: 1rem;
+    max-width: 220px;
+    margin-bottom: 0.5rem;
+  }
+  #fecha_venta:focus {
+    border-color: #0a3d91;
+    box-shadow: 0 0 0 2px rgba(10, 61, 145, 0.10);
+    background: #f0f6ff;
   }
 </style>
