@@ -63,7 +63,6 @@ class CajaModel extends Model
                 FROM movimientos_caja mc
                 LEFT JOIN usuarios u ON mc.usuario_id = u.id
                 LEFT JOIN venta v ON mc.venta_id = v.id
-                WHERE mc.tipo IN ('gasto', 'retiro')
                 ORDER BY mc.fecha DESC, mc.id DESC";
 
         $stmt = $this->db->prepare($sql);

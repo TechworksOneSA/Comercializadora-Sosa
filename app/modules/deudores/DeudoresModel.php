@@ -299,16 +299,33 @@ class DeudoresModel extends Model
                 ':usuario_id'  => $usuarioId,
             ]);
 
+            // Obtener información de la deuda ANTES de actualizar
+            $deudaInfo = $this->getDeudaById($deudaId);
+
             $sqlUpdate = "UPDATE {$this->table}
                           SET total_pagado = COALESCE(total_pagado,0) + :monto
                           WHERE id = :id";
             $upd = $this->db->prepare($sqlUpdate);
             $upd->execute([':monto' => $monto, ':id' => $deudaId]);
 
+            // Registrar movimiento en caja
+            require_once __DIR__ . '/../caja/CajaModel.php';
+            $cajaModel = new CajaModel();
+            $conceptoCaja = 'Abono a deuda';
+            $observacionesCaja = isset($deudaInfo['cliente_nombre']) ? ('Cliente: ' . $deudaInfo['cliente_nombre']) : '';
+            $cajaModel->registrarIngreso([
+                'concepto' => $conceptoCaja,
+                'monto' => $monto,
+                'metodo_pago' => $metodoPago,
+                'observaciones' => $observacionesCaja,
+                'venta_id' => null,
+                'usuario_id' => $usuarioId
+            ]);
+
             // Autoconvertir a venta si saldo <= 0
-            $deudaInfo = $this->getDeudaById($deudaId);
             if ($deudaInfo) {
-                $saldo = (float)$deudaInfo['total'] - ((float)$deudaInfo['total_pagado'] + $monto);
+                $totalPagadoNuevo = (float)$deudaInfo['total_pagado'] + $monto;
+                $saldo = (float)$deudaInfo['total'] - $totalPagadoNuevo;
                 if ($saldo <= 0) {
                     try {
                         $this->convertirDeudaAVenta($deudaId, $usuarioId);
