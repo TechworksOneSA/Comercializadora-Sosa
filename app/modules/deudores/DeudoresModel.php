@@ -322,15 +322,24 @@ class DeudoresModel extends Model
                 'usuario_id' => $usuarioId
             ]);
 
-            // Autoconvertir a venta si saldo <= 0
+            // Autoconvertir a venta si saldo <= 0, o asegurar que esté ACTIVA si aún hay saldo
             if ($deudaInfo) {
                 $totalPagadoNuevo = (float)$deudaInfo['total_pagado'] + $monto;
                 $saldo = (float)$deudaInfo['total'] - $totalPagadoNuevo;
+                
                 if ($saldo <= 0) {
+                    // Deuda completamente pagada: convertir a venta
                     try {
                         $this->convertirDeudaAVenta($deudaId, $usuarioId);
                     } catch (Exception $e) {
                         error_log('Error convirtiendo deuda a venta: ' . $e->getMessage());
+                    }
+                } else {
+                    // Aún hay saldo pendiente: asegurar que esté ACTIVA
+                    if ($this->columnExists($this->table, 'estado')) {
+                        $sqlEstado = "UPDATE {$this->table} SET estado = 'ACTIVA' WHERE id = :id";
+                        $stmtEstado = $this->db->prepare($sqlEstado);
+                        $stmtEstado->execute([':id' => $deudaId]);
                     }
                 }
             }

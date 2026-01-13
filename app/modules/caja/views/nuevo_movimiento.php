@@ -172,12 +172,15 @@ $old = $old ?? [];
                     <select id="tipo" name="tipo" class="form-select" required>
                         <option value="">Seleccionar tipo...</option>
                         <option value="gasto" <?= ($old['tipo'] ?? '') === 'gasto' ? 'selected' : '' ?>>
-                            📤 Gasto Operativo
+                            � Gasto Operativo (Renta, Servicios, Compras, etc.)
                         </option>
                         <option value="retiro" <?= ($old['tipo'] ?? '') === 'retiro' ? 'selected' : '' ?>>
-                            🏦 Retiro de Caja
+                            💰 Retiro Personal (Dinero que sale del negocio)
                         </option>
                     </select>
+                    <small style="color: #64748b; font-size: 0.8rem; display: block; margin-top: 0.25rem;">
+                        <strong>Gasto:</strong> Pagos del negocio (luz, agua, compras). <strong>Retiro:</strong> Dinero que sacas para uso personal.
+                    </small>
                 </div>
 
                 <div class="form-group">
@@ -199,17 +202,17 @@ $old = $old ?? [];
 
             <!-- Concepto -->
             <div class="form-group">
-                <label for="concepto" class="form-label">📝 Concepto</label>
+                <label for="concepto" class="form-label">📝 Concepto del Movimiento</label>
                 <input
                     type="text"
                     id="concepto"
                     name="concepto"
                     class="form-input"
-                    placeholder="Descripción del gasto o retiro..."
+                    placeholder="Ej: Pago de luz, Pago de agua, Compra de insumos, Retiro personal del dueño..."
                     value="<?= htmlspecialchars($old['concepto'] ?? '') ?>"
                     required>
                 <small style="color: #64748b; font-size: 0.8rem;">
-                    Ej: Compra de papelería, Pago de servicios, Retiro para gastos personales, etc.
+                    💡 <strong>Detección automática:</strong> Gastos normales (luz, renta, compras) se registran como GASTO. Solo escribe "retiro personal" si sacas dinero para uso personal.
                 </small>
             </div>
 
@@ -252,19 +255,6 @@ $old = $old ?? [];
 </div>
 
 <script>
-    // Auto-focus en el primer campo
-    document.getElementById('tipo').focus();
-
-    // Actualizar placeholder del concepto según el tipo
-    document.getElementById('tipo').addEventListener('change', function() {
-        const concepto = document.getElementById('concepto');
-
-        if (this.value === 'gasto') {
-            concepto.placeholder = 'Ej: Compra de papelería, Pago de servicios, Mantenimiento...';
-        } else if (this.value === 'retiro') {
-            concepto.placeholder = 'Ej: Retiro para gastos personales, Pago a proveedores...';
-        } else {
-            concepto.placeholder = 'Descripción del gasto o retiro...';
-        }
-    });
+    // Auto-focus en el concepto
+    document.getElementById('concepto').focus();
 </script>
