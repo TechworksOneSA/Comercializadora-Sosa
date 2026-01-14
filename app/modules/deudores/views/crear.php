@@ -664,8 +664,8 @@
             return;
           }
 
-          // Si no se encuentra localmente, buscar en backend
-          fetch('/admin/productos/api/buscar_por_scan', {
+          // Si no se encuentra localmente, buscar en backend (acceso directo al archivo PHP)
+          fetch('/app/modules/productos/api/buscar_por_scan.php', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
