@@ -1,91 +1,101 @@
 // --- Modo Supermercado (Scanner) ---
 let processingScan = false;
-// Agrega input scanner arriba del selector de productos
-const scannerInput = document.createElement('input');
-scannerInput.type = 'text';
-scannerInput.id = 'productoScanner';
-scannerInput.placeholder = 'Escanear serie / código de barra / SKU y presione Enter';
-scannerInput.style = 'width: 100%; padding: 0.75rem 1rem; border: 2px solid #dc3545; border-radius: 0.5rem; font-size: 0.95rem; margin-bottom: 1rem;';
-scannerInput.autocomplete = 'off';
-const productosSection = document.querySelector('h3:contains("🛒 Seleccionar Productos")').parentNode;
-productosSection.insertBefore(scannerInput, productosSection.firstChild);
-
-scannerInput.addEventListener('keydown', function(e) {
-  if ((e.key === 'Enter' || e.key === 'Tab') && !e.repeat) {
-    e.preventDefault();
-    if (processingScan) return;
-    processingScan = true;
-    const q = scannerInput.value.trim();
-    if (!q) {
-      processingScan = false;
-      return;
+// Busca el h3 por texto y agrega el input scanner arriba
+window.addEventListener('DOMContentLoaded', function() {
+  const h3s = document.querySelectorAll('h3');
+  let productosSection = null;
+  h3s.forEach(h3 => {
+    if (h3.textContent.includes('🛒 Seleccionar Productos')) {
+      productosSection = h3.parentNode;
     }
-    fetch('<?= url('/admin/productos/api/buscar_por_scan') ?>', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ q })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success && data.producto) {
-        if (parseInt(data.producto.requiere_serie) === 1) {
-          const yaExisteSerie = productosSeleccionados.some(
-            p => p.numero_serie && p.numero_serie === q
-          );
-          if (yaExisteSerie) {
-            showToast('warning', 'Serie ya agregada');
-            return;
-          }
-          if (parseInt(data.producto.stock) <= 0) {
-            showToast('warning', 'Sin stock');
-            return;
-          }
-          productosSeleccionados.push({
-            id: data.producto.id,
-            nombre: data.producto.nombre,
-            precio: parseFloat(data.producto.precio_venta),
-            cantidad: 1,
-            stock: data.producto.stock,
-            numero_serie: q,
-            requiere_serie: 1
-          });
-        } else {
-          let existe = productosSeleccionados.find(
-            p => p.id == data.producto.id && (!p.requiere_serie || p.requiere_serie == 0)
-          );
-          if (existe) {
-            if (existe.cantidad + 1 > data.producto.stock) {
-              showToast('warning', 'Sin stock');
-              return;
-            }
-            existe.cantidad += 1;
-          } else {
-            if (parseInt(data.producto.stock) <= 0) {
-              showToast('warning', 'Sin stock');
-              return;
-            }
-            productosSeleccionados.push({
-              id: data.producto.id,
-              nombre: data.producto.nombre,
-              precio: parseFloat(data.producto.precio_venta),
-              cantidad: 1,
-              stock: data.producto.stock,
-              numero_serie: '',
-              requiere_serie: 0
-            });
-          }
+  });
+  if (productosSection) {
+    const scannerInput = document.createElement('input');
+    scannerInput.type = 'text';
+    scannerInput.id = 'productoScanner';
+    scannerInput.placeholder = 'Escanear serie / código de barra / SKU y presione Enter';
+    scannerInput.style = 'width: 100%; padding: 0.75rem 1rem; border: 2px solid #dc3545; border-radius: 0.5rem; font-size: 0.95rem; margin-bottom: 1rem;';
+    scannerInput.autocomplete = 'off';
+    productosSection.insertBefore(scannerInput, productosSection.firstChild);
+
+    scannerInput.addEventListener('keydown', function(e) {
+      if ((e.key === 'Enter' || e.key === 'Tab') && !e.repeat) {
+        e.preventDefault();
+        if (processingScan) return;
+        processingScan = true;
+        const q = scannerInput.value.trim();
+        if (!q) {
+          processingScan = false;
+          return;
         }
-        renderizarTabla();
-        showToast('success', 'Producto agregado');
-      } else {
-        showToast('error', data.message || 'No encontrado');
+        fetch('/admin/productos/api/buscar_por_scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ q })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.producto) {
+            if (parseInt(data.producto.requiere_serie) === 1) {
+              const yaExisteSerie = productosSeleccionados.some(
+                p => p.numero_serie && p.numero_serie === q
+              );
+              if (yaExisteSerie) {
+                showToast('warning', 'Serie ya agregada');
+                return;
+              }
+              if (parseInt(data.producto.stock) <= 0) {
+                showToast('warning', 'Sin stock');
+                return;
+              }
+              productosSeleccionados.push({
+                id: data.producto.id,
+                nombre: data.producto.nombre,
+                precio: parseFloat(data.producto.precio_venta),
+                cantidad: 1,
+                stock: data.producto.stock,
+                numero_serie: q,
+                requiere_serie: 1
+              });
+            } else {
+              let existe = productosSeleccionados.find(
+                p => p.id == data.producto.id && (!p.requiere_serie || p.requiere_serie == 0)
+              );
+              if (existe) {
+                if (existe.cantidad + 1 > data.producto.stock) {
+                  showToast('warning', 'Sin stock');
+                  return;
+                }
+                existe.cantidad += 1;
+              } else {
+                if (parseInt(data.producto.stock) <= 0) {
+                  showToast('warning', 'Sin stock');
+                  return;
+                }
+                productosSeleccionados.push({
+                  id: data.producto.id,
+                  nombre: data.producto.nombre,
+                  precio: parseFloat(data.producto.precio_venta),
+                  cantidad: 1,
+                  stock: data.producto.stock,
+                  numero_serie: '',
+                  requiere_serie: 0
+                });
+              }
+            }
+            renderizarTabla();
+            showToast('success', 'Producto agregado');
+          } else {
+            showToast('error', data.message || 'No encontrado');
+          }
+        })
+        .catch(() => showToast('error', 'Error de red'))
+        .finally(() => {
+          scannerInput.value = '';
+          scannerInput.focus();
+          setTimeout(() => { processingScan = false; }, 150);
+        });
       }
-    })
-    .catch(() => showToast('error', 'Error de red'))
-    .finally(() => {
-      scannerInput.value = '';
-      scannerInput.focus();
-      setTimeout(() => { processingScan = false; }, 150);
     });
   }
 });
