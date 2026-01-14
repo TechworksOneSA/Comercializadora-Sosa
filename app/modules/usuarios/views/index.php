@@ -37,7 +37,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm">Total Usuarios</p>
-                    <p class="text-2xl font-bold text-gray-800"><?= $stats['total'] ?? 0 ?></p>
+                    <p class="text-2xl font-bold text-gray-800"><?= max(0, ($stats['total'] ?? 0) - 1) ?></p>
                 </div>
                 <div class="bg-blue-100 p-3 rounded-full">
                     <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,7 +51,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm">Activos</p>
-                    <p class="text-2xl font-bold text-green-600"><?= $stats['activos'] ?? 0 ?></p>
+                    <p class="text-2xl font-bold text-green-600"><?= max(0, ($stats['activos'] ?? 0) - 1) ?></p>
                 </div>
                 <div class="bg-green-100 p-3 rounded-full">
                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,7 +65,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm">Administradores</p>
-                    <p class="text-2xl font-bold text-purple-600"><?= $stats['admins'] ?? 0 ?></p>
+                    <p class="text-2xl font-bold text-purple-600"><?= max(0, ($stats['admins'] ?? 0) - 1) ?></p>
                 </div>
                 <div class="bg-purple-100 p-3 rounded-full">
                     <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +79,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-500 text-sm">Vendedores</p>
-                    <p class="text-2xl font-bold text-orange-600"><?= $stats['vendedores'] ?? 0 ?></p>
+                    <p class="text-2xl font-bold text-orange-600"><?= max(0, ($stats['vendedores'] ?? 0) - 1) ?></p>
                 </div>
                 <div class="bg-orange-100 p-3 rounded-full">
                     <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
