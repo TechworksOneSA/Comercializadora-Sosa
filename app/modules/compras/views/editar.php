@@ -207,6 +207,10 @@ foreach ($detalles as $det) {
         color: white;
     }
 
+    .productos-table thead th {
+        color: white !important;
+    }
+
     .productos-table th {
         padding: 1rem;
         text-align: left;
