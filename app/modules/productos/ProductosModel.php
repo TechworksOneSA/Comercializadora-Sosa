@@ -199,9 +199,6 @@ class ProductosModel extends Model
             throw $e;
         }
     }
-            throw $e;
-        }
-    }
 
     public function actualizar(int $id, array $data): bool
     {
