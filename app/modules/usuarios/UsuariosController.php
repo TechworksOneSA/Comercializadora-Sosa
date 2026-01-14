@@ -27,12 +27,7 @@ class UsuariosController extends Controller
             return (int)$usuario['id'] !== 1;
         });
 
-        // Restar 1 a cada estadística si es mayor a 0
-        foreach (['total', 'activos', 'admins', 'vendedores'] as $key) {
-            if (isset($stats[$key]) && $stats[$key] > 0) {
-                $stats[$key]--;
-            }
-        }
+        // No modificar los stats aquí; el ajuste se hace en la vista
 
         $this->viewWithLayout("usuarios/views/index", [
             "title"    => "Gestión de Usuarios",
