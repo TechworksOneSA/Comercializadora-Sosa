@@ -141,7 +141,9 @@ class ComprasController extends Controller
 
         $compra_id = $this->model->crearCompra($header, $detalles);
         
-        // Guardar series si hay productos con serie
+        // ❌ FUNCIONALIDAD DE SERIES DESACTIVADA
+        // Las series ahora se registran al crear el producto, no en las compras
+        /*
         if (!empty($seriesPorProducto) && $compra_id) {
             $seriesModel = new ProductosSeriesModel();
             
@@ -158,6 +160,7 @@ class ComprasController extends Controller
                 }
             }
         }
+        */
 
         header("Location: " . url('/admin/compras?msg=Compra registrada e inventario actualizado correctamente'));
         exit;

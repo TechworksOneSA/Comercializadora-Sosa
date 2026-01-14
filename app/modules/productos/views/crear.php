@@ -73,6 +73,13 @@ $marcasLista = $marcasModel->listarActivas();
                             placeholder="Ej: Martillo 16oz Mango de Fibra" value="<?= htmlspecialchars($old['nombre'] ?? '') ?>" autofocus>
                         <span class="form-help">El SKU se generará automáticamente</span>
                     </div>
+
+                    <div class="form-group form-grid-full">
+                        <label class="form-label">Número de Serie</label>
+                        <input type="text" name="numero_serie" id="numero_serie_unidad" class="form-input"
+                            placeholder="Ej: SN123456789" value="<?= htmlspecialchars($old['numero_serie'] ?? '') ?>">
+                        <span class="form-help">📝 Ingresa el número de serie del producto (opcional). Si no lo ingresas ahora, podrás hacerlo después.</span>
+                    </div>
                 </div>
             </div>
 

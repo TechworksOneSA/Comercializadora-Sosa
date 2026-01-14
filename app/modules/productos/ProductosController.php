@@ -187,11 +187,20 @@ class ProductosController extends Controller
         ];
 
         try {
-            $ok = $this->model->crear($payload);
-            if (!$ok) {
+            $productoId = $this->model->crear($payload);
+            if (!$productoId) {
                 redirect('/admin/productos/crear?error=No se pudo crear el producto');
                 return;
             }
+
+            // ✅ Si se proporcionó número de serie, guardarlo en productos_series
+            $numeroSerie = trim($data['numero_serie'] ?? '');
+            if (!empty($numeroSerie) && $tipoProducto === 'UNIDAD') {
+                require_once __DIR__ . '/ProductosSeriesModel.php';
+                $seriesModel = new ProductosSeriesModel();
+                $seriesModel->guardarSerieUnica($productoId, $numeroSerie);
+            }
+            
             redirect('/admin/productos?ok=creado');
         } catch (Exception $e) {
             error_log("Error creando producto: " . $e->getMessage());
@@ -212,6 +221,11 @@ class ProductosController extends Controller
             return;
         }
 
+        // ✅ Obtener el número de serie si existe
+        require_once __DIR__ . '/ProductosSeriesModel.php';
+        $seriesModel = new ProductosSeriesModel();
+        $numeroSerie = $seriesModel->getSerieDelProducto((int)$id);
+        
         $categoriasModel = new CategoriasModel();
         $marcasModel     = new MarcasModel();
 
@@ -219,6 +233,7 @@ class ProductosController extends Controller
             "title"      => "Editar Producto",
             "user"       => $_SESSION["user"],
             "producto"   => $producto,
+            "numero_serie" => $numeroSerie, // ✅ Pasar la serie a la vista
             "categorias" => $categoriasModel->listarActivas(),
             "marcas"     => $marcasModel->listarActivas(),
             "errors"     => [],
@@ -244,12 +259,18 @@ class ProductosController extends Controller
         if (!empty($errors)) {
             $categoriasModel = new CategoriasModel();
             $marcasModel     = new MarcasModel();
+            
+            // ✅ Obtener número de serie para mantenerlo en caso de error
+            require_once __DIR__ . '/ProductosSeriesModel.php';
+            $seriesModel = new ProductosSeriesModel();
+            $numeroSerie = $seriesModel->getSerieDelProducto((int)$id);
 
             $this->viewWithLayout("productos/views/editar", [
                 "title"      => "Editar Producto",
                 "user"       => $_SESSION["user"],
                 "errors"     => $errors,
                 "producto"   => array_merge($producto, $data),
+                "numero_serie" => $numeroSerie, // ✅ Pasar la serie
                 "categorias" => $categoriasModel->listarActivas(),
                 "marcas"     => $marcasModel->listarActivas(),
             ]);
@@ -307,6 +328,20 @@ class ProductosController extends Controller
 
         try {
             $this->model->actualizar((int)$id, $payload);
+            
+            // ✅ Guardar o actualizar número de serie si se proporcionó
+            $numeroSerie = trim($data['numero_serie'] ?? '');
+            $tipoProducto = $producto['tipo_producto'] ?? 'UNIDAD';
+            
+            if ($tipoProducto === 'UNIDAD') {
+                require_once __DIR__ . '/ProductosSeriesModel.php';
+                $seriesModel = new ProductosSeriesModel();
+                
+                if (!empty($numeroSerie)) {
+                    $seriesModel->guardarSerieUnica((int)$id, $numeroSerie);
+                }
+            }
+            
             redirect("/admin/productos?ok=actualizado");
         } catch (Exception $e) {
             error_log("Error actualizando producto: " . $e->getMessage());

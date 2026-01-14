@@ -590,6 +590,21 @@ $marcaText = $marcaId && isset($mapMar[$marcaId]) ? $mapMar[$marcaId] : '';
                         placeholder="Código único del producto"
                         readonly>
                 </div>
+                
+                <?php if (strtoupper($producto['tipo_producto'] ?? 'UNIDAD') === 'UNIDAD'): ?>
+                <div class="form-group">
+                    <label class="form-label">Número de Serie</label>
+                    <input
+                        type="text"
+                        name="numero_serie"
+                        class="form-input"
+                        value="<?= htmlspecialchars($numero_serie ?? '') ?>"
+                        placeholder="Serie del producto (opcional)">
+                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
+                        📝 El mismo número de serie aplica a todas las unidades del producto
+                    </small>
+                </div>
+                <?php endif; ?>
             </div>
 
             <!-- Tipo de Producto (Solo Visualización) -->
