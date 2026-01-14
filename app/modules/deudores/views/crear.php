@@ -639,7 +639,7 @@
 
           processingScan = true;
 
-          fetch('/admin/productos/api/buscar_por_scan', {
+          fetch('/admin/productos/api/buscar_por_scan.php', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'

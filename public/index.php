@@ -41,6 +41,8 @@ require_once __DIR__ . "/../app/modules/caja/CajaModel.php";
 
 require_once __DIR__ . "/../app/modules/usuarios/UsuariosController.php";
 
+require __DIR__ . '/../../../../app/modules/productos/api/buscar_por_scan.php';
+
 $router = new Router();
 
 
