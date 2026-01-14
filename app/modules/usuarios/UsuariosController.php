@@ -1,303 +1,276 @@
 <?php
 
 require_once __DIR__ . "/UsuariosModel.php";
+require_once __DIR__ . "/../../core/ImageUploadHelper.php";
 
-class ReportesController extends Controller
+class UsuariosController extends Controller
 {
-    private ReportesModel $model;
+    private UsuariosModel $model;
 
     public function __construct()
     {
-        $this->model = new ReportesModel();
+        $this->model = new UsuariosModel();
     }
 
+    // =========================
+    // LISTADO
+    // =========================
     public function index()
     {
         RoleMiddleware::requireAdmin();
 
-        // Obtener resumen general
-        $resumenVentas = $this->model->obtenerResumenVentas();
-        $resumenCompras = $this->model->obtenerResumenCompras();
-        $resumenInventario = $this->model->obtenerResumenInventario();
-        $productosMasVendidos = $this->model->obtenerProductosMasVendidos(10);
+        $usuarios = $this->model->listar();
+        $stats    = $this->model->obtenerEstadisticas();
 
-        $this->viewWithLayout("reportes/views/index", [
-            "title" => "Reportes y Estadísticas",
-            "user" => $_SESSION["user"],
-            "resumenVentas" => $resumenVentas,
-            "resumenCompras" => $resumenCompras,
-            "resumenInventario" => $resumenInventario,
-            "productosMasVendidos" => $productosMasVendidos,
+        // ✅ Ocultar el usuario administrador principal (ID 1)
+        $usuarios = array_filter($usuarios, function($usuario) {
+            return (int)$usuario['id'] !== 1;
+        });
+
+        $this->viewWithLayout("usuarios/views/index", [
+            "title"    => "Gestión de Usuarios",
+            "user"     => $_SESSION["user"],
+            "usuarios" => $usuarios,
+            "stats"    => $stats,
         ]);
     }
 
-    public function ventas()
+    // =========================
+    // CREAR
+    // =========================
+    public function crear()
     {
         RoleMiddleware::requireAdmin();
 
-        $fechaInicio = $_GET['fecha_inicio'] ?? date('Y-m-01');
-        $fechaFin = $_GET['fecha_fin'] ?? date('Y-m-d');
+        $errors = $_SESSION['usuarios_errors'] ?? [];
+        $old    = $_SESSION['usuarios_old'] ?? [];
 
-        $ventas = $this->model->obtenerReporteVentas($fechaInicio, $fechaFin);
-        $ventasPorDia = $this->model->obtenerVentasPorDia($fechaInicio, $fechaFin);
-        $resumen = $this->model->obtenerResumenVentasPeriodo($fechaInicio, $fechaFin);
+        unset($_SESSION['usuarios_errors'], $_SESSION['usuarios_old']);
 
-        // Manejo de exportación a Excel
-        if (isset($_GET['exportar']) && $_GET['exportar'] === 'excel') {
-            $this->exportarVentasExcel($fechaInicio, $fechaFin, $ventas, $resumen);
+        $this->viewWithLayout("usuarios/views/crear", [
+            "title"  => "Crear Usuario",
+            "user"   => $_SESSION["user"],
+            "errors" => $errors,
+            "old"    => $old,
+        ]);
+    }
+
+    public function guardar()
+    {
+        RoleMiddleware::requireAdmin();
+
+        $data = $_POST;
+
+        // Validaciones
+        $errors = $this->validarUsuario($data);
+        if (!empty($errors)) {
+            $_SESSION['usuarios_errors'] = $errors;
+            $_SESSION['usuarios_old']    = $data;
+            redirect('/admin/usuarios/crear');
             return;
         }
 
-        $this->viewWithLayout("reportes/views/ventas", [
-            "title" => "Reporte de Ventas",
-            "user" => $_SESSION["user"],
-            "ventas" => $ventas,
-            "ventasPorDia" => $ventasPorDia,
-            "resumenPeriodo" => $resumen,
-            "fechaInicio" => $fechaInicio,
-            "fechaFin" => $fechaFin,
-        ]);
-    }
+        // Payload base
+        $payload = [
+            "nombre"   => trim($data["nombre"]),
+            "email"    => mb_strtolower(trim($data["email"])),
+            "password" => $data["password"],
+            "rol"      => $data["rol"] ?? "VENDEDOR",
+            "activo"   => isset($data["activo"]) ? 1 : 0,
+        ];
 
-    /**
-     * Exportación a "Excel" vía HTML (.xls)
-     * Reglas solicitadas:
-     * - NO anteponer "Q" (exportar números)
-     * - Eliminar filas: Cantidad de ventas, Promedio por venta
-     * - Subtotal = suma total según el filtro (ventas)
-     */
-    private function exportarVentasExcel($fechaInicio, $fechaFin, $ventas, $resumen)
-    {
-        // Total según filtro (fuente de verdad: listado de ventas)
-        $totalFiltro = 0.0;
-        $subtotalFiltro = 0.0;
-
-        foreach ($ventas as $v) {
-            $totalFiltro += (float)($v['total'] ?? 0);
-            $subtotalFiltro += (float)($v['subtotal'] ?? 0);
+        // Foto
+        if (!empty($data["foto_base64"])) {
+            $fotoUrl = $this->procesarFoto($data["foto_base64"]);
+            if ($fotoUrl) {
+                $payload["foto"] = $fotoUrl;
+            }
         }
 
-        // Si por alguna razón subtotal viene vacío pero total existe, igualamos subtotal a total
-        // (Usted pidió que "Subtotal" muestre el total de todas las ventas según filtro)
-        $subtotalParaMostrar = $totalFiltro;
+        // Crear
+        $nuevoId = $this->model->crear($payload);
 
-        header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
-        header('Content-Disposition: attachment; filename="Ventas_' . $fechaInicio . '_' . $fechaFin . '.xls"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        echo "\xEF\xBB\xBF"; // BOM para UTF-8
-
-        // Estilo Excel-friendly:
-        // - mso-number-format:'0.00' fuerza número con 2 decimales
-        // - text-align:right para montos
-        echo "<html><head><meta charset='UTF-8'></head><body>";
-        echo "<h2>Reporte de Ventas del {$fechaInicio} al {$fechaFin}</h2>";
-
-        // ===== Resumen (solo 2 filas) =====
-        echo "<h3>Resumen General</h3>";
-        echo "<table border='1'>";
-        echo "<tr><th>Concepto</th><th>Valor</th></tr>";
-
-        // Total Ventas (NUMÉRICO, sin "Q")
-        echo "<tr>";
-        echo "<td>Total Ventas</td>";
-        echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($totalFiltro, 2, '.', '') . "</td>";
-        echo "</tr>";
-
-        // Subtotal = total de ventas según filtro (como usted pidió)
-        echo "<tr>";
-        echo "<td>Subtotal</td>";
-        echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($subtotalParaMostrar, 2, '.', '') . "</td>";
-        echo "</tr>";
-
-        echo "</table><br><br>";
-
-        // ===== Detalle de Ventas =====
-        echo "<h3>Detalle de Ventas (" . count($ventas) . " transacciones)</h3>";
-        echo "<table border='1'>";
-        echo "<tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>NIT</th><th>Vendedor</th><th>Subtotal</th><th>Total</th></tr>";
-
-        foreach ($ventas as $venta) {
-            $id = $venta['id'] ?? '';
-            $fecha = $venta['fecha'] ?? ($venta['fecha_venta'] ?? '');
-            $cliente = $venta['cliente_nombre'] ?? 'Cliente General';
-            $nit = $venta['cliente_nit'] ?? 'C/F';
-            $vendedor = $venta['vendedor'] ?? 'N/A';
-            $sub = (float)($venta['subtotal'] ?? 0);
-            $tot = (float)($venta['total'] ?? 0);
-
-            echo "<tr>";
-            echo "<td>" . htmlspecialchars((string)$id) . "</td>";
-            echo "<td>" . htmlspecialchars((string)$fecha) . "</td>";
-            echo "<td>" . htmlspecialchars((string)$cliente) . "</td>";
-            echo "<td>" . htmlspecialchars((string)$nit) . "</td>";
-            echo "<td>" . htmlspecialchars((string)$vendedor) . "</td>";
-
-            // NUMÉRICO (sin Q)
-            echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($sub, 2, '.', '') . "</td>";
-            echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($tot, 2, '.', '') . "</td>";
-            echo "</tr>";
-        }
-
-        // Fila final TOTAL (NUMÉRICO)
-        echo "<tr style='font-weight:bold; background:#f1f5f9;'>";
-        echo "<td colspan='6' style='text-align:right;'>TOTAL:</td>";
-        echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($totalFiltro, 2, '.', '') . "</td>";
-        echo "</tr>";
-
-        echo "</table>";
-        echo "</body></html>";
-        exit;
-    }
-
-    public function compras()
-    {
-        RoleMiddleware::requireAdmin();
-
-        $fechaInicio = $_GET['fecha_inicio'] ?? date('Y-m-01');
-        $fechaFin = $_GET['fecha_fin'] ?? date('Y-m-d');
-
-        $compras = $this->model->obtenerReporteCompras($fechaInicio, $fechaFin);
-        $resumen = $this->model->obtenerResumenComprasPeriodo($fechaInicio, $fechaFin);
-
-        $this->viewWithLayout("reportes/views/compras", [
-            "title" => "Reporte de Compras",
-            "user" => $_SESSION["user"],
-            "compras" => $compras,
-            "resumen" => $resumen,
-            "fechaInicio" => $fechaInicio,
-            "fechaFin" => $fechaFin,
-        ]);
-    }
-
-    public function inventario()
-    {
-        RoleMiddleware::requireAdmin();
-
-        $filtro = $_GET['filtro'] ?? 'todos';
-        $productos = $this->model->obtenerReporteInventario($filtro);
-        $resumen = $this->model->obtenerResumenInventario();
-
-        $this->viewWithLayout("reportes/views/inventario", [
-            "title" => "Reporte de Inventario",
-            "user" => $_SESSION["user"],
-            "productos" => $productos,
-            "resumen" => $resumen,
-            "filtro" => $filtro,
-        ]);
-    }
-
-    public function productos()
-    {
-        RoleMiddleware::requireAdmin();
-
-        $limite = $_GET['limite'] ?? 20;
-        $orden = $_GET['orden'] ?? 'mas_vendidos';
-
-        if ($orden === 'mas_vendidos') {
-            $productos = $this->model->obtenerProductosMasVendidos($limite);
+        if ($nuevoId && is_numeric($nuevoId)) {
+            $_SESSION['success'] = 'Usuario creado exitosamente';
+            redirect('/admin/usuarios/editar/' . $nuevoId);
         } else {
-            $productos = $this->model->obtenerProductosMenosVendidos($limite);
+            $_SESSION['usuarios_errors'] = [
+                'general' => 'Error al crear el usuario. Verifique que el correo no esté duplicado.'
+            ];
+            $_SESSION['usuarios_old'] = $data;
+            redirect('/admin/usuarios/crear');
         }
-
-        $this->viewWithLayout("reportes/views/productos", [
-            "title" => "Reporte de Productos",
-            "user" => $_SESSION["user"],
-            "productos" => $productos,
-            "orden" => $orden,
-            "limite" => $limite,
-        ]);
     }
 
-    public function balance()
+    // =========================
+    // EDITAR
+    // =========================
+    public function editar($id)
     {
         RoleMiddleware::requireAdmin();
 
-        $fechaInicio = $_GET['fecha_inicio'] ?? date('Y-m-01');
-        $fechaFin = $_GET['fecha_fin'] ?? date('Y-m-d');
-
-        // Manejo de exportación a Excel
-        if (isset($_GET['exportar']) && $_GET['exportar'] === 'excel') {
-            $this->exportarBalanceExcel($fechaInicio, $fechaFin);
+        $usuario = $this->model->obtenerPorId($id);
+        if (!$usuario) {
+            $_SESSION['error'] = 'Usuario no encontrado';
+            redirect('/admin/usuarios');
             return;
         }
 
-        $balance = $this->model->obtenerBalanceFinanciero($fechaInicio, $fechaFin);
-        $balancePorDia = $this->model->obtenerBalancePorDia($fechaInicio, $fechaFin);
-        $detalleVentas = $this->model->obtenerDetalleVentas($fechaInicio, $fechaFin);
-        $detalleCompras = $this->model->obtenerDetalleCompras($fechaInicio, $fechaFin);
+        $errors = $_SESSION['usuarios_errors'] ?? [];
+        $old    = $_SESSION['usuarios_old'] ?? $usuario;
 
-        $this->viewWithLayout("reportes/views/balance", [
-            "title" => "Balance Financiero",
-            "user" => $_SESSION["user"],
-            "balance" => $balance,
-            "balancePorDia" => $balancePorDia,
-            "detalleVentas" => $detalleVentas,
-            "detalleCompras" => $detalleCompras,
-            "fechaInicio" => $fechaInicio,
-            "fechaFin" => $fechaFin,
+        unset($_SESSION['usuarios_errors'], $_SESSION['usuarios_old']);
+
+        $this->viewWithLayout("usuarios/views/editar", [
+            "title"   => "Editar Usuario",
+            "user"    => $_SESSION["user"],
+            "usuario" => $usuario,
+            "errors"  => $errors,
+            "old"     => $old,
         ]);
     }
 
-    private function exportarBalanceExcel($fechaInicio, $fechaFin)
+    public function actualizar($id)
     {
-        $balance = $this->model->obtenerBalanceFinanciero($fechaInicio, $fechaFin);
-        $detalleVentas = $this->model->obtenerDetalleVentas($fechaInicio, $fechaFin);
-        $detalleCompras = $this->model->obtenerDetalleCompras($fechaInicio, $fechaFin);
+        RoleMiddleware::requireAdmin();
 
-        // Headers para descarga de Excel
-        header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
-        header('Content-Disposition: attachment; filename="Balance_' . $fechaInicio . '_' . $fechaFin . '.xls"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
+        $data = $_POST;
 
-        echo "\xEF\xBB\xBF"; // BOM para UTF-8
-
-        echo "<html><head><meta charset='UTF-8'></head><body>";
-        echo "<h2>Balance Financiero del $fechaInicio al $fechaFin</h2>";
-
-        // Resumen
-        echo "<h3>Resumen General</h3>";
-        echo "<table border='1'>";
-        echo "<tr><th>Concepto</th><th>Monto</th></tr>";
-        echo "<tr><td>Ingresos (Ventas)</td><td>Q " . number_format($balance['ingresos'], 2) . "</td></tr>";
-        echo "<tr><td>Egresos (Compras)</td><td>Q " . number_format($balance['egresos'], 2) . "</td></tr>";
-        echo "<tr><td><b>Balance Neto</b></td><td><b>Q " . number_format($balance['balance'], 2) . "</b></td></tr>";
-        echo "</table><br><br>";
-
-        // Detalle de Ventas
-        echo "<h3>Detalle de Ventas (" . count($detalleVentas) . " transacciones)</h3>";
-        echo "<table border='1'>";
-        echo "<tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Vendedor</th><th>Productos</th><th>Total</th></tr>";
-        foreach ($detalleVentas as $venta) {
-            echo "<tr>";
-            echo "<td>" . $venta['id'] . "</td>";
-            echo "<td>" . $venta['fecha'] . "</td>";
-            echo "<td>" . ($venta['cliente'] ?? 'N/A') . "</td>";
-            echo "<td>" . ($venta['vendedor'] ?? 'N/A') . "</td>";
-            echo "<td>" . $venta['cantidad_productos'] . "</td>";
-            echo "<td>Q " . number_format($venta['total'], 2) . "</td>";
-            echo "</tr>";
+        $errors = $this->validarUsuario($data, $id);
+        if (!empty($errors)) {
+            $_SESSION['usuarios_errors'] = $errors;
+            $_SESSION['usuarios_old']    = $data;
+            redirect("/admin/usuarios/editar/$id");
+            return;
         }
-        echo "</table><br><br>";
 
-        // Detalle de Compras
-        echo "<h3>Detalle de Compras (" . count($detalleCompras) . " transacciones)</h3>";
-        echo "<table border='1'>";
-        echo "<tr><th>ID</th><th>Fecha</th><th>Proveedor</th><th>Productos</th><th>Total</th></tr>";
-        foreach ($detalleCompras as $compra) {
-            echo "<tr>";
-            echo "<td>" . $compra['id'] . "</td>";
-            echo "<td>" . $compra['fecha'] . "</td>";
-            echo "<td>" . ($compra['proveedor'] ?? 'N/A') . "</td>";
-            echo "<td>" . $compra['cantidad_productos'] . "</td>";
-            echo "<td>Q " . number_format($compra['total'], 2) . "</td>";
-            echo "</tr>";
+        $payload = [
+            "nombre" => trim($data["nombre"]),
+            "email"  => mb_strtolower(trim($data["email"])),
+            "rol"    => $data["rol"] ?? "VENDEDOR",
+            "activo" => isset($data["activo"]) ? 1 : 0,
+        ];
+
+        if (!empty($data["password"])) {
+            $payload["password"] = $data["password"];
         }
-        echo "</table>";
 
-        echo "</body></html>";
-        exit;
+        // Foto
+        if (!empty($data["foto_base64"])) {
+            $fotoUrl = $this->procesarFoto($data["foto_base64"]);
+            if ($fotoUrl) {
+                $payload["foto"] = $fotoUrl;
+            }
+        } elseif (array_key_exists("foto_base64", $data) && empty($data["foto_base64"])) {
+            // Limpiar foto
+            $payload["foto"] = null;
+        }
+
+        if ($this->model->actualizar($id, $payload)) {
+            $_SESSION['success'] = 'Usuario actualizado exitosamente';
+            redirect('/admin/usuarios');
+        } else {
+            $_SESSION['usuarios_errors'] = ['general' => 'Error al actualizar el usuario'];
+            $_SESSION['usuarios_old']    = $data;
+            redirect("/admin/usuarios/editar/$id");
+        }
+    }
+
+    // =========================
+    // CAMBIAR ESTADO
+    // =========================
+    public function cambiarEstado($id)
+    {
+        RoleMiddleware::requireAdmin();
+
+        if ($id == $_SESSION['user']['id']) {
+            $_SESSION['error'] = 'No puede desactivar su propia cuenta';
+            redirect('/admin/usuarios');
+            return;
+        }
+
+        $usuario = $this->model->obtenerPorId($id);
+        if (!$usuario) {
+            $_SESSION['error'] = 'Usuario no encontrado';
+            redirect('/admin/usuarios');
+            return;
+        }
+
+        $nuevoEstado = $usuario['activo'] ? 0 : 1;
+
+        if ($this->model->cambiarEstado($id, $nuevoEstado)) {
+            $_SESSION['success'] = $nuevoEstado ? 'Usuario activado' : 'Usuario desactivado';
+        } else {
+            $_SESSION['error'] = 'Error al cambiar estado del usuario';
+        }
+
+        redirect('/admin/usuarios');
+    }
+
+    // =========================
+    // VALIDACIONES
+    // =========================
+    private function validarUsuario($data, $id = null): array
+    {
+        $errors = [];
+
+        if (empty($data['nombre']) || strlen($data['nombre']) < 3) {
+            $errors['nombre'] = 'El nombre debe tener al menos 3 caracteres';
+        }
+
+        if (empty($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Email inválido';
+        } else {
+            $email = mb_strtolower(trim($data['email']));
+            if ($this->model->emailExiste($email, $id)) {
+                $errors['email'] = 'El email ya está registrado';
+            }
+        }
+
+        if (!$id) {
+            if (empty($data['password']) || strlen($data['password']) < 6) {
+                $errors['password'] = 'La contraseña debe tener al menos 6 caracteres';
+            }
+            if (($data['password'] ?? '') !== ($data['password_confirmacion'] ?? '')) {
+                $errors['password_confirmacion'] = 'Las contraseñas no coinciden';
+            }
+        } elseif (!empty($data['password'])) {
+            if (strlen($data['password']) < 6) {
+                $errors['password'] = 'La contraseña debe tener al menos 6 caracteres';
+            }
+            if ($data['password'] !== ($data['password_confirmacion'] ?? '')) {
+                $errors['password_confirmacion'] = 'Las contraseñas no coinciden';
+            }
+        }
+
+        if (empty($data['rol']) || !in_array($data['rol'], ['ADMIN', 'VENDEDOR'])) {
+            $errors['rol'] = 'Rol inválido';
+        }
+
+        return $errors;
+    }
+
+    // =========================
+    // FOTO
+    // =========================
+    private function procesarFoto(string $base64Data): ?string
+    {
+        try {
+            if (extension_loaded('gd')) {
+                $base64Data = ImageUploadHelper::optimizeBase64Image($base64Data);
+            }
+
+            $result = ImageUploadHelper::processBase64Image($base64Data, 'usuarios');
+
+            if ($result['success']) {
+                return $result['url'];
+            }
+
+            error_log("Error imagen usuario: " . ($result['error'] ?? 'desconocido'));
+            return null;
+        } catch (Throwable $e) {
+            error_log("UsuariosController::procesarFoto ERROR: " . $e->getMessage());
+            return null;
+        }
     }
 }

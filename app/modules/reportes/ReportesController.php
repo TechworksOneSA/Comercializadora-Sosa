@@ -59,8 +59,28 @@ class ReportesController extends Controller
         ]);
     }
 
+    /**
+     * Exportación a "Excel" vía HTML (.xls)
+     * Reglas solicitadas:
+     * - NO anteponer "Q" (exportar números)
+     * - Eliminar filas: Cantidad de ventas, Promedio por venta
+     * - Subtotal = suma total según el filtro (ventas)
+     */
     private function exportarVentasExcel($fechaInicio, $fechaFin, $ventas, $resumen)
     {
+        // Total según filtro (fuente de verdad: listado de ventas)
+        $totalFiltro = 0.0;
+        $subtotalFiltro = 0.0;
+
+        foreach ($ventas as $v) {
+            $totalFiltro += (float)($v['total'] ?? 0);
+            $subtotalFiltro += (float)($v['subtotal'] ?? 0);
+        }
+
+        // Si por alguna razón subtotal viene vacío pero total existe, igualamos subtotal a total
+        // (Usted pidió que "Subtotal" muestre el total de todas las ventas según filtro)
+        $subtotalParaMostrar = $totalFiltro;
+
         header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
         header('Content-Disposition: attachment; filename="Ventas_' . $fechaInicio . '_' . $fechaFin . '.xls"');
         header('Pragma: no-cache');
@@ -68,36 +88,65 @@ class ReportesController extends Controller
 
         echo "\xEF\xBB\xBF"; // BOM para UTF-8
 
+        // Estilo Excel-friendly:
+        // - mso-number-format:'0.00' fuerza número con 2 decimales
+        // - text-align:right para montos
         echo "<html><head><meta charset='UTF-8'></head><body>";
-        echo "<h2>Reporte de Ventas del $fechaInicio al $fechaFin</h2>";
+        echo "<h2>Reporte de Ventas del {$fechaInicio} al {$fechaFin}</h2>";
 
-        // Resumen
+        // ===== Resumen (solo 2 filas) =====
         echo "<h3>Resumen General</h3>";
         echo "<table border='1'>";
         echo "<tr><th>Concepto</th><th>Valor</th></tr>";
-        echo "<tr><td>Total Ventas</td><td>Q " . number_format($resumen['total_ventas'] ?? 0, 2) . "</td></tr>";
-        echo "<tr><td>Cantidad de Ventas</td><td>" . number_format($resumen['cantidad_ventas'] ?? 0) . "</td></tr>";
-        echo "<tr><td>Promedio por Venta</td><td>Q " . number_format($resumen['promedio_venta'] ?? 0, 2) . "</td></tr>";
-        echo "<tr><td>Total Subtotal</td><td>Q " . number_format($resumen['total_subtotal'] ?? 0, 2) . "</td></tr>";
+
+        // Total Ventas (NUMÉRICO, sin "Q")
+        echo "<tr>";
+        echo "<td>Total Ventas</td>";
+        echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($totalFiltro, 2, '.', '') . "</td>";
+        echo "</tr>";
+
+        // Subtotal = total de ventas según filtro (como usted pidió)
+        echo "<tr>";
+        echo "<td>Subtotal</td>";
+        echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($subtotalParaMostrar, 2, '.', '') . "</td>";
+        echo "</tr>";
+
         echo "</table><br><br>";
 
-        // Detalle de Ventas
+        // ===== Detalle de Ventas =====
         echo "<h3>Detalle de Ventas (" . count($ventas) . " transacciones)</h3>";
         echo "<table border='1'>";
         echo "<tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>NIT</th><th>Vendedor</th><th>Subtotal</th><th>Total</th></tr>";
+
         foreach ($ventas as $venta) {
+            $id = $venta['id'] ?? '';
+            $fecha = $venta['fecha'] ?? ($venta['fecha_venta'] ?? '');
+            $cliente = $venta['cliente_nombre'] ?? 'Cliente General';
+            $nit = $venta['cliente_nit'] ?? 'C/F';
+            $vendedor = $venta['vendedor'] ?? 'N/A';
+            $sub = (float)($venta['subtotal'] ?? 0);
+            $tot = (float)($venta['total'] ?? 0);
+
             echo "<tr>";
-            echo "<td>" . $venta['id'] . "</td>";
-            echo "<td>" . $venta['fecha'] . "</td>";
-            echo "<td>" . ($venta['cliente_nombre'] ?? 'Cliente General') . "</td>";
-            echo "<td>" . ($venta['cliente_nit'] ?? 'C/F') . "</td>";
-            echo "<td>" . ($venta['vendedor'] ?? 'N/A') . "</td>";
-            echo "<td>Q " . number_format($venta['subtotal'], 2) . "</td>";
-            echo "<td>Q " . number_format($venta['total'], 2) . "</td>";
+            echo "<td>" . htmlspecialchars((string)$id) . "</td>";
+            echo "<td>" . htmlspecialchars((string)$fecha) . "</td>";
+            echo "<td>" . htmlspecialchars((string)$cliente) . "</td>";
+            echo "<td>" . htmlspecialchars((string)$nit) . "</td>";
+            echo "<td>" . htmlspecialchars((string)$vendedor) . "</td>";
+
+            // NUMÉRICO (sin Q)
+            echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($sub, 2, '.', '') . "</td>";
+            echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($tot, 2, '.', '') . "</td>";
             echo "</tr>";
         }
-        echo "</table>";
 
+        // Fila final TOTAL (NUMÉRICO)
+        echo "<tr style='font-weight:bold; background:#f1f5f9;'>";
+        echo "<td colspan='6' style='text-align:right;'>TOTAL:</td>";
+        echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($totalFiltro, 2, '.', '') . "</td>";
+        echo "</tr>";
+
+        echo "</table>";
         echo "</body></html>";
         exit;
     }
