@@ -31,7 +31,7 @@ class ProductosController extends Controller
             "marca_id"     => (int)($_GET["marca_id"] ?? 0),
             "stock"        => $_GET["stock"] ?? "all",   // all | bajo | cero
             "estado"       => $_GET["estado"] ?? "ALL",  // ALL | ACTIVO | INACTIVO
-            "tipo"         => $_GET["tipo"] ?? "ALL",    // ALL | NORMAL | SERIE
+            "tipo"         => $_GET["tipo"] ?? "ALL",    // ALL | UNIDAD | MISC (o NORMAL/SERIE según su UI)
         ];
 
         $productos = $this->model->buscar($q, $filters);
@@ -128,12 +128,11 @@ class ProductosController extends Controller
         $data = $this->sanitizar($_POST);
 
         $tipoProducto = strtoupper(trim($data["tipo_producto"] ?? "UNIDAD"));
-        $skuGenerado  = $this->generarSKU();
+        if (!in_array($tipoProducto, ['UNIDAD', 'MISC'], true)) {
+            $tipoProducto = 'UNIDAD';
+        }
 
-        // Debug: Log de datos recibidos
-        error_log("POST datos recibidos: " . json_encode($_POST));
-        error_log("numero_serie recibido (sanitizado): " . ($data["numero_serie"] ?? 'NO ENVIADO'));
-        error_log("tipo_producto: " . $tipoProducto);
+        $skuGenerado  = $this->generarSKU();
 
         $errors = $this->validar($data);
         if (!empty($errors)) {
@@ -156,20 +155,26 @@ class ProductosController extends Controller
         if (isset($_FILES['imagen']) && ($_FILES['imagen']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
             $fileName = $this->procesarImagenUnica($_FILES['imagen']);
             if ($fileName) {
-                // Guardamos ruta pública absoluta (consumida por el navegador)
                 $imagenPath = $this->UPLOAD_PUBLIC_DIR . '/productos/' . $fileName;
             }
         }
 
-        // Código de barra solo para UNIDAD
+        // Marca opcional: si viene 0/vacío -> NULL
+        $marcaId = (int)($data["marca_id"] ?? 0);
+        $marcaId = $marcaId > 0 ? $marcaId : null;
+
+        // Serie: 1 por producto (en productos.numero_serie)
+        $numeroSerie = trim($data["numero_serie"] ?? '');
+        if ($tipoProducto !== 'UNIDAD') {
+            $numeroSerie = '';
+        }
+
+        // Código de barra solo para UNIDAD (si usted lo usa)
         $codigoBarra = null;
         if ($tipoProducto === "UNIDAD") {
             $cb = trim($data["codigo_barra"] ?? "");
             $codigoBarra = $cb !== "" ? $cb : null;
         }
-
-        // ✅ requiere_serie: clave para que el scan/flujo trate el producto como “con serie”
-        $requiereSerie = ($tipoProducto === "UNIDAD") ? 1 : 0;
 
         $payload = [
             "sku"              => $skuGenerado,
@@ -177,7 +182,7 @@ class ProductosController extends Controller
             "nombre"           => trim($data["nombre"] ?? ""),
             "tipo_producto"    => $tipoProducto,
             "categoria_id"     => (int)$data["categoria_id"],
-            "marca_id"         => (int)$data["marca_id"],
+            "marca_id"         => $marcaId,
             "unidad_medida_id" => 1,
 
             "precio_venta"     => (float)$data["precio"],
@@ -186,37 +191,22 @@ class ProductosController extends Controller
             "stock"            => 0,
             "stock_minimo"     => (int)$data["stock_minimo"],
 
-            "descripcion"      => "",
+            "descripcion"      => (string)($data["descripcion"] ?? ""),
             "activo"           => 1,
             "estado"           => "ACTIVO",
 
-            // ✅ Esto evita que quede en 0 por default en DB
-            "requiere_serie"   => $requiereSerie,
+            // ✅ Guardar serie directamente en productos
+            "numero_serie"     => ($numeroSerie !== '') ? $numeroSerie : null,
+            "requiere_serie"   => ($tipoProducto === 'UNIDAD') ? 1 : 0,
 
-            // NO guardamos numero_serie en productos; se guarda en productos_series
             "imagen_path"      => $imagenPath,
         ];
-
-        // Debug: Log del payload antes de crear
-        error_log("Payload para crear producto: " . json_encode($payload));
 
         try {
             $result = $this->model->crear($payload);
             if (!$result) {
-                error_log("Error al crear producto - modelo retornó false");
                 redirect('/admin/productos/crear?error=No se pudo crear el producto');
                 return;
-            }
-
-            // Guardar número de serie en productos_series si aplica
-            $serie = trim((string)($data['numero_serie'] ?? ''));
-            if ($tipoProducto === 'UNIDAD' && $serie !== '') {
-                require_once __DIR__ . '/ProductosSeriesModel.php';
-                $seriesModel = new ProductosSeriesModel();
-
-                // Obtener el id del producto recién creado
-                $productoId = $this->model->getLastInsertId();
-                $seriesModel->guardarSerieUnica((int)$productoId, $serie);
             }
 
             redirect('/admin/productos?ok=creado');
@@ -240,22 +230,18 @@ class ProductosController extends Controller
             return;
         }
 
-        // ✅ Obtener el número de serie si existe
-        require_once __DIR__ . '/ProductosSeriesModel.php';
-        $seriesModel = new ProductosSeriesModel();
-        $numeroSerie = $seriesModel->getSerieDelProducto((int)$id);
-
         $categoriasModel = new CategoriasModel();
         $marcasModel     = new MarcasModel();
 
         $this->viewWithLayout("productos/views/editar", [
-            "title"        => "Editar Producto",
-            "user"         => $_SESSION["user"],
-            "producto"     => $producto,
-            "numero_serie" => $numeroSerie,
-            "categorias"   => $categoriasModel->listarActivas(),
-            "marcas"       => $marcasModel->listarActivas(),
-            "errors"       => [],
+            "title"      => "Editar Producto",
+            "user"       => $_SESSION["user"],
+            "producto"   => $producto,
+            // ✅ ahora la serie viene del mismo producto
+            "numero_serie" => $producto['numero_serie'] ?? '',
+            "categorias" => $categoriasModel->listarActivas(),
+            "marcas"     => $marcasModel->listarActivas(),
+            "errors"     => [],
         ]);
     }
 
@@ -279,19 +265,14 @@ class ProductosController extends Controller
             $categoriasModel = new CategoriasModel();
             $marcasModel     = new MarcasModel();
 
-            // ✅ Obtener número de serie para mantenerlo en caso de error
-            require_once __DIR__ . '/ProductosSeriesModel.php';
-            $seriesModel = new ProductosSeriesModel();
-            $numeroSerie = $seriesModel->getSerieDelProducto((int)$id);
-
             $this->viewWithLayout("productos/views/editar", [
-                "title"        => "Editar Producto",
-                "user"         => $_SESSION["user"],
-                "errors"       => $errors,
-                "producto"     => array_merge($producto, $data),
-                "numero_serie" => $numeroSerie,
-                "categorias"   => $categoriasModel->listarActivas(),
-                "marcas"       => $marcasModel->listarActivas(),
+                "title"      => "Editar Producto",
+                "user"       => $_SESSION["user"],
+                "errors"     => $errors,
+                "producto"   => array_merge($producto, $data),
+                "numero_serie" => $producto['numero_serie'] ?? '',
+                "categorias" => $categoriasModel->listarActivas(),
+                "marcas"     => $marcasModel->listarActivas(),
             ]);
             return;
         }
@@ -308,7 +289,7 @@ class ProductosController extends Controller
                 }
             }
             $imagen_path = null;
-        } else if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+        } else if (isset($_FILES['imagen']) && ($_FILES['imagen']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
             // Si suben nueva imagen, reemplazar y borrar anterior
             $nuevo = $this->procesarImagenUnica($_FILES['imagen']);
             if ($nuevo) {
@@ -322,14 +303,28 @@ class ProductosController extends Controller
             }
         }
 
+        $tipoProducto = strtoupper($producto["tipo_producto"] ?? "UNIDAD");
+        if (!in_array($tipoProducto, ['UNIDAD', 'MISC'], true)) {
+            $tipoProducto = 'UNIDAD';
+        }
+
+        // Marca opcional
+        $marcaId = (int)($data["marca_id"] ?? 0);
+        $marcaId = $marcaId > 0 ? $marcaId : null;
+
+        // Serie (solo UNIDAD)
+        $numeroSerie = trim($data["numero_serie"] ?? '');
+        if ($tipoProducto !== 'UNIDAD') {
+            $numeroSerie = '';
+        }
+
         $payload = [
-            // coherencia básica
             "sku"              => $producto["sku"] ?? null,
             "codigo_barra"     => $producto["codigo_barra"] ?? null,
             "nombre"           => trim($data["nombre"]),
-            "tipo_producto"    => $producto["tipo_producto"] ?? "UNIDAD",
+            "tipo_producto"    => $tipoProducto,
             "categoria_id"     => (int)$data["categoria_id"],
-            "marca_id"         => (int)$data["marca_id"],
+            "marca_id"         => $marcaId,
             "unidad_medida_id" => 1,
 
             "precio_venta"     => (float)$data["precio"],
@@ -338,40 +333,23 @@ class ProductosController extends Controller
             "stock"            => (int)$data["stock"],
             "stock_minimo"     => (int)$data["stock_minimo"],
 
-            "descripcion"      => $producto["descripcion"] ?? "",
+            "descripcion"      => (string)($data["descripcion"] ?? ($producto["descripcion"] ?? "")),
             "estado"           => $producto["estado"] ?? "ACTIVO",
 
-            // ✅ Mantener requiere_serie coherente con el tipo actual guardado del producto
-            "requiere_serie"   => (($producto["tipo_producto"] ?? "UNIDAD") === "UNIDAD") ? 1 : 0,
+            // ✅ Serie directa en productos
+            "numero_serie"     => ($numeroSerie !== '') ? $numeroSerie : null,
+            "requiere_serie"   => ($tipoProducto === 'UNIDAD') ? 1 : 0,
 
-            // NO guardar numero_serie aquí
             "imagen_path"      => $imagen_path,
         ];
 
         try {
             $this->model->actualizar((int)$id, $payload);
-
-            // Guardar número de serie en productos_series si aplica
-            if (($producto["tipo_producto"] ?? "UNIDAD") === 'UNIDAD') {
-                require_once __DIR__ . '/ProductosSeriesModel.php';
-                $seriesModel = new ProductosSeriesModel();
-                $serie = trim((string)($data['numero_serie'] ?? ''));
-                $seriesModel->guardarSerieUnica((int)$id, $serie);
-            }
-
             redirect("/admin/productos?ok=actualizado");
         } catch (Exception $e) {
             error_log("Error actualizando producto: " . $e->getMessage());
             redirect("/admin/productos?error=No se pudo actualizar");
         }
-    }
-
-    // =========================
-    // API: Buscar por scan
-    // =========================
-    public function buscarPorScan(): void
-    {
-        require __DIR__ . "/api/buscar_por_scan.php";
     }
 
     // =========================
@@ -416,9 +394,9 @@ class ProductosController extends Controller
             "stock_minimo"  => (int)($in["stock_minimo"] ?? 0),
             "codigo_barra"  => trim($in["codigo_barra"] ?? ""),
             "tipo_producto" => strtoupper(trim($in["tipo_producto"] ?? "UNIDAD")),
-
-            // ✅ Ahora sí queda dentro de $data para logs y guardado consistente
+            // ✅ NUEVO
             "numero_serie"  => trim($in["numero_serie"] ?? ""),
+            "descripcion"   => trim($in["descripcion"] ?? ""),
         ];
     }
 
@@ -428,7 +406,10 @@ class ProductosController extends Controller
         if (empty($d["nombre"])) $e[] = "Nombre es obligatorio.";
         if ($d["precio"] < $d["costo"]) $e[] = "Precio no puede ser menor al costo.";
         if ($d["categoria_id"] <= 0) $e[] = "Categoría es obligatoria.";
-        if ($d["marca_id"] <= 0) $e[] = "Marca es obligatoria.";
+
+        // ✅ Marca es opcional, NO se valida como obligatoria
+        // if ($d["marca_id"] <= 0) $e[] = "Marca es obligatoria.";
+
         if ($d["stock"] < 0) $e[] = "Stock no puede ser negativo.";
         if ($d["stock_minimo"] < 0) $e[] = "Stock mínimo no puede ser negativo.";
         return $e;
@@ -447,5 +428,10 @@ class ProductosController extends Controller
         } while ($this->model->skuExiste($sku));
 
         return $sku;
+    }
+
+    public function buscarPorScan(): void
+    {
+        require __DIR__ . "/api/buscar_por_scan.php";
     }
 }
