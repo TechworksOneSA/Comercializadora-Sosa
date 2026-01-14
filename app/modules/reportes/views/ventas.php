@@ -292,21 +292,11 @@ $fechaFin = $fechaFin ?? date('Y-m-d');
     <!-- Estadísticas -->
     <div class="stats-cards">
         <div class="stat-card">
-            <div class="stat-label">Total Ventas</div>
-            <div class="stat-value">Q <?= number_format($resumenPeriodo['total_ventas'] ?? 0, 2) ?></div>
-            <div class="stat-subtitle"><?= number_format($resumenPeriodo['cantidad_ventas'] ?? 0) ?> transacciones</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-label">Promedio por Venta</div>
-            <div class="stat-value">Q <?= number_format($resumenPeriodo['promedio_venta'] ?? 0, 2) ?></div>
-            <div class="stat-subtitle">Ticket promedio</div>
-        </div>
-
-        <div class="stat-card">
             <div class="stat-label">Subtotal</div>
             <div class="stat-value">Q <?= number_format($resumenPeriodo['total_subtotal'] ?? 0, 2) ?></div>
-            <div class="stat-subtitle">Sin impuestos</div>
+            <div class="stat-subtitle">
+                <?= number_format($resumenPeriodo['cantidad_ventas'] ?? ($resumenPeriodo['total_ventas'] ?? 0)) ?> ventas realizadas
+            </div>
         </div>
     </div>
 
