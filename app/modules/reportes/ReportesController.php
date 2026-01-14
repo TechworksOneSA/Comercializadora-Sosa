@@ -61,14 +61,18 @@ class ReportesController extends Controller
 
     /**
      * Exportación a "Excel" vía HTML (.xls)
-     * Reglas solicitadas:
+     * Reglas:
      * - NO anteponer "Q" (exportar números)
-     * - Eliminar filas: Cantidad de ventas, Promedio por venta
-     * - Subtotal = suma total según el filtro (ventas)
+     * - "Total Ventas" = CANTIDAD de ventas realizadas (transacciones)
+     * - Quitar "Promedio por venta"
+     * - Subtotal = total de todas las ventas según el filtro (monto)
      */
     private function exportarVentasExcel($fechaInicio, $fechaFin, $ventas, $resumen)
     {
-        // Total según filtro (fuente de verdad: listado de ventas)
+        // Cantidad de ventas según filtro (transacciones)
+        $cantidadVentas = is_array($ventas) ? count($ventas) : 0;
+
+        // Totales (monto) según filtro (fuente de verdad: listado de ventas)
         $totalFiltro = 0.0;
         $subtotalFiltro = 0.0;
 
@@ -77,8 +81,7 @@ class ReportesController extends Controller
             $subtotalFiltro += (float)($v['subtotal'] ?? 0);
         }
 
-        // Si por alguna razón subtotal viene vacío pero total existe, igualamos subtotal a total
-        // (Usted pidió que "Subtotal" muestre el total de todas las ventas según filtro)
+        // Usted pidió que "Subtotal" muestre el total de todas las ventas según el filtro
         $subtotalParaMostrar = $totalFiltro;
 
         header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
@@ -88,24 +91,21 @@ class ReportesController extends Controller
 
         echo "\xEF\xBB\xBF"; // BOM para UTF-8
 
-        // Estilo Excel-friendly:
-        // - mso-number-format:'0.00' fuerza número con 2 decimales
-        // - text-align:right para montos
         echo "<html><head><meta charset='UTF-8'></head><body>";
         echo "<h2>Reporte de Ventas del {$fechaInicio} al {$fechaFin}</h2>";
 
-        // ===== Resumen (solo 2 filas) =====
+        // ===== Resumen =====
         echo "<h3>Resumen General</h3>";
         echo "<table border='1'>";
         echo "<tr><th>Concepto</th><th>Valor</th></tr>";
 
-        // Total Ventas (NUMÉRICO, sin "Q")
+        // Total Ventas = CANTIDAD (no dinero)
         echo "<tr>";
-        echo "<td>Total Ventas</td>";
-        echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($totalFiltro, 2, '.', '') . "</td>";
+        echo "<td>Total Ventas (Cantidad)</td>";
+        echo "<td style=\"mso-number-format:'0'; text-align:right;\">" . (int)$cantidadVentas . "</td>";
         echo "</tr>";
 
-        // Subtotal = total de ventas según filtro (como usted pidió)
+        // Subtotal = monto total según filtro
         echo "<tr>";
         echo "<td>Subtotal</td>";
         echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($subtotalParaMostrar, 2, '.', '') . "</td>";
@@ -114,7 +114,7 @@ class ReportesController extends Controller
         echo "</table><br><br>";
 
         // ===== Detalle de Ventas =====
-        echo "<h3>Detalle de Ventas (" . count($ventas) . " transacciones)</h3>";
+        echo "<h3>Detalle de Ventas (" . $cantidadVentas . " transacciones)</h3>";
         echo "<table border='1'>";
         echo "<tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>NIT</th><th>Vendedor</th><th>Subtotal</th><th>Total</th></tr>";
 
@@ -140,7 +140,7 @@ class ReportesController extends Controller
             echo "</tr>";
         }
 
-        // Fila final TOTAL (NUMÉRICO)
+        // Fila final TOTAL (monto total)
         echo "<tr style='font-weight:bold; background:#f1f5f9;'>";
         echo "<td colspan='6' style='text-align:right;'>TOTAL:</td>";
         echo "<td style=\"mso-number-format:'0.00'; text-align:right;\">" . number_format($totalFiltro, 2, '.', '') . "</td>";
