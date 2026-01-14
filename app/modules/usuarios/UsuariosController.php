@@ -22,10 +22,17 @@ class UsuariosController extends Controller
         $usuarios = $this->model->listar();
         $stats    = $this->model->obtenerEstadisticas();
 
-        // ✅ Ocultar el usuario administrador principal (ID 1)
+        // Ocultar el usuario administrador principal (ID 1)
         $usuarios = array_filter($usuarios, function($usuario) {
             return (int)$usuario['id'] !== 1;
         });
+
+        // Restar 1 a cada estadística si es mayor a 0
+        foreach (['total', 'activos', 'admins', 'vendedores'] as $key) {
+            if (isset($stats[$key]) && $stats[$key] > 0) {
+                $stats[$key]--;
+            }
+        }
 
         $this->viewWithLayout("usuarios/views/index", [
             "title"    => "Gestión de Usuarios",
