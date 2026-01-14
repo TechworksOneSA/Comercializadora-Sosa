@@ -146,10 +146,15 @@ class ProductosModel extends Model
 
             $stmt = $this->db->prepare($sql);
 
+            $numeroSerie = $data["numero_serie"] ?? null;
+            if (empty($numeroSerie)) {
+                $numeroSerie = null;
+            }
+
             $result = $stmt->execute([
                 ":sku"              => $data["sku"],
                 ":codigo_barra"     => $data["codigo_barra"] ?? null,
-                ":numero_serie"     => $data["numero_serie"] ?? null,
+                ":numero_serie"     => $numeroSerie,
                 ":nombre"           => $data["nombre"],
                 ":tipo_producto"    => $data["tipo_producto"] ?? 'UNIDAD',
                 ":categoria_id"     => $data["categoria_id"],
@@ -173,6 +178,9 @@ class ProductosModel extends Model
             return true;
         } catch (PDOException $e) {
             error_log("PDOException en ProductosModel::crear: " . $e->getMessage());
+            throw $e;
+        }
+    }
             throw $e;
         }
     }
@@ -202,10 +210,15 @@ class ProductosModel extends Model
 
         $stmt = $this->db->prepare($sql);
 
+        $numeroSerie = $data['numero_serie'] ?? null;
+        if (empty($numeroSerie)) {
+            $numeroSerie = null;
+        }
+
         return $stmt->execute([
             ':sku'              => $data['sku'],
             ':codigo_barra'     => $data['codigo_barra'] ?? null,
-            ':numero_serie'     => $data['numero_serie'] ?? null,
+            ':numero_serie'     => $numeroSerie,
             ':nombre'           => $data['nombre'],
             ':tipo_producto'    => $data['tipo_producto'] ?? 'UNIDAD',
             ':categoria_id'     => $data['categoria_id'],
