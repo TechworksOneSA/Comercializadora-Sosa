@@ -185,11 +185,7 @@ class ProductosController extends Controller
             "descripcion"      => "",
             "activo"           => 1,
             "estado"           => "ACTIVO",
-
-            // ✅ Número de serie
-            "numero_serie"     => trim($data["numero_serie"] ?? ''),
-
-            // ✅ ÚNICO CAMPO REAL EN DB
+            // NO guardar numero_serie aquí
             "imagen_path"      => $imagenPath,
         ];
 
@@ -202,6 +198,15 @@ class ProductosController extends Controller
                 error_log("Error al crear producto - modelo retornó false");
                 redirect('/admin/productos/crear?error=No se pudo crear el producto');
                 return;
+            }
+
+            // Guardar número de serie en productos_series si aplica
+            if ($tipoProducto === 'UNIDAD' && !empty(trim($_POST['numero_serie'] ?? ''))) {
+                require_once __DIR__ . '/ProductosSeriesModel.php';
+                $seriesModel = new ProductosSeriesModel();
+                // Obtener el id del producto recién creado
+                $productoId = $this->model->getLastInsertId();
+                $seriesModel->guardarSerieUnica($productoId, trim($_POST['numero_serie']));
             }
 
             redirect('/admin/productos?ok=creado');
@@ -325,16 +330,20 @@ class ProductosController extends Controller
 
             "descripcion"      => $producto["descripcion"] ?? "",
             "estado"           => $producto["estado"] ?? "ACTIVO",
-
-            // ✅ Número de serie
-            "numero_serie"     => trim($data["numero_serie"] ?? ''),
-
-            // ✅ ÚNICO CAMPO REAL EN DB
+            // NO guardar numero_serie aquí
             "imagen_path" => $imagen_path,
         ];
 
         try {
             $this->model->actualizar((int)$id, $payload);
+
+            // Guardar número de serie en productos_series si aplica
+            if (($producto["tipo_producto"] ?? "UNIDAD") === 'UNIDAD') {
+                require_once __DIR__ . '/ProductosSeriesModel.php';
+                $seriesModel = new ProductosSeriesModel();
+                $serie = trim($_POST['numero_serie'] ?? '');
+                $seriesModel->guardarSerieUnica((int)$id, $serie);
+            }
 
             redirect("/admin/productos?ok=actualizado");
         } catch (Exception $e) {
