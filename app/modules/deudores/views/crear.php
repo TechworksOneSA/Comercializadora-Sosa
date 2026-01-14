@@ -634,24 +634,50 @@
           e.preventDefault();
           if (processingScan) return;
 
-          const q = (scannerInput.value || '').trim();
-          if (!q) return;
+          const serie = (scannerInput.value || '').trim();
+          if (!serie) return;
 
           processingScan = true;
 
+          // Buscar producto por número de serie en productosData (JS, búsqueda local primero)
+          let productoEncontrado = null;
+          for (const prod of productosData) {
+            if (prod.requiere_serie == 1 && prod.series && Array.isArray(prod.series)) {
+              if (prod.series.includes(serie)) {
+                productoEncontrado = prod;
+                break;
+              }
+            }
+          }
+
+          if (productoEncontrado) {
+            const ok = agregarProductoPOS(productoEncontrado, serie, 1);
+            if (ok) {
+              renderizarTabla(tablaProductos, inputsProductos, totalDisplay);
+              showToast('success', 'Producto agregado');
+            } else {
+              showToast('warning', 'No se pudo agregar el producto');
+            }
+            scannerInput.value = '';
+            scannerInput.focus();
+            setTimeout(() => { processingScan = false; }, 120);
+            return;
+          }
+
+          // Si no se encuentra localmente, buscar en backend
           fetch('/admin/productos/api/buscar_por_scan.php', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
-                q
+                q: serie
               })
             })
             .then(res => res.json())
             .then(data => {
               if (data && data.success && data.producto) {
-                const ok = agregarProductoPOS(data.producto, q, 1);
+                const ok = agregarProductoPOS(data.producto, serie, 1);
                 if (ok) {
                   renderizarTabla(tablaProductos, inputsProductos, totalDisplay);
                   showToast('success', 'Producto agregado');
