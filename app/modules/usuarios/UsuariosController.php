@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . "/ReportesModel.php";
+require_once __DIR__ . "/UsuariosModel.php";
 
 class ReportesController extends Controller
 {
