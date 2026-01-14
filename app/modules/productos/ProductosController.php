@@ -126,7 +126,7 @@ class ProductosController extends Controller
         RoleMiddleware::requireAdminOrVendedor();
 
         $data = $this->sanitizar($_POST);
-        
+
         // Debug: Log de datos recibidos
         error_log("POST datos recibidos: " . json_encode($_POST));
         error_log("numero_serie recibido: " . ($data["numero_serie"] ?? 'NO ENVIADO'));

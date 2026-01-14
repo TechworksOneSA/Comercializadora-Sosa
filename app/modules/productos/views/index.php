@@ -184,14 +184,7 @@ $kpis = $kpis ?? [];
         </select>
       </div>
 
-      <div class="filter-group">
-        <span class="filter-label">🔘 Estado:</span>
-        <select id="fEstado" class="filter-select">
-          <option value="ALL" <?= (($filters['estado'] ?? 'ALL') === 'ALL') ? 'selected' : '' ?>>Todos</option>
-          <option value="ACTIVO" <?= (($filters['estado'] ?? 'ALL') === 'ACTIVO') ? 'selected' : '' ?>>Activos</option>
-          <option value="INACTIVO" <?= (($filters['estado'] ?? 'ALL') === 'INACTIVO') ? 'selected' : '' ?>>Desactivados</option>
-        </select>
-      </div>
+      <!-- Filtro de estado eliminado -->
 
     </div>
   </div>

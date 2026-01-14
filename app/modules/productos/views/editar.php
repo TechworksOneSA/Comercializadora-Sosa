@@ -592,18 +592,18 @@ $marcaText = $marcaId && isset($mapMar[$marcaId]) ? $mapMar[$marcaId] : '';
                 </div>
 
                 <?php if (strtoupper($producto['tipo_producto'] ?? 'UNIDAD') === 'UNIDAD'): ?>
-                <div class="form-group">
-                    <label class="form-label">Número de Serie</label>
-                    <input
-                        type="text"
-                        name="numero_serie"
-                        class="form-input"
-                        value="<?= htmlspecialchars($numero_serie ?? '') ?>"
-                        placeholder="Serie del producto (opcional)">
-                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
-                        📝 El mismo número de serie aplica a todas las unidades del producto
-                    </small>
-                </div>
+                    <div class="form-group">
+                        <label class="form-label">Número de Serie</label>
+                        <input
+                            type="text"
+                            name="numero_serie"
+                            class="form-input"
+                            value="<?= htmlspecialchars($numero_serie ?? '') ?>"
+                            placeholder="Serie del producto (opcional)">
+                        <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
+                            📝 El mismo número de serie aplica a todas las unidades del producto
+                        </small>
+                    </div>
                 <?php endif; ?>
             </div>
 
@@ -675,12 +675,12 @@ $marcaText = $marcaId && isset($mapMar[$marcaId]) ? $mapMar[$marcaId] : '';
                             <input type="hidden" name="eliminar_imagen" id="eliminar_imagen" value="0">
                         </div>
                         <script>
-                        document.getElementById('btnLimpiarImagen').onclick = function() {
-                            var img = document.getElementById('imgActualProducto');
-                            if (img) img.style.display = 'none';
-                            document.getElementById('eliminar_imagen').value = '1';
-                            this.style.display = 'none';
-                        };
+                            document.getElementById('btnLimpiarImagen').onclick = function() {
+                                var img = document.getElementById('imgActualProducto');
+                                if (img) img.style.display = 'none';
+                                document.getElementById('eliminar_imagen').value = '1';
+                                this.style.display = 'none';
+                            };
                         </script>
                     <?php endif; ?>
                 </div>
