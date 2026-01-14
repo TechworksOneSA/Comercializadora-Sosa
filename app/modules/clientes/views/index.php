@@ -36,11 +36,10 @@
       <input
         type="text"
         id="searchInput"
-        placeholder="🔍 Buscar por nombre, teléfono, NIT o dirección..."
+        placeholder="Buscar por nombre, teléfono, NIT o dirección..."
         style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 2px solid #dee2e6; border-radius: 0.5rem; font-size: 1rem; transition: all 0.3s;"
         onfocus="this.style.borderColor='#667eea'; this.style.boxShadow='0 0 0 3px rgba(102, 126, 234, 0.1)'"
-        onblur="this.style.borderColor='#dee2e6'; this.style.boxShadow='none'"
-      />
+        onblur="this.style.borderColor='#dee2e6'; this.style.boxShadow='none'" />
       <span style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); font-size: 1.25rem;">🔍</span>
     </div>
     <p id="searchResults" style="margin-top: 0.75rem; color: #6c757d; font-size: 0.9rem;"></p>
