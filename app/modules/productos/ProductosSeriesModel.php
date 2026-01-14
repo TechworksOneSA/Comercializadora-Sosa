@@ -151,25 +151,45 @@ class ProductosSeriesModel extends Model
      */
     public function guardarSerieUnica($producto_id, $numero_serie)
     {
-        // Verificar si ya existe una serie para este producto
-        $serieExistente = $this->getSerieDelProducto($producto_id);
+        try {
+            // Verificar si ya existe una serie para este producto
+            $serieExistente = $this->getSerieDelProducto($producto_id);
 
-        if ($serieExistente) {
-            // Actualizar la serie existente
-            $sql = "UPDATE productos_series
-                    SET numero_serie = :numero_serie
-                    WHERE producto_id = :producto_id";
-        } else {
-            // Crear nueva serie
-            $sql = "INSERT INTO productos_series
-                    (producto_id, numero_serie, estado, observaciones)
-                    VALUES (:producto_id, :numero_serie, 'EN_STOCK', 'Serie del producto')";
+            if ($serieExistente) {
+                // Actualizar la serie existente
+                $sql = "UPDATE productos_series
+                        SET numero_serie = :numero_serie,
+                            updated_at = NOW()
+                        WHERE producto_id = :producto_id";
+            } else {
+                // Primero, verificar si el numero_serie ya existe para evitar error UNIQUE
+                $sqlCheck = "SELECT id FROM productos_series WHERE numero_serie = :numero_serie LIMIT 1";
+                $stmtCheck = $this->db->prepare($sqlCheck);
+                $stmtCheck->execute([':numero_serie' => $numero_serie]);
+                $exists = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+                if ($exists) {
+                    // Si el número de serie ya existe, actualizarlo en lugar de insertar
+                    $sql = "UPDATE productos_series
+                            SET producto_id = :producto_id,
+                                updated_at = NOW()
+                            WHERE numero_serie = :numero_serie";
+                } else {
+                    // Crear nueva serie
+                    $sql = "INSERT INTO productos_series
+                            (producto_id, numero_serie, estado, observaciones)
+                            VALUES (:producto_id, :numero_serie, 'EN_STOCK', '')";
+                }
+            }
+
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([
+                ':producto_id' => $producto_id,
+                ':numero_serie' => $numero_serie
+            ]);
+        } catch (PDOException $e) {
+            error_log("Error en guardarSerieUnica: " . $e->getMessage());
+            return false;
         }
-
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            ':producto_id' => $producto_id,
-            ':numero_serie' => $numero_serie
-        ]);
     }
 }
