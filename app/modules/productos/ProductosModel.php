@@ -163,6 +163,10 @@ class ProductosModel extends Model
             if (empty($numeroSerie)) {
                 $numeroSerie = null;
             }
+            
+            // Debug
+            error_log("numero_serie a guardar: " . ($numeroSerie ?? 'NULL'));
+            error_log("Tiene columna numero_serie: " . ($tieneNumeroSerie ? 'SI' : 'NO'));
 
             $params = [
                 ":sku"              => $data["sku"],

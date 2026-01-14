@@ -126,6 +126,10 @@ class ProductosController extends Controller
         RoleMiddleware::requireAdminOrVendedor();
 
         $data = $this->sanitizar($_POST);
+        
+        // Debug: Log de datos recibidos
+        error_log("POST datos recibidos: " . json_encode($_POST));
+        error_log("numero_serie recibido: " . ($data["numero_serie"] ?? 'NO ENVIADO'));
 
         $tipoProducto = strtoupper(trim($data["tipo_producto"] ?? "UNIDAD"));
         $skuGenerado  = $this->generarSKU();
@@ -188,6 +192,9 @@ class ProductosController extends Controller
             // ✅ ÚNICO CAMPO REAL EN DB
             "imagen_path"      => $imagenPath,
         ];
+
+        // Debug: Log del payload antes de crear
+        error_log("Payload para crear producto: " . json_encode($payload));
 
         try {
             $result = $this->model->crear($payload);
