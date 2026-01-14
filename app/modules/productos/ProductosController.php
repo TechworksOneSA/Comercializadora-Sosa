@@ -190,8 +190,9 @@ class ProductosController extends Controller
         ];
 
         try {
-            $productoId = $this->model->crear($payload);
-            if (!$productoId) {
+            $result = $this->model->crear($payload);
+            if (!$result) {
+                error_log("Error al crear producto - modelo retornó false");
                 redirect('/admin/productos/crear?error=No se pudo crear el producto');
                 return;
             }
@@ -199,7 +200,8 @@ class ProductosController extends Controller
             redirect('/admin/productos?ok=creado');
         } catch (Exception $e) {
             error_log("Error creando producto: " . $e->getMessage());
-            redirect('/admin/productos/crear?error=Error interno');
+            error_log("Stack trace: " . $e->getTraceAsString());
+            redirect('/admin/productos/crear?error=' . urlencode($e->getMessage()));
         }
     }
 
