@@ -171,6 +171,6 @@ $router->post("/admin/caja/eliminar-movimiento/{id}", "CajaController@eliminarMo
 // API - Mantener sesión activa
 $router->post("/api/mantener-sesion", "AuthController@mantenerSesion");
 
-$router->post("/admin/productos/api/buscar_por_scan", "ProductosController@buscarPorScan");
+$router->post("/admin/productos/api/buscar_por_scan", "ProductosApiController@buscarPorScan");
 
 $router->dispatch();
