@@ -138,10 +138,10 @@ class ProductosModel extends Model
             $imagenPath = $data["imagen_path"] ?? null;
 
             $sql = "INSERT INTO {$this->table}
-                (sku, codigo_barra, nombre, tipo_producto, categoria_id, marca_id, unidad_medida_id,
+                (sku, codigo_barra, numero_serie, nombre, tipo_producto, categoria_id, marca_id, unidad_medida_id,
                  precio_venta, costo_actual, stock, stock_minimo, descripcion, imagen_path, activo, estado)
                 VALUES
-                (:sku, :codigo_barra, :nombre, :tipo_producto, :categoria_id, :marca_id, :unidad_medida_id,
+                (:sku, :codigo_barra, :numero_serie, :nombre, :tipo_producto, :categoria_id, :marca_id, :unidad_medida_id,
                  :precio_venta, :costo_actual, :stock, :stock_minimo, :descripcion, :imagen_path, :activo, :estado)";
 
             $stmt = $this->db->prepare($sql);
@@ -149,6 +149,7 @@ class ProductosModel extends Model
             $result = $stmt->execute([
                 ":sku"              => $data["sku"],
                 ":codigo_barra"     => $data["codigo_barra"] ?? null,
+                ":numero_serie"     => $data["numero_serie"] ?? null,
                 ":nombre"           => $data["nombre"],
                 ":tipo_producto"    => $data["tipo_producto"] ?? 'UNIDAD',
                 ":categoria_id"     => $data["categoria_id"],
@@ -183,6 +184,7 @@ class ProductosModel extends Model
         $sql = "UPDATE {$this->table}
                 SET sku              = :sku,
                     codigo_barra     = :codigo_barra,
+                    numero_serie     = :numero_serie,
                     nombre           = :nombre,
                     tipo_producto    = :tipo_producto,
                     categoria_id     = :categoria_id,
@@ -203,6 +205,7 @@ class ProductosModel extends Model
         return $stmt->execute([
             ':sku'              => $data['sku'],
             ':codigo_barra'     => $data['codigo_barra'] ?? null,
+            ':numero_serie'     => $data['numero_serie'] ?? null,
             ':nombre'           => $data['nombre'],
             ':tipo_producto'    => $data['tipo_producto'] ?? 'UNIDAD',
             ':categoria_id'     => $data['categoria_id'],

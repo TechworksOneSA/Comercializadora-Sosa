@@ -47,18 +47,15 @@ class VentasController extends Controller
 
         $productosModel = new ProductosModel();
         $clientesModel = new ClientesModel();
-        require_once __DIR__ . '/../productos/ProductosSeriesModel.php';
-        $seriesModel = new ProductosSeriesModel();
 
         $productos = $productosModel->listarActivos();
         $clientes = $clientesModel->listar();
 
-        // ✅ Cargar series existentes
+        // ✅ Cargar series existentes desde productos.numero_serie
         $series_existentes = [];
         foreach ($productos as $producto) {
-            $serie = $seriesModel->getSerieDelProducto($producto['id']);
-            if ($serie) {
-                $series_existentes[$producto['id']] = $serie;
+            if (!empty($producto['numero_serie'])) {
+                $series_existentes[$producto['id']] = $producto['numero_serie'];
             }
         }
 

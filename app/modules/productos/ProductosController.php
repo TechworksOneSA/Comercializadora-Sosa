@@ -182,6 +182,9 @@ class ProductosController extends Controller
             "activo"           => 1,
             "estado"           => "ACTIVO",
 
+            // ✅ Número de serie
+            "numero_serie"     => trim($data["numero_serie"] ?? ''),
+
             // ✅ ÚNICO CAMPO REAL EN DB
             "imagen_path"      => $imagenPath,
         ];
@@ -191,14 +194,6 @@ class ProductosController extends Controller
             if (!$productoId) {
                 redirect('/admin/productos/crear?error=No se pudo crear el producto');
                 return;
-            }
-
-            // ✅ Si se proporcionó número de serie, guardarlo en productos_series
-            $numeroSerie = trim($data['numero_serie'] ?? '');
-            if (!empty($numeroSerie) && $tipoProducto === 'UNIDAD') {
-                require_once __DIR__ . '/ProductosSeriesModel.php';
-                $seriesModel = new ProductosSeriesModel();
-                $seriesModel->guardarSerieUnica($productoId, $numeroSerie);
             }
 
             redirect('/admin/productos?ok=creado');
@@ -322,25 +317,15 @@ class ProductosController extends Controller
             "descripcion"      => $producto["descripcion"] ?? "",
             "estado"           => $producto["estado"] ?? "ACTIVO",
 
+            // ✅ Número de serie
+            "numero_serie"     => trim($data["numero_serie"] ?? ''),
+
             // ✅ ÚNICO CAMPO REAL EN DB
             "imagen_path" => $imagen_path,
         ];
 
         try {
             $this->model->actualizar((int)$id, $payload);
-
-            // ✅ Guardar o actualizar número de serie si se proporcionó
-            $numeroSerie = trim($data['numero_serie'] ?? '');
-            $tipoProducto = $producto['tipo_producto'] ?? 'UNIDAD';
-
-            if ($tipoProducto === 'UNIDAD') {
-                require_once __DIR__ . '/ProductosSeriesModel.php';
-                $seriesModel = new ProductosSeriesModel();
-
-                if (!empty($numeroSerie)) {
-                    $seriesModel->guardarSerieUnica((int)$id, $numeroSerie);
-                }
-            }
 
             redirect("/admin/productos?ok=actualizado");
         } catch (Exception $e) {

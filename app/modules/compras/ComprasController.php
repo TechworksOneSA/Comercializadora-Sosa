@@ -33,19 +33,15 @@ class ComprasController extends Controller
 
         $productosModel   = new ProductosModel();
         $proveedoresModel = new ProveedoresModel();
-        $seriesModel      = new ProductosSeriesModel();
 
         $productos   = $productosModel->listarActivos();   // catálogo de productos
         $proveedores = $proveedoresModel->listarActivos(); // catálogo de proveedores
 
-        // ✅ Obtener las series existentes de cada producto
+        // ✅ Obtener las series existentes de cada producto desde productos.numero_serie
         $seriesExistentes = [];
         foreach ($productos as $producto) {
-            if ($producto['tipo_producto'] === 'UNIDAD') {
-                $serie = $seriesModel->getSerieDelProducto($producto['id']);
-                if ($serie) {
-                    $seriesExistentes[$producto['id']] = $serie;
-                }
+            if ($producto['tipo_producto'] === 'UNIDAD' && !empty($producto['numero_serie'])) {
+                $seriesExistentes[$producto['id']] = $producto['numero_serie'];
             }
         }
 
@@ -154,14 +150,17 @@ class ComprasController extends Controller
 
         $compra_id = $this->model->crearCompra($header, $detalles);
 
-        // ✅ Guardar/actualizar la serie única de cada producto si se proporcionó
+        // ✅ Actualizar la serie única de cada producto si se proporcionó
         if (!empty($seriesPorProducto) && $compra_id) {
-            $seriesModel = new ProductosSeriesModel();
-
             foreach ($seriesPorProducto as $producto_id => $serie) {
                 // $serie es una cadena única, no un array
                 if (!empty(trim($serie))) {
-                    $seriesModel->guardarSerieUnica($producto_id, trim($serie));
+                    $sql = "UPDATE productos SET numero_serie = :numero_serie WHERE id = :id";
+                    $stmt = Database::connect()->prepare($sql);
+                    $stmt->execute([
+                        ':numero_serie' => trim($serie),
+                        ':id' => $producto_id
+                    ]);
                 }
             }
         }

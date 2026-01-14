@@ -50,18 +50,15 @@ class CotizacionesController extends Controller
 
         $clientesModel = new ClientesModel();
         $productosModel = new ProductosModel();
-        require_once __DIR__ . '/../productos/ProductosSeriesModel.php';
-        $seriesModel = new ProductosSeriesModel();
 
         $clientes = $clientesModel->listar();
         $productos = $productosModel->listarActivos();
 
-        // ✅ Cargar series existentes
+        // ✅ Cargar series existentes desde productos.numero_serie
         $series_existentes = [];
         foreach ($productos as $producto) {
-            $serie = $seriesModel->getSerieDelProducto($producto['id']);
-            if ($serie) {
-                $series_existentes[$producto['id']] = $serie;
+            if (!empty($producto['numero_serie'])) {
+                $series_existentes[$producto['id']] = $producto['numero_serie'];
             }
         }
 
