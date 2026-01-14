@@ -41,6 +41,7 @@ require_once __DIR__ . "/../app/modules/caja/CajaModel.php";
 
 require_once __DIR__ . "/../app/modules/usuarios/UsuariosController.php";
 
+require_once __DIR__ . "/../app/modules/productos/ProductosApiController.php";
 
 $router = new Router();
 
@@ -65,12 +66,6 @@ $router->get("/admin/productos/{id}/series",    "ProductosController@series");
 $router->post("/admin/productos/desactivar/{id}", "ProductosController@desactivar");
 $router->post("/admin/productos/activar/{id}",    "ProductosController@activar");
 $router->post("/admin/productos/eliminarPermanente/{id}", "ProductosController@eliminarPermanente");
-
-// PRODUCTOS API - Scanner (Supermercado)
-$router->post("/admin/productos/api/buscar_por_scan", function () {
-    require __DIR__ . "/../app/modules/productos/api/buscar_por_scan.php";
-    exit; // importantísimo: evita que siga el router
-});
 
 // COMPRAS
 $router->get('/admin/compras',          'ComprasController@index');
@@ -175,5 +170,7 @@ $router->post("/admin/caja/eliminar-movimiento/{id}", "CajaController@eliminarMo
 
 // API - Mantener sesión activa
 $router->post("/api/mantener-sesion", "AuthController@mantenerSesion");
+
+$router->post("/admin/productos/api/buscar_por_scan", "ProductosApiController@buscarPorScan");
 
 $router->dispatch();
