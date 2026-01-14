@@ -2,136 +2,132 @@
 declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-header('Pragma: no-cache');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+  http_response_code(204);
+  exit;
 }
 
-/**
- * Requisitos del proyecto:
- * - env.php y database.php ya existen en /app/config/
- * - Database::connect() retorna PDO
- * - Auth.php existe en /app/core/ (si quiere protegerlo)
- */
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
 
 require_once __DIR__ . '/../../../config/env.php';
 require_once __DIR__ . '/../../../config/database.php';
 require_once __DIR__ . '/../../../core/Auth.php';
 
+function respond(int $code, array $payload): void {
+  http_response_code($code);
+  echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+  exit;
+}
+
+// Seguridad: requiere sesión (ajuste si usted quiere permitirlo sin login)
+if (!class_exists('Auth') || !Auth::check()) {
+  respond(401, ['success' => false, 'message' => 'No autorizado']);
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+  respond(405, ['success' => false, 'message' => 'Método no permitido']);
+}
+
+// Leer JSON
+$raw = file_get_contents('php://input');
+$data = json_decode($raw ?: '[]', true);
+
+$q = trim((string)($data['q'] ?? ''));
+if ($q === '') {
+  respond(422, ['success' => false, 'message' => 'Parámetro q requerido']);
+}
+
 try {
-    // Seguridad básica (opcional pero recomendado)
-    if (!Auth::check()) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'message' => 'No autorizado'], JSON_UNESCAPED_UNICODE);
-        exit;
+  $pdo = Database::connect();
+
+  // Buscamos por: SKU exacto, o si existe "codigo_barras", o si existe "numero_serie" en tabla series.
+  // NOTA: como no tengo su esquema exacto, hago detección segura de columnas/tablas.
+  $hasCodigoBarras = false;
+  $hasRequiereSerie = false;
+
+  $cols = $pdo->query("SHOW COLUMNS FROM productos")->fetchAll(PDO::FETCH_ASSOC);
+  foreach ($cols as $c) {
+    if (($c['Field'] ?? '') === 'codigo_barras') $hasCodigoBarras = true;
+    if (($c['Field'] ?? '') === 'requiere_serie') $hasRequiereSerie = true;
+  }
+
+  // Detectar tabla de series (si existe) y su columna típica
+  $hasSeriesTable = false;
+  $seriesTableName = null;
+  $seriesCol = null;
+  $seriesProdCol = null;
+
+  $tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_NUM);
+  $tableNames = array_map(fn($r) => (string)$r[0], $tables);
+
+  // Nombres comunes: producto_series / productos_series / series_productos / series
+  foreach (['producto_series', 'productos_series', 'series_productos', 'series'] as $t) {
+    if (in_array($t, $tableNames, true)) {
+      $hasSeriesTable = true;
+      $seriesTableName = $t;
+      break;
     }
+  }
 
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        http_response_code(405);
-        echo json_encode(['success' => false, 'message' => 'Método no permitido'], JSON_UNESCAPED_UNICODE);
-        exit;
+  if ($hasSeriesTable && $seriesTableName) {
+    $scols = $pdo->query("SHOW COLUMNS FROM `$seriesTableName`")->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($scols as $c) {
+      $f = (string)($c['Field'] ?? '');
+      if (in_array($f, ['numero_serie', 'serie', 'serial'], true)) $seriesCol = $f;
+      if (in_array($f, ['producto_id', 'id_producto'], true)) $seriesProdCol = $f;
     }
-
-    $raw = file_get_contents('php://input') ?: '';
-    $payload = json_decode($raw, true);
-
-    if (!is_array($payload)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'JSON inválido'], JSON_UNESCAPED_UNICODE);
-        exit;
+    if (!$seriesCol || !$seriesProdCol) {
+      // Si la tabla existe pero no matchea, mejor no usarla para evitar SQL roto
+      $hasSeriesTable = false;
     }
+  }
 
-    $q = trim((string)($payload['q'] ?? ''));
+  // 1) Intentar por SKU / codigo_barras
+  $where = "p.sku = :q";
+  if ($hasCodigoBarras) $where .= " OR p.codigo_barras = :q";
 
-    if ($q === '') {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Parámetro q requerido'], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    $db = Database::connect(); // PDO
-
-    // Normalización: también intentamos variantes comunes
-    $qLike = '%' . $q . '%';
-
-    /**
-     * Estrategia de búsqueda:
-     * 1) SKU exacto
-     * 2) Código de barras exacto (si existe columna barcode/codigo_barras)
-     * 3) Número de serie exacto (si existe tabla/columna de series)
-     *
-     * Como no tengo su esquema exacto, dejo consultas "compatibles" usando COALESCE
-     * y fallback seguro.
-     */
-
-    // 1) Buscar por SKU exacto o por campos alternos si existen
-    // Ajuste: cambie nombres de columnas si su tabla difiere.
-    $sqlProducto = "
-        SELECT
-            p.id,
-            p.nombre,
-            p.sku,
-            p.precio_venta,
-            p.stock,
-            COALESCE(p.requiere_serie, 0) AS requiere_serie
-        FROM productos p
-        WHERE
-            (p.sku = :q)
-            OR (COALESCE(p.codigo_barras, '') = :q)
-            OR (COALESCE(p.barcode, '') = :q)
-        LIMIT 1
+  // 2) Intentar por serie: si existe tabla de series, buscamos por serie y traemos el producto
+  if ($hasSeriesTable && $seriesTableName) {
+    $sql = "
+      SELECT p.id, p.nombre, p.sku, p.precio_venta, p.stock" . ($hasRequiereSerie ? ", p.requiere_serie" : ", 0 AS requiere_serie") . "
+      FROM `$seriesTableName` s
+      INNER JOIN productos p ON p.id = s.`$seriesProdCol`
+      WHERE s.`$seriesCol` = :q
+      LIMIT 1
     ";
-
-    $stmt = $db->prepare($sqlProducto);
+    $stmt = $pdo->prepare($sql);
     $stmt->execute([':q' => $q]);
-    $producto = $stmt->fetch(PDO::FETCH_ASSOC);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // 2) Si no encontró en producto, intentar por serie (si hay tabla de series)
-    // Si su tabla se llama distinto, ajuste aquí.
-    if (!$producto) {
-        // Probables nombres: productos_series / producto_series / series_productos
-        // Probable columna: numero_serie / serie / serial
-        $sqlSerie = "
-            SELECT
-                p.id,
-                p.nombre,
-                p.sku,
-                p.precio_venta,
-                p.stock,
-                1 AS requiere_serie
-            FROM productos p
-            INNER JOIN productos_series s ON s.producto_id = p.id
-            WHERE s.numero_serie = :q
-            LIMIT 1
-        ";
-
-        try {
-            $stmt2 = $db->prepare($sqlSerie);
-            $stmt2->execute([':q' => $q]);
-            $producto = $stmt2->fetch(PDO::FETCH_ASSOC);
-        } catch (Throwable $e) {
-            // Si esa tabla no existe, ignoramos este intento sin tumbar la API
-            $producto = null;
-        }
+    if ($row) {
+      respond(200, ['success' => true, 'producto' => $row, 'match' => 'serie']);
     }
+  }
 
-    if (!$producto) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Producto no encontrado'], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
+  // Si no fue serie, probamos productos directo
+  $sql2 = "
+    SELECT p.id, p.nombre, p.sku, p.precio_venta, p.stock" . ($hasRequiereSerie ? ", p.requiere_serie" : ", 0 AS requiere_serie") . "
+    FROM productos p
+    WHERE ($where)
+    LIMIT 1
+  ";
+  $stmt2 = $pdo->prepare($sql2);
+  $stmt2->execute([':q' => $q]);
+  $row2 = $stmt2->fetch(PDO::FETCH_ASSOC);
 
-    echo json_encode(['success' => true, 'producto' => $producto], JSON_UNESCAPED_UNICODE);
-    exit;
+  if ($row2) {
+    respond(200, ['success' => true, 'producto' => $row2, 'match' => 'sku/codigo_barras']);
+  }
 
+  respond(404, ['success' => false, 'message' => 'No encontrado']);
 } catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error interno',
-        'error'   => $e->getMessage()
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+  // Log server-side real
+  error_log("buscar_por_scan ERROR: " . $e->getMessage());
+  respond(500, ['success' => false, 'message' => 'Error interno']);
 }

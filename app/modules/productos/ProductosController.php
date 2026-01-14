@@ -89,6 +89,13 @@ class ProductosController extends Controller
         ]);
     }
 
+    public function buscarPorScan()
+{
+    header('Content-Type: application/json; charset=utf-8');
+    require __DIR__ . '/api/buscar_por_scan.php';
+    exit;
+}
+
     // =========================
     // CREAR (FORM)
     // =========================
