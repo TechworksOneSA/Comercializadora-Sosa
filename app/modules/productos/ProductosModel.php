@@ -137,12 +137,25 @@ class ProductosModel extends Model
         try {
             $imagenPath = $data["imagen_path"] ?? null;
 
-            $sql = "INSERT INTO {$this->table}
-                (sku, codigo_barra, numero_serie, nombre, tipo_producto, categoria_id, marca_id, unidad_medida_id,
-                 precio_venta, costo_actual, stock, stock_minimo, descripcion, imagen_path, activo, estado)
-                VALUES
-                (:sku, :codigo_barra, :numero_serie, :nombre, :tipo_producto, :categoria_id, :marca_id, :unidad_medida_id,
-                 :precio_venta, :costo_actual, :stock, :stock_minimo, :descripcion, :imagen_path, :activo, :estado)";
+            // Verificar si la columna numero_serie existe
+            $checkColumn = $this->db->query("SHOW COLUMNS FROM {$this->table} LIKE 'numero_serie'")->fetch();
+            $tieneNumeroSerie = !empty($checkColumn);
+
+            if ($tieneNumeroSerie) {
+                $sql = "INSERT INTO {$this->table}
+                    (sku, codigo_barra, numero_serie, nombre, tipo_producto, categoria_id, marca_id, unidad_medida_id,
+                     precio_venta, costo_actual, stock, stock_minimo, descripcion, imagen_path, activo, estado)
+                    VALUES
+                    (:sku, :codigo_barra, :numero_serie, :nombre, :tipo_producto, :categoria_id, :marca_id, :unidad_medida_id,
+                     :precio_venta, :costo_actual, :stock, :stock_minimo, :descripcion, :imagen_path, :activo, :estado)";
+            } else {
+                $sql = "INSERT INTO {$this->table}
+                    (sku, codigo_barra, nombre, tipo_producto, categoria_id, marca_id, unidad_medida_id,
+                     precio_venta, costo_actual, stock, stock_minimo, descripcion, imagen_path, activo, estado)
+                    VALUES
+                    (:sku, :codigo_barra, :nombre, :tipo_producto, :categoria_id, :marca_id, :unidad_medida_id,
+                     :precio_venta, :costo_actual, :stock, :stock_minimo, :descripcion, :imagen_path, :activo, :estado)";
+            }
 
             $stmt = $this->db->prepare($sql);
 
@@ -151,10 +164,9 @@ class ProductosModel extends Model
                 $numeroSerie = null;
             }
 
-            $result = $stmt->execute([
+            $params = [
                 ":sku"              => $data["sku"],
                 ":codigo_barra"     => $data["codigo_barra"] ?? null,
-                ":numero_serie"     => $numeroSerie,
                 ":nombre"           => $data["nombre"],
                 ":tipo_producto"    => $data["tipo_producto"] ?? 'UNIDAD',
                 ":categoria_id"     => $data["categoria_id"],
@@ -168,7 +180,13 @@ class ProductosModel extends Model
                 ":imagen_path"      => $imagenPath,
                 ":activo"           => $data["activo"] ?? 1,
                 ":estado"           => $data["estado"] ?? "ACTIVO",
-            ]);
+            ];
+
+            if ($tieneNumeroSerie) {
+                $params[":numero_serie"] = $numeroSerie;
+            }
+
+            $result = $stmt->execute($params);
 
             if (!$result) {
                 error_log("Error al crear producto: " . json_encode($stmt->errorInfo()));
@@ -189,24 +207,48 @@ class ProductosModel extends Model
     {
         $imagenPath = $data["imagen_path"] ?? null;
 
-        $sql = "UPDATE {$this->table}
-                SET sku              = :sku,
-                    codigo_barra     = :codigo_barra,
-                    numero_serie     = :numero_serie,
-                    nombre           = :nombre,
-                    tipo_producto    = :tipo_producto,
-                    categoria_id     = :categoria_id,
-                    marca_id         = :marca_id,
-                    unidad_medida_id = :unidad_medida_id,
-                    precio_venta     = :precio_venta,
-                    costo_actual     = :costo_actual,
-                    stock            = :stock,
-                    stock_minimo     = :stock_minimo,
-                    descripcion      = :descripcion,
-                    estado           = :estado,
-                    imagen_path      = :imagen_path,
-                    updated_at       = NOW()
-                WHERE id = :id";
+        // Verificar si la columna numero_serie existe
+        $checkColumn = $this->db->query("SHOW COLUMNS FROM {$this->table} LIKE 'numero_serie'")->fetch();
+        $tieneNumeroSerie = !empty($checkColumn);
+
+        if ($tieneNumeroSerie) {
+            $sql = "UPDATE {$this->table}
+                    SET sku              = :sku,
+                        codigo_barra     = :codigo_barra,
+                        numero_serie     = :numero_serie,
+                        nombre           = :nombre,
+                        tipo_producto    = :tipo_producto,
+                        categoria_id     = :categoria_id,
+                        marca_id         = :marca_id,
+                        unidad_medida_id = :unidad_medida_id,
+                        precio_venta     = :precio_venta,
+                        costo_actual     = :costo_actual,
+                        stock            = :stock,
+                        stock_minimo     = :stock_minimo,
+                        descripcion      = :descripcion,
+                        estado           = :estado,
+                        imagen_path      = :imagen_path,
+                        updated_at       = NOW()
+                    WHERE id = :id";
+        } else {
+            $sql = "UPDATE {$this->table}
+                    SET sku              = :sku,
+                        codigo_barra     = :codigo_barra,
+                        nombre           = :nombre,
+                        tipo_producto    = :tipo_producto,
+                        categoria_id     = :categoria_id,
+                        marca_id         = :marca_id,
+                        unidad_medida_id = :unidad_medida_id,
+                        precio_venta     = :precio_venta,
+                        costo_actual     = :costo_actual,
+                        stock            = :stock,
+                        stock_minimo     = :stock_minimo,
+                        descripcion      = :descripcion,
+                        estado           = :estado,
+                        imagen_path      = :imagen_path,
+                        updated_at       = NOW()
+                    WHERE id = :id";
+        }
 
         $stmt = $this->db->prepare($sql);
 
@@ -215,10 +257,9 @@ class ProductosModel extends Model
             $numeroSerie = null;
         }
 
-        return $stmt->execute([
+        $params = [
             ':sku'              => $data['sku'],
             ':codigo_barra'     => $data['codigo_barra'] ?? null,
-            ':numero_serie'     => $numeroSerie,
             ':nombre'           => $data['nombre'],
             ':tipo_producto'    => $data['tipo_producto'] ?? 'UNIDAD',
             ':categoria_id'     => $data['categoria_id'],
@@ -232,7 +273,13 @@ class ProductosModel extends Model
             ':estado'           => $data['estado'] ?? 'ACTIVO',
             ':imagen_path'      => $imagenPath,
             ':id'               => $id,
-        ]);
+        ];
+
+        if ($tieneNumeroSerie) {
+            $params[':numero_serie'] = $numeroSerie;
+        }
+
+        return $stmt->execute($params);
     }
 
     public function desactivar(int $id): bool
