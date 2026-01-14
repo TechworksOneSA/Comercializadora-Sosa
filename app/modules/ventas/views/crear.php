@@ -168,6 +168,7 @@ $series_existentes = $series_existentes ?? [];
       'id' => (int)$p['id'],
       'nombre' => $p['nombre'],
       'sku' => $p['sku'] ?? '',
+      'codigo_barra' => $p['codigo_barra'] ?? '',
       'stock' => (int)($p['stock'] ?? 0),
       'precio' => (float)($p['precio_venta'] ?? 0),
       'numero_serie' => '',
@@ -271,8 +272,9 @@ $series_existentes = $series_existentes ?? [];
     const resultados = productosData.filter(producto => {
       const nombre = (producto.nombre || '').toLowerCase();
       const sku = (producto.sku || '').toLowerCase();
+      const codigo = (producto.codigo_barra || '').toLowerCase();
       const serie = (producto.numero_serie || '').toLowerCase();
-      return nombre.includes(termino) || sku.includes(termino) || serie.includes(termino);
+      return nombre.includes(termino) || sku.includes(termino) || codigo.includes(termino) || serie.includes(termino);
     });
 
     if (resultados.length === 0) {

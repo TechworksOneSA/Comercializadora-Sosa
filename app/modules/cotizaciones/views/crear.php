@@ -26,13 +26,13 @@ $series_existentes = $series_existentes ?? [];
 
   <!-- FORMULARIO -->
   <form method="POST" action="<?= url('/admin/cotizaciones/guardar') ?>" id="formCotizacion" style="padding: 2rem;">
-    
+
     <!-- SECCIÓN: DATOS GENERALES -->
     <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
       <h3 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 700;">📋 Datos Generales</h3>
-      
+
       <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
-        
+
         <!-- CLIENTE -->
         <div>
           <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">
@@ -81,7 +81,7 @@ $series_existentes = $series_existentes ?? [];
     <!-- SECCIÓN: PRODUCTOS -->
     <div style="background: #fff; border: 2px solid #e9ecef; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 2rem;">
       <h3 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 700;">🛒 Seleccionar Productos</h3>
-      
+
       <div style="display: grid; grid-template-columns: 3fr 1fr auto; gap: 1rem; align-items: end;">
         <div>
           <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">Producto</label>
@@ -99,7 +99,7 @@ $series_existentes = $series_existentes ?? [];
             <div id="resultadosProductos" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 300px; overflow-y: auto; background: white; border: 2px solid #0a3d91; border-top: none; border-radius: 0 0 0.5rem 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;"></div>
           </div>
         </div>
-        
+
         <div>
           <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">Cantidad</label>
           <input
@@ -110,9 +110,9 @@ $series_existentes = $series_existentes ?? [];
             style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem;"
           >
         </div>
-        
-        <button 
-          type="button" 
+
+        <button
+          type="button"
           id="btnAgregarProducto"
           style="padding: 0.75rem 1.5rem; background: #28a745; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.95rem;"
         >
@@ -124,7 +124,7 @@ $series_existentes = $series_existentes ?? [];
     <!-- TABLA DE PRODUCTOS SELECCIONADOS -->
     <div style="margin-bottom: 2rem;">
       <h3 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 700;">📦 Productos en la Cotización</h3>
-      
+
       <div style="border: 2px solid #e9ecef; border-radius: 0.5rem; overflow: hidden;">
         <table style="width: 100%; border-collapse: collapse;">
           <thead style="background: #f8f9fa;">
@@ -164,13 +164,13 @@ $series_existentes = $series_existentes ?? [];
 
     <!-- BOTONES -->
     <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 2rem; border-top: 2px solid #e9ecef;">
-      <a 
-        href="<?= url('/admin/cotizaciones') ?>" 
+      <a
+        href="<?= url('/admin/cotizaciones') ?>"
         style="padding: 0.75rem 1.5rem; background: #6c757d; color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 600;"
       >
         ← Cancelar
       </a>
-      <button 
+      <button
         type="submit"
         id="btnGuardar"
         style="padding: 0.75rem 2rem; background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(10, 61, 145, 0.3);"
@@ -190,6 +190,7 @@ const productosData = <?= json_encode(array_map(function($p) use ($series_existe
     'id' => (int)$p['id'],
     'nombre' => $p['nombre'],
     'sku' => $p['sku'] ?? '',
+    'codigo_barra' => $p['codigo_barra'] ?? '',
     'stock' => (int)($p['stock'] ?? 0),
     'precio' => (float)($p['precio_venta'] ?? 0),
     'numero_serie' => '',
@@ -222,7 +223,7 @@ const formCotizacion = document.getElementById('formCotizacion');
 // ===== BÚSQUEDA DE CLIENTES =====
 function buscarClientes() {
   const termino = buscarClienteInput.value.toLowerCase().trim();
-  
+
   if (!termino) {
     resultadosClientesDiv.innerHTML = '<div style="padding: 1rem; color: #6c757d; text-align: center;">Escribe para buscar...</div>';
     resultadosClientesDiv.style.display = 'block';
@@ -245,7 +246,7 @@ function buscarClientes() {
   let html = '';
   resultados.forEach(cliente => {
     html += `
-      <div 
+      <div
         onclick="seleccionarCliente(${cliente.id}, '${cliente.nombre} ${cliente.apellido}')"
         style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #e9ecef; transition: background 0.2s;"
         onmouseover="this.style.background='#f8f9fa'"
@@ -283,7 +284,7 @@ function ocultarResultadosClientes() {
 // ===== BÚSQUEDA DE PRODUCTOS =====
 function buscarProductos() {
   const termino = buscarProductoInput.value.toLowerCase().trim();
-  
+
   if (!termino) {
     resultadosProductosDiv.innerHTML = '<div style="padding: 1rem; color: #6c757d; text-align: center;">Escribe para buscar...</div>';
     resultadosProductosDiv.style.display = 'block';
@@ -293,8 +294,9 @@ function buscarProductos() {
   const resultados = productosData.filter(producto => {
     const nombre = (producto.nombre || '').toLowerCase();
     const sku = (producto.sku || '').toLowerCase();
+    const codigo = (producto.codigo_barra || '').toLowerCase();
     const serie = (producto.numero_serie || '').toLowerCase();
-    return nombre.includes(termino) || sku.includes(termino) || serie.includes(termino);
+    return nombre.includes(termino) || sku.includes(termino) || codigo.includes(termino) || serie.includes(termino);
   });
 
   if (resultados.length === 0) {
@@ -307,7 +309,7 @@ function buscarProductos() {
   resultados.forEach(producto => {
     const stockColor = producto.stock > 10 ? '#28a745' : (producto.stock > 0 ? '#ffc107' : '#dc3545');
     html += `
-      <div 
+      <div
         onclick='seleccionarProducto(${JSON.stringify(producto)})'
         style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #e9ecef; transition: background 0.2s;"
         onmouseover="this.style.background='#f8f9fa'"
@@ -356,7 +358,7 @@ btnAgregarProducto.addEventListener('click', function() {
     alert('Selecciona un producto primero');
     return;
   }
-  
+
   const productoId = productoSeleccionado.id.toString();
   const cantidad = parseInt(inputCantidad.value);
 
@@ -428,12 +430,12 @@ function renderizarTabla() {
           <br><small style="color: #6c757d; font-weight: 400;">Stock disponible: ${prod.stock}</small>
         </td>
         <td style="padding: 0.75rem; text-align: center;">
-          <input 
-            type="number" 
-            class="cantidad-input" 
+          <input
+            type="number"
+            class="cantidad-input"
             data-index="${index}"
-            value="${prod.cantidad}" 
-            min="1" 
+            value="${prod.cantidad}"
+            min="1"
             max="${prod.stock}"
             style="width: 80px; padding: 0.5rem; border: 2px solid #e9ecef; border-radius: 0.375rem; text-align: center;"
           >
@@ -445,9 +447,9 @@ function renderizarTabla() {
           Q ${subtotalLinea.toFixed(2)}
         </td>
         <td style="padding: 0.75rem; text-align: center;">
-          <button 
-            type="button" 
-            class="btn-quitar" 
+          <button
+            type="button"
+            class="btn-quitar"
             data-index="${index}"
             style="padding: 0.5rem 0.75rem; background: #dc3545; color: white; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 600;"
           >
@@ -486,7 +488,7 @@ function renderizarTabla() {
       }
 
       productosSeleccionados[index].cantidad = cantidad;
-      
+
       // Actualizar input oculto
       const hiddenInput = document.querySelector(`.hidden-cantidad-${index}`);
       if (hiddenInput) {
