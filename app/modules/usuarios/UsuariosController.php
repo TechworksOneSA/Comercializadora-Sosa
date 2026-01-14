@@ -23,7 +23,7 @@ class UsuariosController extends Controller
         $stats    = $this->model->obtenerEstadisticas();
 
         // Ocultar el usuario administrador principal (ID 1)
-        $usuarios = array_filter($usuarios, function($usuario) {
+        $usuarios = array_filter($usuarios, function ($usuario) {
             return (int)$usuario['id'] !== 1;
         });
 

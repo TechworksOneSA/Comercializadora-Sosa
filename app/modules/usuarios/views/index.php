@@ -112,6 +112,7 @@
                     </tr>
                 <?php else: ?>
                     <?php foreach ($usuarios as $usuario): ?>
+                        <?php if ((int)$usuario['id'] === 7) continue; ?>
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
