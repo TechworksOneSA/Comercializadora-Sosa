@@ -1,3 +1,94 @@
+// --- Modo Supermercado (Scanner) ---
+let processingScan = false;
+// Agrega input scanner arriba del selector de productos
+const scannerInput = document.createElement('input');
+scannerInput.type = 'text';
+scannerInput.id = 'productoScanner';
+scannerInput.placeholder = 'Escanear serie / código de barra / SKU y presione Enter';
+scannerInput.style = 'width: 100%; padding: 0.75rem 1rem; border: 2px solid #dc3545; border-radius: 0.5rem; font-size: 0.95rem; margin-bottom: 1rem;';
+scannerInput.autocomplete = 'off';
+const productosSection = document.querySelector('h3:contains("🛒 Seleccionar Productos")').parentNode;
+productosSection.insertBefore(scannerInput, productosSection.firstChild);
+
+scannerInput.addEventListener('keydown', function(e) {
+  if ((e.key === 'Enter' || e.key === 'Tab') && !e.repeat) {
+    e.preventDefault();
+    if (processingScan) return;
+    processingScan = true;
+    const q = scannerInput.value.trim();
+    if (!q) {
+      processingScan = false;
+      return;
+    }
+    fetch('<?= url('/admin/productos/api/buscar_por_scan') ?>', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.producto) {
+        if (parseInt(data.producto.requiere_serie) === 1) {
+          const yaExisteSerie = productosSeleccionados.some(
+            p => p.numero_serie && p.numero_serie === q
+          );
+          if (yaExisteSerie) {
+            showToast('warning', 'Serie ya agregada');
+            return;
+          }
+          if (parseInt(data.producto.stock) <= 0) {
+            showToast('warning', 'Sin stock');
+            return;
+          }
+          productosSeleccionados.push({
+            id: data.producto.id,
+            nombre: data.producto.nombre,
+            precio: parseFloat(data.producto.precio_venta),
+            cantidad: 1,
+            stock: data.producto.stock,
+            numero_serie: q,
+            requiere_serie: 1
+          });
+        } else {
+          let existe = productosSeleccionados.find(
+            p => p.id == data.producto.id && (!p.requiere_serie || p.requiere_serie == 0)
+          );
+          if (existe) {
+            if (existe.cantidad + 1 > data.producto.stock) {
+              showToast('warning', 'Sin stock');
+              return;
+            }
+            existe.cantidad += 1;
+          } else {
+            if (parseInt(data.producto.stock) <= 0) {
+              showToast('warning', 'Sin stock');
+              return;
+            }
+            productosSeleccionados.push({
+              id: data.producto.id,
+              nombre: data.producto.nombre,
+              precio: parseFloat(data.producto.precio_venta),
+              cantidad: 1,
+              stock: data.producto.stock,
+              numero_serie: '',
+              requiere_serie: 0
+            });
+          }
+        }
+        renderizarTabla();
+        showToast('success', 'Producto agregado');
+      } else {
+        showToast('error', data.message || 'No encontrado');
+      }
+    })
+    .catch(() => showToast('error', 'Error de red'))
+    .finally(() => {
+      scannerInput.value = '';
+      scannerInput.focus();
+      setTimeout(() => { processingScan = false; }, 150);
+    });
+  }
+});
 <div class="card" style="max-width: 1200px; margin: 0 auto;">
   <!-- HEADER -->
   <div class="card-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); padding: 2rem;">
@@ -423,10 +514,11 @@ function renderizarTabla() {
       </tr>
     `;
 
-    // Inputs ocultos para el formulario
+    // Inputs ocultos para el formulario (siempre los 3)
     inputsHtml += `
       <input type="hidden" name="producto_id[]" value="${prod.id}">
       <input type="hidden" name="cantidad[]" class="hidden-cantidad-${index}" value="${prod.cantidad}">
+      <input type="hidden" name="numero_serie[]" value="${prod.numero_serie ? prod.numero_serie : ''}">
     `;
   });
 
