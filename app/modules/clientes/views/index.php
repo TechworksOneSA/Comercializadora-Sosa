@@ -30,6 +30,22 @@
     </a>
   </div>
 
+  <!-- BUSCADOR -->
+  <div style="padding: 1.5rem; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+    <div style="position: relative; max-width: 500px;">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="🔍 Buscar por nombre, teléfono, NIT o dirección..."
+        style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 2px solid #dee2e6; border-radius: 0.5rem; font-size: 1rem; transition: all 0.3s;"
+        onfocus="this.style.borderColor='#667eea'; this.style.boxShadow='0 0 0 3px rgba(102, 126, 234, 0.1)'"
+        onblur="this.style.borderColor='#dee2e6'; this.style.boxShadow='none'"
+      />
+      <span style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); font-size: 1.25rem;">🔍</span>
+    </div>
+    <p id="searchResults" style="margin-top: 0.75rem; color: #6c757d; font-size: 0.9rem;"></p>
+  </div>
+
   <!-- MENSAJES DE ÉXITO Y ERROR -->
   <?php if (isset($_GET['ok']) && $_GET['ok'] === 'creado'): ?>
     <div style="margin: 1.5rem; padding: 1rem 1.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 0.5rem; color: #155724;">
@@ -69,7 +85,15 @@
         <tbody>
           <?php if (!empty($clientes)): ?>
             <?php foreach ($clientes as $c): ?>
-              <tr style="border-bottom: 1px solid #e9ecef; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+              <tr 
+                class="cliente-row"
+                data-nombre="<?= e($c['nombre'] . ' ' . $c['apellido']) ?>"
+                data-telefono="<?= e($c['telefono']) ?>"
+                data-nit="<?= e($c['nit'] ?? '') ?>"
+                data-direccion="<?= e($c['direccion'] ?? '') ?>"
+                style="border-bottom: 1px solid #e9ecef; transition: background 0.2s;" 
+                onmouseover="this.style.background='#f8f9fa'" 
+                onmouseout="this.style.background='white'">
                 <td style="padding: 1rem; color: #6c757d; font-weight: 600;">#<?= e($c['id']) ?></td>
                 <td style="padding: 1rem; color: #495057; font-weight: 600;">
                   <?= e($c['nombre']) ?> <?= e($c['apellido']) ?>
@@ -145,4 +169,63 @@
       transform: translateY(0);
     }
   }
+
+  .cliente-row {
+    transition: all 0.2s;
+  }
+
+  .cliente-row.hidden {
+    display: none;
+  }
 </style>
+
+<script>
+  // Búsqueda en tiempo real
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    // Filtrar solo las filas con clase cliente-row (excluir el mensaje de "no hay clientes")
+    const clienteRows = Array.from(tableRows).filter(row => row.classList.contains('cliente-row'));
+    const totalClientes = clienteRows.length;
+
+    searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase().trim();
+      
+      if (!searchTerm) {
+        // Mostrar todos
+        clienteRows.forEach(row => row.classList.remove('hidden'));
+        searchResults.textContent = '';
+        return;
+      }
+
+      let visibleCount = 0;
+
+      clienteRows.forEach(row => {
+        const nombre = row.getAttribute('data-nombre') || '';
+        const telefono = row.getAttribute('data-telefono') || '';
+        const nit = row.getAttribute('data-nit') || '';
+        const direccion = row.getAttribute('data-direccion') || '';
+        
+        const searchText = `${nombre} ${telefono} ${nit} ${direccion}`.toLowerCase();
+        
+        if (searchText.includes(searchTerm)) {
+          row.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+
+      // Actualizar contador
+      if (visibleCount === 0) {
+        searchResults.innerHTML = '<span style="color: #dc3545;">❌ No se encontraron resultados</span>';
+      } else if (visibleCount === totalClientes) {
+        searchResults.textContent = '';
+      } else {
+        searchResults.innerHTML = `<span style="color: #28a745;">✅ Mostrando ${visibleCount} de ${totalClientes} clientes</span>`;
+      }
+    });
+  });
+</script>

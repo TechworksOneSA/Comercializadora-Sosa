@@ -3,11 +3,12 @@ $errors = $errors ?? [];
 $old = $old ?? [];
 $productos = $productos ?? [];
 $proveedores = $proveedores ?? [];
+$series_existentes = $series_existentes ?? []; // ✅ Series existentes
 
 // Para JS: lista de productos
 $productosJs = [];
 foreach ($productos as $p) {
-    $productosJs[] = [
+    $productoData = [
         'id'    => (int)$p['id'],
         'nombre' => $p['nombre'],
         'sku'   => $p['sku'] ?? '',
@@ -16,6 +17,13 @@ foreach ($productos as $p) {
         'costo' => isset($p['costo_actual']) ? (float)$p['costo_actual'] : 0,
         'stock_actual' => (int)($p['stock'] ?? 0),
     ];
+    
+    // ✅ Agregar serie existente si tiene
+    if (isset($series_existentes[$p['id']])) {
+        $productoData['serie_actual'] = $series_existentes[$p['id']];
+    }
+    
+    $productosJs[] = $productoData;
 }
 ?>
 
@@ -906,15 +914,15 @@ foreach ($productos as $p) {
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalSeries()"></div>
 <div class="modal-series" id="modalSeries">
     <div class="modal-header">
-        <h3>📦 Ingresar Números de Serie</h3>
+        <h3>📦 Número de Serie del Producto</h3>
         <button type="button" class="modal-close" onclick="closeModalSeries()">×</button>
     </div>
     <div class="modal-body" id="modalSeriesBody">
-        <!-- Los inputs se generarán dinámicamente -->
+        <!-- Un solo input para la serie única del producto -->
     </div>
     <div class="modal-footer">
         <button type="button" class="btn-modal-cancel" onclick="closeModalSeries()">Cancelar</button>
-        <button type="button" class="btn-modal-save" onclick="saveSeriesModal()">Guardar Series</button>
+        <button type="button" class="btn-modal-save" onclick="saveSeriesModal()">Guardar Serie</button>
     </div>
 </div>
 
@@ -948,31 +956,31 @@ foreach ($productos as $p) {
         currentProductoIndex = index;
         
         const modalBody = document.getElementById('modalSeriesBody');
-        const cantidad = Math.floor(producto.cantidad);
         
-        let html = '';
-        for (let i = 0; i < cantidad; i++) {
-            const value = producto.series && producto.series[i] ? producto.series[i] : '';
-            html += `
-                <div class="series-input-group">
-                    <label class="series-input-label">Serie ${i + 1} de ${cantidad}</label>
-                    <input type="text" 
-                           class="series-input" 
-                           id="serie_${i}" 
-                           value="${value}"
-                           placeholder="Ingrese número de serie ${i + 1}"
-                           autocomplete="off">
-                </div>
-            `;
-        }
+        // ✅ Solo un input para la serie única del producto
+        const serieActual = producto.serie || '';
         
-        modalBody.innerHTML = html;
+        modalBody.innerHTML = `
+            <div class="series-input-group">
+                <label class="series-input-label">Número de Serie del Producto</label>
+                <input type="text" 
+                       class="series-input" 
+                       id="serie_unica" 
+                       value="${serieActual}"
+                       placeholder="Ingrese el número de serie (todas las unidades comparten esta serie)"
+                       autocomplete="off">
+                <small style="color: #666; font-size: 0.85rem; margin-top: 8px; display: block;">
+                    📝 Este número de serie aplica a todas las ${Math.floor(producto.cantidad)} unidades del producto
+                </small>
+            </div>
+        `;
+        
         document.getElementById('modalOverlay').classList.add('show');
         document.getElementById('modalSeries').classList.add('show');
         
-        // Focus en el primer input
+        // Focus en el input
         setTimeout(() => {
-            document.getElementById('serie_0')?.focus();
+            document.getElementById('serie_unica')?.focus();
         }, 100);
     }
 
@@ -986,32 +994,12 @@ foreach ($productos as $p) {
         if (currentProductoIndex === null) return;
         
         const producto = productosEnCompra[currentProductoIndex];
-        const cantidad = Math.floor(producto.cantidad);
-        const series = [];
+        const input = document.getElementById('serie_unica');
+        const serie = input?.value.trim() || '';
         
-        // Recoger todos los valores
-        for (let i = 0; i < cantidad; i++) {
-            const input = document.getElementById(`serie_${i}`);
-            const valor = input?.value.trim() || '';
-            series.push(valor);
-        }
+        // ✅ Guardar la serie única (puede estar vacía)
+        producto.serie = serie;
         
-        // Validar que no haya vacíos
-        const seriesVacias = series.filter(s => !s).length;
-        if (seriesVacias > 0) {
-            alert(`⚠️ Faltan ${seriesVacias} números de serie por ingresar.`);
-            return;
-        }
-        
-        // Validar duplicados
-        const seriesSet = new Set(series);
-        if (seriesSet.size !== series.length) {
-            alert('⚠️ Hay números de serie duplicados. Cada serie debe ser única.');
-            return;
-        }
-        
-        // Guardar series
-        producto.series = series;
         closeModalSeries();
         renderizarTabla();
     }
@@ -1073,10 +1061,6 @@ foreach ($productos as $p) {
         const existe = productosEnCompra.find(p => p.id === producto.id);
         if (existe) {
             existe.cantidad += 1;
-            // Si el producto aplica serie, agregar espacio para una serie más
-            if (existe.tipo_producto === 'UNIDAD' && existe.series) {
-                existe.series.push('');
-            }
         } else {
             const nuevoProducto = {
                 id: producto.id,
@@ -1089,9 +1073,9 @@ foreach ($productos as $p) {
                 descuento: 0
             };
             
-            // Si aplica serie, inicializar array de series
+            // ✅ Si aplica serie, cargar la serie existente o inicializar vacía
             if (nuevoProducto.tipo_producto === 'UNIDAD') {
-                nuevoProducto.series = [''];
+                nuevoProducto.serie = producto.serie_actual || '';
                 // Mostrar alerta de que es un producto con serie
                 showAlertSerie(nuevoProducto);
             }

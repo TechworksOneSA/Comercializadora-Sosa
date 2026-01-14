@@ -95,7 +95,6 @@
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
@@ -107,16 +106,13 @@
             <tbody class="bg-white divide-y divide-gray-200">
                 <?php if (empty($usuarios)): ?>
                     <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
                             No hay usuarios registrados
                         </td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($usuarios as $usuario): ?>
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                #<?= htmlspecialchars($usuario['id']) ?>
-                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">

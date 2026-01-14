@@ -33,9 +33,21 @@ class ComprasController extends Controller
 
         $productosModel   = new ProductosModel();
         $proveedoresModel = new ProveedoresModel();
+        $seriesModel      = new ProductosSeriesModel();
 
         $productos   = $productosModel->listarActivos();   // catálogo de productos
         $proveedores = $proveedoresModel->listarActivos(); // catálogo de proveedores
+
+        // ✅ Obtener las series existentes de cada producto
+        $seriesExistentes = [];
+        foreach ($productos as $producto) {
+            if ($producto['tipo_producto'] === 'UNIDAD') {
+                $serie = $seriesModel->getSerieDelProducto($producto['id']);
+                if ($serie) {
+                    $seriesExistentes[$producto['id']] = $serie;
+                }
+            }
+        }
 
         $errors = $_SESSION['compras_errors'] ?? [];
         $old    = $_SESSION['compras_old'] ?? [];
@@ -47,6 +59,7 @@ class ComprasController extends Controller
             "user"        => $_SESSION["user"],
             "productos"   => $productos,
             "proveedores" => $proveedores,
+            "series_existentes" => $seriesExistentes, // ✅ Pasar series existentes
             "errors"      => $errors,
             "old"         => $old,
         ]);
@@ -79,7 +92,7 @@ class ComprasController extends Controller
             $costo = (float)($item['costo_unitario'] ?? 0);
             $desc  = (float)($item['descuento'] ?? 0);
             $tipo  = $item['tipo_producto'] ?? 'MISC';
-            $series = $item['series'] ?? [];
+            $serie = $item['serie'] ?? ''; // ✅ Ahora es una cadena única, no array
 
             if ($pid <= 0 || $cant <= 0 || $costo < 0) continue;
 
@@ -95,9 +108,9 @@ class ComprasController extends Controller
                 'subtotal'       => $subtotal,
             ];
             
-            // Si el producto aplica serie, almacenar las series
-            if ($tipo === 'UNIDAD' && !empty($series)) {
-                $seriesPorProducto[$pid] = $series;
+            // ✅ Si el producto aplica serie y se proporcionó, almacenarla
+            if ($tipo === 'UNIDAD' && !empty($serie)) {
+                $seriesPorProducto[$pid] = $serie; // Ahora es una cadena, no array
             }
         }
 
@@ -141,26 +154,17 @@ class ComprasController extends Controller
 
         $compra_id = $this->model->crearCompra($header, $detalles);
         
-        // ❌ FUNCIONALIDAD DE SERIES DESACTIVADA
-        // Las series ahora se registran al crear el producto, no en las compras
-        /*
+        // ✅ Guardar/actualizar la serie única de cada producto si se proporcionó
         if (!empty($seriesPorProducto) && $compra_id) {
             $seriesModel = new ProductosSeriesModel();
             
-            foreach ($seriesPorProducto as $producto_id => $series) {
-                foreach ($series as $numero_serie) {
-                    if (!empty(trim($numero_serie))) {
-                        $seriesModel->guardarSerie([
-                            'producto_id' => $producto_id,
-                            'numero_serie' => trim($numero_serie),
-                            'compra_id' => $compra_id,
-                            'estado' => 'EN_STOCK'
-                        ]);
-                    }
+            foreach ($seriesPorProducto as $producto_id => $serie) {
+                // $serie es una cadena única, no un array
+                if (!empty(trim($serie))) {
+                    $seriesModel->guardarSerieUnica($producto_id, trim($serie));
                 }
             }
         }
-        */
 
         header("Location: " . url('/admin/compras?msg=Compra registrada e inventario actualizado correctamente'));
         exit;
