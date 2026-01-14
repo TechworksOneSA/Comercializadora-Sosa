@@ -26,7 +26,7 @@ function respond(int $code, array $payload): void {
 }
 
 // Seguridad: requiere sesión (ajuste si usted quiere permitirlo sin login)
-if (!class_exists('Auth') || !Auth::check()) {
+if (empty($_SESSION['user'])) {
   respond(401, ['success' => false, 'message' => 'No autorizado']);
 }
 
