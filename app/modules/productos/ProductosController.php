@@ -127,12 +127,13 @@ class ProductosController extends Controller
 
         $data = $this->sanitizar($_POST);
 
-        // Debug: Log de datos recibidos
-        error_log("POST datos recibidos: " . json_encode($_POST));
-        error_log("numero_serie recibido: " . ($data["numero_serie"] ?? 'NO ENVIADO'));
-
         $tipoProducto = strtoupper(trim($data["tipo_producto"] ?? "UNIDAD"));
         $skuGenerado  = $this->generarSKU();
+
+        // Debug: Log de datos recibidos
+        error_log("POST datos recibidos: " . json_encode($_POST));
+        error_log("numero_serie recibido (sanitizado): " . ($data["numero_serie"] ?? 'NO ENVIADO'));
+        error_log("tipo_producto: " . $tipoProducto);
 
         $errors = $this->validar($data);
         if (!empty($errors)) {
@@ -167,6 +168,9 @@ class ProductosController extends Controller
             $codigoBarra = $cb !== "" ? $cb : null;
         }
 
+        // ✅ requiere_serie: clave para que el scan/flujo trate el producto como “con serie”
+        $requiereSerie = ($tipoProducto === "UNIDAD") ? 1 : 0;
+
         $payload = [
             "sku"              => $skuGenerado,
             "codigo_barra"     => $codigoBarra,
@@ -185,7 +189,11 @@ class ProductosController extends Controller
             "descripcion"      => "",
             "activo"           => 1,
             "estado"           => "ACTIVO",
-            // NO guardar numero_serie aquí
+
+            // ✅ Esto evita que quede en 0 por default en DB
+            "requiere_serie"   => $requiereSerie,
+
+            // NO guardamos numero_serie en productos; se guarda en productos_series
             "imagen_path"      => $imagenPath,
         ];
 
@@ -201,12 +209,14 @@ class ProductosController extends Controller
             }
 
             // Guardar número de serie en productos_series si aplica
-            if ($tipoProducto === 'UNIDAD' && !empty(trim($_POST['numero_serie'] ?? ''))) {
+            $serie = trim((string)($data['numero_serie'] ?? ''));
+            if ($tipoProducto === 'UNIDAD' && $serie !== '') {
                 require_once __DIR__ . '/ProductosSeriesModel.php';
                 $seriesModel = new ProductosSeriesModel();
+
                 // Obtener el id del producto recién creado
                 $productoId = $this->model->getLastInsertId();
-                $seriesModel->guardarSerieUnica($productoId, trim($_POST['numero_serie']));
+                $seriesModel->guardarSerieUnica((int)$productoId, $serie);
             }
 
             redirect('/admin/productos?ok=creado');
@@ -239,13 +249,13 @@ class ProductosController extends Controller
         $marcasModel     = new MarcasModel();
 
         $this->viewWithLayout("productos/views/editar", [
-            "title"      => "Editar Producto",
-            "user"       => $_SESSION["user"],
-            "producto"   => $producto,
-            "numero_serie" => $numeroSerie, // ✅ Pasar la serie a la vista
-            "categorias" => $categoriasModel->listarActivas(),
-            "marcas"     => $marcasModel->listarActivas(),
-            "errors"     => [],
+            "title"        => "Editar Producto",
+            "user"         => $_SESSION["user"],
+            "producto"     => $producto,
+            "numero_serie" => $numeroSerie,
+            "categorias"   => $categoriasModel->listarActivas(),
+            "marcas"       => $marcasModel->listarActivas(),
+            "errors"       => [],
         ]);
     }
 
@@ -275,13 +285,13 @@ class ProductosController extends Controller
             $numeroSerie = $seriesModel->getSerieDelProducto((int)$id);
 
             $this->viewWithLayout("productos/views/editar", [
-                "title"      => "Editar Producto",
-                "user"       => $_SESSION["user"],
-                "errors"     => $errors,
-                "producto"   => array_merge($producto, $data),
-                "numero_serie" => $numeroSerie, // ✅ Pasar la serie
-                "categorias" => $categoriasModel->listarActivas(),
-                "marcas"     => $marcasModel->listarActivas(),
+                "title"        => "Editar Producto",
+                "user"         => $_SESSION["user"],
+                "errors"       => $errors,
+                "producto"     => array_merge($producto, $data),
+                "numero_serie" => $numeroSerie,
+                "categorias"   => $categoriasModel->listarActivas(),
+                "marcas"       => $marcasModel->listarActivas(),
             ]);
             return;
         }
@@ -330,8 +340,12 @@ class ProductosController extends Controller
 
             "descripcion"      => $producto["descripcion"] ?? "",
             "estado"           => $producto["estado"] ?? "ACTIVO",
+
+            // ✅ Mantener requiere_serie coherente con el tipo actual guardado del producto
+            "requiere_serie"   => (($producto["tipo_producto"] ?? "UNIDAD") === "UNIDAD") ? 1 : 0,
+
             // NO guardar numero_serie aquí
-            "imagen_path" => $imagen_path,
+            "imagen_path"      => $imagen_path,
         ];
 
         try {
@@ -341,7 +355,7 @@ class ProductosController extends Controller
             if (($producto["tipo_producto"] ?? "UNIDAD") === 'UNIDAD') {
                 require_once __DIR__ . '/ProductosSeriesModel.php';
                 $seriesModel = new ProductosSeriesModel();
-                $serie = trim($_POST['numero_serie'] ?? '');
+                $serie = trim((string)($data['numero_serie'] ?? ''));
                 $seriesModel->guardarSerieUnica((int)$id, $serie);
             }
 
@@ -350,6 +364,14 @@ class ProductosController extends Controller
             error_log("Error actualizando producto: " . $e->getMessage());
             redirect("/admin/productos?error=No se pudo actualizar");
         }
+    }
+
+    // =========================
+    // API: Buscar por scan
+    // =========================
+    public function buscarPorScan(): void
+    {
+        require __DIR__ . "/api/buscar_por_scan.php";
     }
 
     // =========================
@@ -394,6 +416,9 @@ class ProductosController extends Controller
             "stock_minimo"  => (int)($in["stock_minimo"] ?? 0),
             "codigo_barra"  => trim($in["codigo_barra"] ?? ""),
             "tipo_producto" => strtoupper(trim($in["tipo_producto"] ?? "UNIDAD")),
+
+            // ✅ Ahora sí queda dentro de $data para logs y guardado consistente
+            "numero_serie"  => trim($in["numero_serie"] ?? ""),
         ];
     }
 
@@ -423,9 +448,4 @@ class ProductosController extends Controller
 
         return $sku;
     }
-    public function buscarPorScan(): void
-    {
-        require __DIR__ . "/api/buscar_por_scan.php";
-    }
-
 }
