@@ -260,7 +260,11 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
     <!-- Botones de Acción -->
     <div class="section-title">
         <span>💼 Acciones de Caja</span>
-        <a href="<?= url('/admin/caja/movimientos') ?>" class="btn-primary">📊 Ver Todos los Movimientos</a>
+    </div>
+    <div style="margin-bottom: 1.5rem;">
+        <a href="<?= url('/admin/caja/movimientos') ?>" class="btn-primary" style="font-size:1.1rem;">
+            📊 Movimientos de Caja
+        </a>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
