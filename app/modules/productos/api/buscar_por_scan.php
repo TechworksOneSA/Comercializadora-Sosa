@@ -23,7 +23,7 @@ function respond(int $code, array $payload): void {
 }
 
 // Seguridad
-if (!Auth::check() || empty($_SESSION['user'])) {
+if (empty($_SESSION['user'])) {
   respond(401, ['success' => false, 'message' => 'No autorizado']);
 }
 
