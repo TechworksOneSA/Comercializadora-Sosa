@@ -660,12 +660,14 @@
             }
             scannerInput.value = '';
             scannerInput.focus();
-            setTimeout(() => { processingScan = false; }, 120);
+            setTimeout(() => {
+              processingScan = false;
+            }, 120);
             return;
           }
 
           // Si no se encuentra localmente, buscar en backend (endpoint público en /api)
-          fetch('/api/buscar_por_scan.php', {
+          fetch('/api/buscar_por_scan', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
