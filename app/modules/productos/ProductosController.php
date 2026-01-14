@@ -424,8 +424,8 @@ class ProductosController extends Controller
         return $sku;
     }
     public function buscarPorScan(): void
-{
-    require __DIR__ . "/api/buscar_por_scan.php";
-}
+    {
+        require __DIR__ . "/api/buscar_por_scan.php";
+    }
 
 }
