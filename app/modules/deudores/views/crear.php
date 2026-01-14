@@ -1,274 +1,6 @@
-<div class="card" style="max-width: 1200px; margin: 0 auto;">
-  <!-- HEADER -->
-  <div class="card-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); padding: 2rem;">
-    <h1 class="card-title" style="color: white; font-size: 1.75rem; font-weight: 700; margin: 0;">
-      🧾 Nueva Deuda
-    </h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0 0; font-size: 0.95rem;">
-      Registra una deuda seleccionando cliente y productos
-    </p>
-  </div>
-
-  <!-- ERRORES -->
-  <?php if (!empty($errors)): ?>
-    <div style="margin: 1.5rem; padding: 1rem 1.5rem; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 0.5rem; color: #721c24;">
-      <strong>⚠️ Errores:</strong>
-      <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
-        <?php foreach ($errors as $error): ?>
-          <li><?= htmlspecialchars($error) ?></li>
-        <?php endforeach; ?>
-      </ul>
-    </div>
-  <?php endif; ?>
-
-  <!-- FORMULARIO -->
-  <form method="POST" action="<?= url('/admin/deudores/guardar') ?>" id="formDeuda" style="padding: 2rem;">
-
-    <!-- SECCIÓN: DATOS GENERALES -->
-    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
-      <h3 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 700;">📋 Datos Generales</h3>
-
-      <div>
-        <!-- CLIENTE -->
-        <div style="margin-bottom: 1rem;">
-          <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">
-            Cliente <span style="color: #dc3545;">*</span>
-          </label>
-          <div style="position: relative;">
-            <input
-              type="text"
-              id="buscarCliente"
-              placeholder="🔍 Buscar por nombre, NIT o teléfono..."
-              autocomplete="off"
-              style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
-              onfocus="this.style.borderColor='#dc3545'; mostrarResultadosClientes()"
-              onblur="setTimeout(() => ocultarResultadosClientes(), 200)"
-              oninput="buscarClientes()"
-            >
-            <input type="hidden" name="cliente_id" id="cliente_id" required>
-            <div id="resultadosClientes" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 300px; overflow-y: auto; background: white; border: 2px solid #dc3545; border-top: none; border-radius: 0 0 0.5rem 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;"></div>
-          </div>
-        </div>
-
-        <!-- DESCRIPCIÓN -->
-        <div>
-          <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">Descripción (opcional)</label>
-          <textarea
-            name="descripcion"
-            style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; min-height: 80px;"
-            placeholder="Notas o detalles adicionales..."
-          ></textarea>
-        </div>
-      </div>
-    </div>
-
-    <!-- SECCIÓN: PRODUCTOS -->
-    <div style="background: #fff; border: 2px solid #e9ecef; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 2rem;">
-      <h3 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 700;">🛒 Seleccionar Productos</h3>
-
-      <div style="display: grid; grid-template-columns: 3fr 1fr auto; gap: 1rem; align-items: end;">
-        <div>
-          <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">Producto</label>
-          <div style="position: relative;">
-            <input
-              type="text"
-              id="buscarProducto"
-              placeholder="🔍 Buscar por nombre o código de barras..."
-              autocomplete="off"
-              style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
-              onfocus="this.style.borderColor='#dc3545'; mostrarResultadosProductos()"
-              onblur="setTimeout(() => ocultarResultadosProductos(), 200)"
-              oninput="buscarProductos()"
-            >
-            <div id="resultadosProductos" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 300px; overflow-y: auto; background: white; border: 2px solid #dc3545; border-top: none; border-radius: 0 0 0.5rem 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;"></div>
-          </div>
-        </div>
-
-        <div>
-          <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">Cantidad</label>
-          <input
-            type="number"
-            id="inputCantidad"
-            value="1"
-            min="1"
-            style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem;"
-          >
-        </div>
-
-        <button
-          type="button"
-          id="btnAgregarProducto"
-          style="padding: 0.75rem 1.5rem; background: #28a745; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.95rem;"
-        >
-          ➕ Agregar
-        </button>
-      </div>
-    </div>
-
-    <!-- TABLA DE PRODUCTOS SELECCIONADOS -->
-    <div style="margin-bottom: 2rem;">
-      <h3 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 700;">📦 Productos en la Deuda</h3>
-
-      <div style="border: 2px solid #e9ecef; border-radius: 0.5rem; overflow: hidden;">
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead style="background: #f8f9fa;">
-            <tr>
-              <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #495057;">Producto</th>
-              <th style="padding: 0.75rem; text-align: center; font-weight: 600; color: #495057; width: 120px;">Cantidad</th>
-              <th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #495057; width: 120px;">Precio Unit.</th>
-              <th style="padding: 0.75rem; text-align: right; font-weight: 600; color: #495057; width: 120px;">Subtotal</th>
-              <th style="padding: 0.75rem; text-align: center; font-weight: 600; color: #495057; width: 80px;">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tablaProductos">
-            <tr>
-              <td colspan="5" style="padding: 2rem; text-align: center; color: #6c757d;">
-                No hay productos agregados. Usa el selector de arriba para agregar.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- TOTALES -->
-      <div style="display: flex; justify-content: flex-end; margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 0.5rem;">
-        <div style="text-align: right;">
-          <div style="font-size: 1.5rem; font-weight: 700; color: #dc3545;">
-            Total Deuda: Q <span id="totalDisplay">0.00</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- INPUTS OCULTOS PARA PRODUCTOS -->
-    <div id="inputsProductos"></div>
-
-    <!-- BOTONES -->
-    <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 2rem; border-top: 2px solid #e9ecef;">
-      <a
-        href="<?= url('/admin/deudores') ?>"
-        style="padding: 0.75rem 1.5rem; background: #6c757d; color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 600;"
-      >
-        ← Cancelar
-      </a>
-      <button
-        type="submit"
-        id="btnGuardar"
-        style="padding: 0.75rem 2rem; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(220, 53, 69, 0.3);"
-      >
-        💾 Guardar Deuda
-      </button>
-    </div>
-
-  </form>
-</div>
-
-<script>
-// --- Modo Supermercado (Scanner) ---
-let processingScan = false;
-window.addEventListener('DOMContentLoaded', function() {
-  const h3s = document.querySelectorAll('h3');
-  let productosSection = null;
-  h3s.forEach(h3 => {
-    if (h3.textContent.includes('🛒 Seleccionar Productos')) {
-      productosSection = h3.parentNode;
-    }
-  });
-  if (productosSection && !document.getElementById('productoScanner')) {
-    const scannerInput = document.createElement('input');
-    scannerInput.type = 'text';
-    scannerInput.id = 'productoScanner';
-    scannerInput.placeholder = 'Escanear serie / código de barra / SKU y presione Enter';
-    scannerInput.style = 'width: 100%; padding: 0.75rem 1rem; border: 2px solid #dc3545; border-radius: 0.5rem; font-size: 0.95rem; margin-bottom: 1rem;';
-    scannerInput.autocomplete = 'off';
-    productosSection.insertBefore(scannerInput, productosSection.firstChild);
-
-    scannerInput.addEventListener('keydown', function(e) {
-      if ((e.key === 'Enter' || e.key === 'Tab') && !e.repeat) {
-        e.preventDefault();
-        if (processingScan) return;
-        processingScan = true;
-        const q = scannerInput.value.trim();
-        if (!q) {
-          processingScan = false;
-          return;
-        }
-        fetch('/admin/productos/api/buscar_por_scan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ q })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.producto) {
-            if (parseInt(data.producto.requiere_serie) === 1) {
-              const yaExisteSerie = productosSeleccionados.some(
-                p => p.numero_serie && p.numero_serie === q
-              );
-              if (yaExisteSerie) {
-                showToast('warning', 'Serie ya agregada');
-                return;
-              }
-              if (parseInt(data.producto.stock) <= 0) {
-                showToast('warning', 'Sin stock');
-                return;
-              }
-              productosSeleccionados.push({
-                id: data.producto.id,
-                nombre: data.producto.nombre,
-                precio: parseFloat(data.producto.precio_venta),
-                cantidad: 1,
-                stock: data.producto.stock,
-                numero_serie: q,
-                requiere_serie: 1
-              });
-            } else {
-              let existe = productosSeleccionados.find(
-                p => p.id == data.producto.id && (!p.requiere_serie || p.requiere_serie == 0)
-              );
-              if (existe) {
-                if (existe.cantidad + 1 > data.producto.stock) {
-                  showToast('warning', 'Sin stock');
-                  return;
-                }
-                existe.cantidad += 1;
-              } else {
-                if (parseInt(data.producto.stock) <= 0) {
-                  showToast('warning', 'Sin stock');
-                  return;
-                }
-                productosSeleccionados.push({
-                  id: data.producto.id,
-                  nombre: data.producto.nombre,
-                  precio: parseFloat(data.producto.precio_venta),
-                  cantidad: 1,
-                  stock: data.producto.stock,
-                  numero_serie: '',
-                  requiere_serie: 0
-                });
-              }
-            }
-            renderizarTabla();
-            showToast('success', 'Producto agregado');
-          } else {
-            showToast('error', data.message || 'No encontrado');
-          }
-        })
-        .catch(() => showToast('error', 'Error de red'))
-        .finally(() => {
-          scannerInput.value = '';
-          scannerInput.focus();
-          setTimeout(() => { processingScan = false; }, 150);
-        });
-      }
-    });
-  }
-});
-</script>
-
 <script>
 // Datos PHP a JavaScript
-const clientesData = <?= json_encode($clientes) ?>;
+const clientesData  = <?= json_encode($clientes) ?>;
 const productosData = <?= json_encode($productos) ?>;
 
 // Estado
@@ -289,7 +21,193 @@ const inputsProductos = document.getElementById('inputsProductos');
 const totalDisplay = document.getElementById('totalDisplay');
 const formDeuda = document.getElementById('formDeuda');
 
-// ===== BÚSQUEDA DE CLIENTES =====
+/* =========================================================
+ * Toast simple (porque aquí no existía showToast)
+ * ========================================================= */
+function showToast(type, message) {
+  const colors = {
+    success: '#28a745',
+    warning: '#ffc107',
+    error:   '#dc3545',
+    info:    '#17a2b8'
+  };
+
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.style.position = 'fixed';
+  toast.style.right = '18px';
+  toast.style.top = '18px';
+  toast.style.zIndex = '99999';
+  toast.style.padding = '12px 14px';
+  toast.style.borderRadius = '10px';
+  toast.style.color = '#fff';
+  toast.style.fontWeight = '700';
+  toast.style.fontSize = '0.95rem';
+  toast.style.boxShadow = '0 8px 18px rgba(0,0,0,0.18)';
+  toast.style.background = colors[type] || colors.info;
+  toast.style.opacity = '0';
+  toast.style.transform = 'translateY(-10px)';
+  toast.style.transition = 'all .18s ease';
+
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+  });
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-10px)';
+    setTimeout(() => toast.remove(), 200);
+  }, 1800);
+}
+
+/* =========================================================
+ * Modo Supermercado (Scanner)
+ * ========================================================= */
+let processingScan = false;
+
+function asegurarScannerInput() {
+  // Busca el h3 por texto y agrega el input scanner justo debajo del título
+  const h3s = document.querySelectorAll('h3');
+  let productosH3 = null;
+
+  h3s.forEach(h3 => {
+    if ((h3.textContent || '').includes('🛒 Seleccionar Productos')) {
+      productosH3 = h3;
+    }
+  });
+
+  if (!productosH3) return null;
+
+  // Si ya existe, no duplicar
+  let scannerInput = document.getElementById('productoScanner');
+  if (scannerInput) return scannerInput;
+
+  scannerInput = document.createElement('input');
+  scannerInput.type = 'text';
+  scannerInput.id = 'productoScanner';
+  scannerInput.placeholder = 'Escanear serie / código de barra / SKU y presione Enter';
+  scannerInput.autocomplete = 'off';
+  scannerInput.style = 'width: 100%; padding: 0.75rem 1rem; border: 2px solid #dc3545; border-radius: 0.5rem; font-size: 0.95rem; margin: 0 0 1rem 0; background: #fff;';
+
+  // Insertar después del h3
+  productosH3.insertAdjacentElement('afterend', scannerInput);
+
+  return scannerInput;
+}
+
+function agregarProductoPOS(producto, q, cantidad = 1) {
+  // Normalizaciones
+  const requiereSerie = parseInt(producto.requiere_serie || 0, 10) === 1;
+  const stock = parseInt(producto.stock || 0, 10);
+  const precio = parseFloat(producto.precio_venta || producto.precio || 0);
+
+  if (stock <= 0) {
+    showToast('warning', 'Sin stock');
+    return false;
+  }
+
+  if (requiereSerie) {
+    // En serie: cada escaneo agrega una línea, no suma cantidades
+    const yaExisteSerie = productosSeleccionados.some(p => (p.numero_serie || '') === q);
+    if (yaExisteSerie) {
+      showToast('warning', 'Serie ya agregada');
+      return false;
+    }
+
+    productosSeleccionados.push({
+      id: String(producto.id),
+      nombre: producto.nombre,
+      precio: precio,
+      cantidad: 1,
+      stock: stock,
+      numero_serie: q,
+      requiere_serie: 1
+    });
+
+    return true;
+  }
+
+  // Sin serie: sumar cantidad si ya existe
+  const existente = productosSeleccionados.find(p => String(p.id) == String(producto.id) && (!p.requiere_serie || p.requiere_serie == 0));
+  if (existente) {
+    const nuevaCantidad = (parseInt(existente.cantidad, 10) || 0) + cantidad;
+    if (nuevaCantidad > stock) {
+      showToast('warning', `Sin stock (máx: ${stock})`);
+      return false;
+    }
+    existente.cantidad = nuevaCantidad;
+    return true;
+  }
+
+  // Nuevo
+  if (cantidad > stock) {
+    showToast('warning', `Stock insuficiente (máx: ${stock})`);
+    return false;
+  }
+
+  productosSeleccionados.push({
+    id: String(producto.id),
+    nombre: producto.nombre,
+    precio: precio,
+    cantidad: cantidad,
+    stock: stock,
+    numero_serie: '',
+    requiere_serie: 0
+  });
+
+  return true;
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  const scannerInput = asegurarScannerInput();
+  if (!scannerInput) return;
+
+  // Focus inicial (experiencia tipo caja)
+  scannerInput.focus();
+
+  scannerInput.addEventListener('keydown', function(e) {
+    if ((e.key === 'Enter' || e.key === 'Tab') && !e.repeat) {
+      e.preventDefault();
+      if (processingScan) return;
+
+      const q = (scannerInput.value || '').trim();
+      if (!q) return;
+
+      processingScan = true;
+
+      fetch('/admin/productos/api/buscar_por_scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && data.producto) {
+          const ok = agregarProductoPOS(data.producto, q, 1);
+          if (ok) {
+            renderizarTabla();
+            showToast('success', 'Producto agregado');
+          }
+        } else {
+          showToast('error', (data && data.message) ? data.message : 'No encontrado');
+        }
+      })
+      .catch(() => showToast('error', 'Error de red'))
+      .finally(() => {
+        scannerInput.value = '';
+        scannerInput.focus();
+        setTimeout(() => { processingScan = false; }, 120);
+      });
+    }
+  });
+});
+
+/* =========================================================
+ * BÚSQUEDA DE CLIENTES
+ * ========================================================= */
 function buscarClientes() {
   const termino = buscarClienteInput.value.toLowerCase().trim();
 
@@ -350,7 +268,9 @@ function ocultarResultadosClientes() {
   resultadosClientesDiv.style.display = 'none';
 }
 
-// ===== BÚSQUEDA DE PRODUCTOS =====
+/* =========================================================
+ * BÚSQUEDA DE PRODUCTOS
+ * ========================================================= */
 function buscarProductos() {
   const termino = buscarProductoInput.value.toLowerCase().trim();
 
@@ -419,57 +339,34 @@ function ocultarResultadosProductos() {
   resultadosProductosDiv.style.display = 'none';
 }
 
-// ===== AGREGAR PRODUCTO =====
+/* =========================================================
+ * AGREGAR PRODUCTO (Manual) - ahora también suma como “supermercado”
+ * ========================================================= */
 btnAgregarProducto.addEventListener('click', function() {
   if (!productoSeleccionado) {
-    alert('Selecciona un producto primero');
+    showToast('warning', 'Seleccione un producto primero');
     return;
   }
 
-  const productoId = productoSeleccionado.id.toString();
-  const cantidad = parseInt(inputCantidad.value);
-
-  if (cantidad <= 0) {
-    alert('La cantidad debe ser mayor a 0');
+  const cantidad = parseInt(inputCantidad.value, 10);
+  if (!cantidad || cantidad <= 0) {
+    showToast('warning', 'Cantidad inválida');
     return;
   }
 
-  const nombre = productoSeleccionado.nombre;
-  const precio = parseFloat(productoSeleccionado.precio_venta);
-  const stock = parseInt(productoSeleccionado.stock);
-
-  // Validar stock
-  if (cantidad > stock) {
-    alert(`Stock insuficiente para ${nombre}. Disponible: ${stock}`);
-    return;
+  const ok = agregarProductoPOS(productoSeleccionado, '', cantidad);
+  if (ok) {
+    productoSeleccionado = null;
+    buscarProductoInput.value = '';
+    inputCantidad.value = '1';
+    renderizarTabla();
+    showToast('success', 'Producto agregado');
   }
-
-  // Verificar si ya existe
-  const existe = productosSeleccionados.find(p => p.id === productoId);
-  if (existe) {
-    alert('Este producto ya está en la lista');
-    return;
-  }
-
-  // Agregar a la lista
-  productosSeleccionados.push({
-    id: productoId,
-    nombre: nombre,
-    precio: precio,
-    cantidad: cantidad,
-    stock: stock
-  });
-
-  // Resetear
-  productoSeleccionado = null;
-  buscarProductoInput.value = '';
-  inputCantidad.value = '1';
-
-  // Actualizar tabla
-  renderizarTabla();
 });
 
-// Renderizar tabla de productos
+/* =========================================================
+ * Renderizar tabla de productos
+ * ========================================================= */
 function renderizarTabla() {
   if (productosSeleccionados.length === 0) {
     tablaProductos.innerHTML = `
@@ -488,12 +385,18 @@ function renderizarTabla() {
   let inputsHtml = '';
 
   productosSeleccionados.forEach((prod, index) => {
-    const subtotalLinea = prod.cantidad * prod.precio;
+    const requiereSerie = parseInt(prod.requiere_serie || 0, 10) === 1;
+    const subtotalLinea = (parseInt(prod.cantidad, 10) || 0) * (parseFloat(prod.precio) || 0);
+
+    const serieLabel = requiereSerie && prod.numero_serie
+      ? `<br><small style="color:#6c757d;font-weight:600;">Serie: ${String(prod.numero_serie).replace(/</g,'&lt;')}</small>`
+      : '';
 
     html += `
       <tr style="border-bottom: 1px solid #e9ecef;">
         <td style="padding: 0.75rem; color: #495057; font-weight: 600;">
           ${prod.nombre}
+          ${serieLabel}
           <br><small style="color: #6c757d; font-weight: 400;">Stock disponible: ${prod.stock}</small>
         </td>
         <td style="padding: 0.75rem; text-align: center;">
@@ -501,14 +404,15 @@ function renderizarTabla() {
             type="number"
             class="cantidad-input"
             data-index="${index}"
-            value="${prod.cantidad}"
+            value="${requiereSerie ? 1 : prod.cantidad}"
             min="1"
-            max="${prod.stock}"
-            style="width: 80px; padding: 0.5rem; border: 2px solid #e9ecef; border-radius: 0.375rem; text-align: center;"
+            max="${requiereSerie ? 1 : prod.stock}"
+            ${requiereSerie ? 'readonly' : ''}
+            style="width: 80px; padding: 0.5rem; border: 2px solid #e9ecef; border-radius: 0.375rem; text-align: center; ${requiereSerie ? 'background:#f8f9fa; cursor:not-allowed;' : ''}"
           >
         </td>
         <td style="padding: 0.75rem; text-align: right; color: #6c757d;">
-          Q ${prod.precio.toFixed(2)}
+          Q ${Number(prod.precio).toFixed(2)}
         </td>
         <td style="padding: 0.75rem; text-align: right; font-weight: 700; color: #dc3545;">
           Q ${subtotalLinea.toFixed(2)}
@@ -526,42 +430,46 @@ function renderizarTabla() {
       </tr>
     `;
 
-    // Inputs ocultos para el formulario (siempre los 3)
+    // Inputs ocultos para el formulario (alineados por índice)
     inputsHtml += `
-      <input type="hidden" name="producto_id[]" value="${prod.id}">
-      <input type="hidden" name="cantidad[]" class="hidden-cantidad-${index}" value="${prod.cantidad}">
-      <input type="hidden" name="numero_serie[]" value="${prod.numero_serie ? prod.numero_serie : ''}">
+      <input type="hidden" name="producto_id[]" value="${String(prod.id)}">
+      <input type="hidden" name="cantidad[]" class="hidden-cantidad-${index}" value="${requiereSerie ? 1 : (parseInt(prod.cantidad,10)||1)}">
+      <input type="hidden" name="numero_serie[]" value="${requiereSerie ? String(prod.numero_serie || '') : ''}">
     `;
   });
 
   tablaProductos.innerHTML = html;
   inputsProductos.innerHTML = inputsHtml;
 
-  // Event listeners para cambio de cantidad
+  // Event listeners para cambio de cantidad (solo si NO es serie)
   document.querySelectorAll('.cantidad-input').forEach(input => {
     input.addEventListener('change', function() {
-      const index = parseInt(this.dataset.index);
-      let cantidad = parseInt(this.value);
+      const index = parseInt(this.dataset.index, 10);
       const prod = productosSeleccionados[index];
+      const requiereSerie = parseInt(prod.requiere_serie || 0, 10) === 1;
 
-      if (cantidad <= 0) {
+      if (requiereSerie) {
+        this.value = 1;
+        return;
+      }
+
+      let cantidad = parseInt(this.value, 10);
+      if (!cantidad || cantidad <= 0) {
         cantidad = 1;
         this.value = 1;
       }
 
-      if (cantidad > prod.stock) {
-        alert(`Stock máximo: ${prod.stock}`);
-        cantidad = prod.stock;
-        this.value = prod.stock;
+      if (cantidad > parseInt(prod.stock, 10)) {
+        showToast('warning', `Stock máximo: ${prod.stock}`);
+        cantidad = parseInt(prod.stock, 10);
+        this.value = cantidad;
       }
 
       productosSeleccionados[index].cantidad = cantidad;
 
       // Actualizar input oculto
       const hiddenInput = document.querySelector(`.hidden-cantidad-${index}`);
-      if (hiddenInput) {
-        hiddenInput.value = cantidad;
-      }
+      if (hiddenInput) hiddenInput.value = cantidad;
 
       renderizarTabla();
     });
@@ -570,7 +478,7 @@ function renderizarTabla() {
   // Event listeners para quitar producto
   document.querySelectorAll('.btn-quitar').forEach(btn => {
     btn.addEventListener('click', function() {
-      const index = parseInt(this.dataset.index);
+      const index = parseInt(this.dataset.index, 10);
       productosSeleccionados.splice(index, 1);
       renderizarTabla();
     });
@@ -582,11 +490,9 @@ function renderizarTabla() {
 // Calcular totales
 function calcularTotales() {
   let total = 0;
-
   productosSeleccionados.forEach(prod => {
-    total += prod.cantidad * prod.precio;
+    total += (parseInt(prod.cantidad, 10) || 0) * (parseFloat(prod.precio) || 0);
   });
-
   totalDisplay.textContent = total.toFixed(2);
 }
 
@@ -594,13 +500,13 @@ function calcularTotales() {
 formDeuda.addEventListener('submit', function(e) {
   if (productosSeleccionados.length === 0) {
     e.preventDefault();
-    alert('Debes agregar al menos un producto a la deuda');
+    showToast('warning', 'Debe agregar al menos un producto');
     return false;
   }
 
   if (!clienteIdInput.value) {
     e.preventDefault();
-    alert('Debes seleccionar un cliente');
+    showToast('warning', 'Debe seleccionar un cliente');
     return false;
   }
 });
@@ -608,24 +514,3 @@ formDeuda.addEventListener('submit', function(e) {
 // Inicializar
 renderizarTabla();
 </script>
-
-<style>
-  .card {
-    animation: fadeIn 0.3s ease-in;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  input:focus, select:focus {
-    outline: none;
-  }
-</style>
