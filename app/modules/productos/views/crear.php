@@ -555,6 +555,14 @@ $marcasLista = $marcasModel->listarActivas();
 
     // Validación precio < costo
     document.getElementById('formProducto').addEventListener('submit', function(e) {
+        // Debug: verificar qué campos se están enviando
+        const formData = new FormData(this);
+        console.log('=== DATOS DEL FORMULARIO ===');
+        for (let [key, value] of formData.entries()) {
+            console.log(key + ': ' + value);
+        }
+        console.log('numero_serie en FormData:', formData.get('numero_serie'));
+        
         const precioVenta = parseFloat(document.getElementById('precio_venta').value) || 0;
         const costo = parseFloat(document.getElementById('costo_compra').value) || 0;
 
