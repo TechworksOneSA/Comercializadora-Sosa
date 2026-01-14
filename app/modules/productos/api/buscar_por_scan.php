@@ -3,11 +3,7 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 
-// ===== CORS (si el frontend y backend comparten dominio, igual no estorba) =====
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Accept');
-
+// CORS / preflight
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
   http_response_code(204);
   exit;
@@ -17,16 +13,50 @@ if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
 
-require_once __DIR__ . '/../../../config/env.php';
-require_once __DIR__ . '/../../../config/database.php';
-
 function respond(int $code, array $payload): void {
   http_response_code($code);
   echo json_encode($payload, JSON_UNESCAPED_UNICODE);
   exit;
 }
 
-// ===== Seguridad =====
+/**
+ * Estructura real detectada por usted:
+ * /srv/apps/comercializadora/config/env.php
+ * /srv/apps/comercializadora/app/config/database.php
+ * /srv/apps/comercializadora/app/core/Auth.php
+ *
+ * Este archivo está en:
+ * /srv/apps/comercializadora/app/modules/productos/api/buscar_por_scan.php
+ *
+ * Subiendo 4 niveles desde /api llegamos a /srv/apps/comercializadora
+ */
+$ROOT = realpath(__DIR__ . '/../../../..'); // => /srv/apps/comercializadora
+if (!$ROOT) {
+  respond(500, ['success' => false, 'message' => 'ROOT no resolvible']);
+}
+
+$envPath  = $ROOT . '/config/env.php';
+$dbPath   = $ROOT . '/app/config/database.php';
+$authPath = $ROOT . '/app/core/Auth.php';
+
+if (!file_exists($envPath) || !file_exists($dbPath) || !file_exists($authPath)) {
+  respond(500, [
+    'success' => false,
+    'message' => 'Dependencias no encontradas',
+    'debug' => [
+      'ROOT' => $ROOT,
+      'env'  => file_exists($envPath) ? $envPath : null,
+      'db'   => file_exists($dbPath) ? $dbPath : null,
+      'auth' => file_exists($authPath) ? $authPath : null,
+    ]
+  ]);
+}
+
+require_once $envPath;
+require_once $dbPath;
+require_once $authPath;
+
+// Seguridad
 if (empty($_SESSION['user'])) {
   respond(401, ['success' => false, 'message' => 'No autorizado']);
 }
@@ -50,45 +80,20 @@ if ($q === '') {
 try {
   $pdo = Database::connect();
 
-  /**
-   * NOTA ARQUITECTURA:
-   * - numero_serie está en productos_series, no en productos
-   * - requiere_serie está en productos (ya lo corregimos al crear)
-   */
-
-  // Traer producto por:
-  // 1) Serie (productos_series.numero_serie)
-  // 2) Código de barras
-  // 3) SKU
-  // y devolver un "match" que indique qué coincidió
   $sql = "
     SELECT
-      p.id,
-      p.sku,
-      p.nombre,
-      p.precio_venta,
-      p.stock,
-      p.requiere_serie,
-      p.codigo_barra,
-      ps.numero_serie,
-      CASE
-        WHEN ps.numero_serie = :q THEN 'numero_serie'
-        WHEN p.codigo_barra = :q THEN 'codigo_barra'
-        WHEN p.sku = :q THEN 'sku'
-        ELSE 'unknown'
-      END AS match
-    FROM productos p
-    LEFT JOIN productos_series ps
-      ON ps.producto_id = p.id
-      AND ps.numero_serie = :q
-    WHERE
-      p.sku = :q
-      OR p.codigo_barra = :q
-      OR ps.numero_serie = :q
-    ORDER BY
-      (ps.numero_serie = :q) DESC,
-      (p.codigo_barra = :q) DESC,
-      (p.sku = :q) DESC
+      id,
+      sku,
+      nombre,
+      precio_venta,
+      stock,
+      codigo_barra,
+      numero_serie,
+      requiere_serie
+    FROM productos
+    WHERE sku = :q
+       OR codigo_barra = :q
+       OR numero_serie = :q
     LIMIT 1
   ";
 
@@ -100,17 +105,13 @@ try {
     respond(404, ['success' => false, 'message' => 'No encontrado']);
   }
 
-  // Limpieza: match lo devolvemos fuera del producto para el frontend
-  $match = $row['match'] ?? 'unknown';
-  unset($row['match']);
-
   respond(200, [
     'success' => true,
     'producto' => $row,
-    'match' => $match
+    'match' => 'sku/codigo_barra/numero_serie'
   ]);
 
 } catch (Throwable $e) {
-  error_log("buscar_por_scan ERROR: " . $e->getMessage());
+  error_log("buscar_por_scan ERROR: {$e->getMessage()} in {$e->getFile()}:{$e->getLine()}");
   respond(500, ['success' => false, 'message' => 'Error interno']);
 }
