@@ -16,13 +16,15 @@ foreach ($productos as $p) {
         'tipo_producto' => $p['tipo_producto'] ?? 'MISC',
         'costo' => isset($p['costo_actual']) ? (float)$p['costo_actual'] : 0,
         'stock_actual' => (int)($p['stock'] ?? 0),
+        'numero_serie' => '', // Inicializar vacío
     ];
-    
+
     // ✅ Agregar serie existente si tiene
     if (isset($series_existentes[$p['id']])) {
         $productoData['serie_actual'] = $series_existentes[$p['id']];
+        $productoData['numero_serie'] = $series_existentes[$p['id']]; // Para búsqueda
     }
-    
+
     $productosJs[] = $productoData;
 }
 ?>
@@ -939,7 +941,7 @@ foreach ($productos as $p) {
         document.getElementById('alertSerieProducto').textContent = producto.nombre;
         document.getElementById('alertSerieSku').textContent = producto.sku;
         alert.classList.add('show');
-        
+
         // Auto ocultar después de 5 segundos
         setTimeout(() => {
             closeAlertSerie();
@@ -954,18 +956,18 @@ foreach ($productos as $p) {
     function openModalSeries(index) {
         const producto = productosEnCompra[index];
         currentProductoIndex = index;
-        
+
         const modalBody = document.getElementById('modalSeriesBody');
-        
+
         // ✅ Solo un input para la serie única del producto
         const serieActual = producto.serie || '';
-        
+
         modalBody.innerHTML = `
             <div class="series-input-group">
                 <label class="series-input-label">Número de Serie del Producto</label>
-                <input type="text" 
-                       class="series-input" 
-                       id="serie_unica" 
+                <input type="text"
+                       class="series-input"
+                       id="serie_unica"
                        value="${serieActual}"
                        placeholder="Ingrese el número de serie (todas las unidades comparten esta serie)"
                        autocomplete="off">
@@ -974,10 +976,10 @@ foreach ($productos as $p) {
                 </small>
             </div>
         `;
-        
+
         document.getElementById('modalOverlay').classList.add('show');
         document.getElementById('modalSeries').classList.add('show');
-        
+
         // Focus en el input
         setTimeout(() => {
             document.getElementById('serie_unica')?.focus();
@@ -992,14 +994,14 @@ foreach ($productos as $p) {
 
     function saveSeriesModal() {
         if (currentProductoIndex === null) return;
-        
+
         const producto = productosEnCompra[currentProductoIndex];
         const input = document.getElementById('serie_unica');
         const serie = input?.value.trim() || '';
-        
+
         // ✅ Guardar la serie única (puede estar vacía)
         producto.serie = serie;
-        
+
         closeModalSeries();
         renderizarTabla();
     }
@@ -1012,7 +1014,8 @@ foreach ($productos as $p) {
         return PRODUCTOS.filter(p =>
             p.nombre.toLowerCase().includes(query) ||
             p.sku.toLowerCase().includes(query) ||
-            p.codigo_barra.toLowerCase().includes(query)
+            p.codigo_barra.toLowerCase().includes(query) ||
+            (p.numero_serie && p.numero_serie.toLowerCase().includes(query))
         ).slice(0, 10);
     }
 
@@ -1024,12 +1027,18 @@ foreach ($productos as $p) {
         const resultados = buscarProducto(this.value);
 
         if (resultados.length > 0) {
-            dropdown.innerHTML = resultados.map(p => `
-            <div class="autocomplete-item" data-id="${p.id}">
-                <div class="producto-nombre">${p.nombre}</div>
-                <div class="producto-sku">SKU: ${p.sku} | Stock: ${p.stock_actual}</div>
-            </div>
-        `).join('');
+            dropdown.innerHTML = resultados.map(p => {
+                let infoExtra = `SKU: ${p.sku} | Stock: ${p.stock_actual}`;
+                if (p.numero_serie) {
+                    infoExtra += ` | Serie: ${p.numero_serie}`;
+                }
+                return `
+                <div class="autocomplete-item" data-id="${p.id}">
+                    <div class="producto-nombre">${p.nombre}</div>
+                    <div class="producto-sku">${infoExtra}</div>
+                </div>
+            `;
+            }).join('');
             dropdown.style.display = 'block';
         } else {
             dropdown.style.display = 'none';
@@ -1072,14 +1081,14 @@ foreach ($productos as $p) {
                 costo_unitario: producto.costo || 0,
                 descuento: 0
             };
-            
+
             // ✅ Si aplica serie, cargar la serie existente o inicializar vacía
             if (nuevoProducto.tipo_producto === 'UNIDAD') {
                 nuevoProducto.serie = producto.serie_actual || '';
                 // Mostrar alerta de que es un producto con serie
                 showAlertSerie(nuevoProducto);
             }
-            
+
             productosEnCompra.push(nuevoProducto);
         }
         renderizarTabla();
@@ -1094,12 +1103,12 @@ foreach ($productos as $p) {
         const producto = productosEnCompra[index];
         const nuevaCantidad = parseFloat(valor) || 0;
         producto.cantidad = nuevaCantidad;
-        
+
         // Si el producto aplica serie, ajustar el array de series
         if (producto.tipo_producto === 'UNIDAD' && producto.series) {
             const cantidadActual = producto.series.length;
             const diferencia = Math.floor(nuevaCantidad) - cantidadActual;
-            
+
             if (diferencia > 0) {
                 // Agregar más espacios para series
                 for (let i = 0; i < diferencia; i++) {
@@ -1109,13 +1118,13 @@ foreach ($productos as $p) {
                 // Quitar espacios sobrantes
                 producto.series = producto.series.slice(0, Math.floor(nuevaCantidad));
             }
-            
+
             // Si la cantidad es mayor a 0, abrir modal para ingresar series
             if (Math.floor(nuevaCantidad) > 0) {
                 openModalSeries(index);
             }
         }
-        
+
         renderizarTabla();
         calcularTotales();
     }
@@ -1141,14 +1150,14 @@ foreach ($productos as $p) {
 
         tbody.innerHTML = productosEnCompra.map((p, index) => {
             const subtotal = (p.cantidad * p.costo_unitario) - p.descuento;
-            
+
             // Indicador de series completadas
             let seriesStatus = '';
             if (p.tipo_producto === 'UNIDAD' && p.series) {
                 const seriesCompletas = p.series.filter(s => s.trim() !== '').length;
                 const totalSeries = Math.floor(p.cantidad);
                 const porcentaje = totalSeries > 0 ? (seriesCompletas / totalSeries * 100) : 0;
-                
+
                 let statusColor = '#ef4444'; // rojo
                 let statusText = 'Pendiente';
                 if (porcentaje === 100) {
@@ -1158,14 +1167,14 @@ foreach ($productos as $p) {
                     statusColor = '#f59e0b'; // amarillo
                     statusText = 'Parcial';
                 }
-                
+
                 seriesStatus = `
                     <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                         <span style="background: ${statusColor}; color: white; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">
                             📋 Series: ${seriesCompletas}/${totalSeries} ${statusText}
                         </span>
-                        <button type="button" 
-                                onclick="openModalSeries(${index})" 
+                        <button type="button"
+                                onclick="openModalSeries(${index})"
                                 style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: all 0.2s;"
                                 onmouseover="this.style.transform='scale(1.05)'"
                                 onmouseout="this.style.transform='scale(1)'">
@@ -1258,7 +1267,7 @@ foreach ($productos as $p) {
                     alert(`⚠️ El producto "${producto.nombre}" requiere ${producto.series.length} números de serie.\nPor favor complete todos los campos de serie.`);
                     return;
                 }
-                
+
                 // Validar que no haya series duplicadas
                 const seriesSet = new Set(producto.series);
                 if (seriesSet.size !== producto.series.length) {

@@ -1,3 +1,6 @@
+<?php
+$series_existentes = $series_existentes ?? [];
+?>
 <div class="card" style="max-width: 1200px; margin: 0 auto;">
   <!-- HEADER -->
   <div class="card-header" style="background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%); padding: 2rem;">
@@ -182,7 +185,20 @@
 <script>
 // Datos PHP a JavaScript
 const clientesData = <?= json_encode($clientes) ?>;
-const productosData = <?= json_encode($productos) ?>;
+const productosData = <?= json_encode(array_map(function($p) use ($series_existentes) {
+  $data = [
+    'id' => (int)$p['id'],
+    'nombre' => $p['nombre'],
+    'sku' => $p['sku'] ?? '',
+    'stock' => (int)($p['stock'] ?? 0),
+    'precio' => (float)($p['precio_venta'] ?? 0),
+    'numero_serie' => '',
+  ];
+  if (isset($series_existentes[$p['id']])) {
+    $data['numero_serie'] = $series_existentes[$p['id']];
+  }
+  return $data;
+}, $productos)) ?>;
 
 // Estado
 let productosSeleccionados = [];
@@ -277,7 +293,8 @@ function buscarProductos() {
   const resultados = productosData.filter(producto => {
     const nombre = (producto.nombre || '').toLowerCase();
     const sku = (producto.sku || '').toLowerCase();
-    return nombre.includes(termino) || sku.includes(termino);
+    const serie = (producto.numero_serie || '').toLowerCase();
+    return nombre.includes(termino) || sku.includes(termino) || serie.includes(termino);
   });
 
   if (resultados.length === 0) {

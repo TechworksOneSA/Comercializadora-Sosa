@@ -134,14 +134,14 @@ class ProductosSeriesModel extends Model
      */
     public function getSerieDelProducto($producto_id)
     {
-        $sql = "SELECT numero_serie FROM productos_series 
-                WHERE producto_id = :producto_id 
+        $sql = "SELECT numero_serie FROM productos_series
+                WHERE producto_id = :producto_id
                 LIMIT 1";
-        
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':producto_id' => $producto_id]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         return $result ? $result['numero_serie'] : null;
     }
 
@@ -153,19 +153,19 @@ class ProductosSeriesModel extends Model
     {
         // Verificar si ya existe una serie para este producto
         $serieExistente = $this->getSerieDelProducto($producto_id);
-        
+
         if ($serieExistente) {
             // Actualizar la serie existente
-            $sql = "UPDATE productos_series 
-                    SET numero_serie = :numero_serie 
+            $sql = "UPDATE productos_series
+                    SET numero_serie = :numero_serie
                     WHERE producto_id = :producto_id";
         } else {
             // Crear nueva serie
-            $sql = "INSERT INTO productos_series 
-                    (producto_id, numero_serie, estado, observaciones) 
+            $sql = "INSERT INTO productos_series
+                    (producto_id, numero_serie, estado, observaciones)
                     VALUES (:producto_id, :numero_serie, 'EN_STOCK', 'Serie del producto')";
         }
-        
+
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             ':producto_id' => $producto_id,

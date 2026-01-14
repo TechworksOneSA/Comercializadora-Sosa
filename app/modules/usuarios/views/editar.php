@@ -220,7 +220,6 @@
 
             <!-- Información adicional -->
             <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
-                <p><strong>Usuario ID:</strong> #<?= $usuario['id'] ?></p>
                 <p><strong>Creado:</strong> <?= date('d/m/Y H:i', strtotime($usuario['created_at'])) ?></p>
             </div>
 

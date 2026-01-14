@@ -86,11 +86,11 @@ class CajaController extends Controller
         // Detectar automáticamente si es retiro o gasto basándose en el concepto
         $conceptoLower = strtolower($concepto);
         $tipo = 'gasto'; // Por defecto es gasto
-        
+
         // Solo es retiro si menciona explícitamente retiro personal/dueño
         if (
-            strpos($conceptoLower, 'retiro') !== false && 
-            (strpos($conceptoLower, 'personal') !== false || 
+            strpos($conceptoLower, 'retiro') !== false &&
+            (strpos($conceptoLower, 'personal') !== false ||
              strpos($conceptoLower, 'dueño') !== false ||
              strpos($conceptoLower, 'dueno') !== false ||
              strpos($conceptoLower, 'propietario') !== false)

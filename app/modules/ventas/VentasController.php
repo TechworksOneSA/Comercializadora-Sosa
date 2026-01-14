@@ -47,9 +47,20 @@ class VentasController extends Controller
 
         $productosModel = new ProductosModel();
         $clientesModel = new ClientesModel();
+        require_once __DIR__ . '/../productos/ProductosSeriesModel.php';
+        $seriesModel = new ProductosSeriesModel();
 
         $productos = $productosModel->listarActivos();
         $clientes = $clientesModel->listar();
+
+        // ✅ Cargar series existentes
+        $series_existentes = [];
+        foreach ($productos as $producto) {
+            $serie = $seriesModel->getSerieDelProducto($producto['id']);
+            if ($serie) {
+                $series_existentes[$producto['id']] = $serie;
+            }
+        }
 
         $errors = $_SESSION['ventas_errors'] ?? [];
         $old    = $_SESSION['ventas_old']    ?? [];
@@ -61,6 +72,7 @@ class VentasController extends Controller
             "user"      => $_SESSION["user"],
             "productos" => $productos,
             "clientes"  => $clientes,
+            "series_existentes" => $series_existentes,
             "errors"    => $errors,
             "old"       => $old,
         ]);

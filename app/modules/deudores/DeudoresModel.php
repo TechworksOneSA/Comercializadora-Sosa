@@ -291,7 +291,7 @@ class DeudoresModel extends Model
 
             $sql = "INSERT INTO {$this->tablePagos} (deuda_id, monto, metodo_pago, fecha, usuario_id)
                     VALUES (:deuda_id, :monto, :metodo_pago, NOW(), :usuario_id)";
-            $stmt = $this->db->prepare($sql);
+
             $stmt->execute([
                 ':deuda_id'    => $deudaId,
                 ':monto'       => $monto,
@@ -326,7 +326,7 @@ class DeudoresModel extends Model
             if ($deudaInfo) {
                 $totalPagadoNuevo = (float)$deudaInfo['total_pagado'] + $monto;
                 $saldo = (float)$deudaInfo['total'] - $totalPagadoNuevo;
-                
+
                 if ($saldo <= 0) {
                     // Deuda completamente pagada: convertir a venta
                     try {

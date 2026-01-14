@@ -590,7 +590,7 @@ $marcaText = $marcaId && isset($mapMar[$marcaId]) ? $mapMar[$marcaId] : '';
                         placeholder="Código único del producto"
                         readonly>
                 </div>
-                
+
                 <?php if (strtoupper($producto['tipo_producto'] ?? 'UNIDAD') === 'UNIDAD'): ?>
                 <div class="form-group">
                     <label class="form-label">Número de Serie</label>

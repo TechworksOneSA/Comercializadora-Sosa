@@ -200,7 +200,7 @@ class ProductosController extends Controller
                 $seriesModel = new ProductosSeriesModel();
                 $seriesModel->guardarSerieUnica($productoId, $numeroSerie);
             }
-            
+
             redirect('/admin/productos?ok=creado');
         } catch (Exception $e) {
             error_log("Error creando producto: " . $e->getMessage());
@@ -225,7 +225,7 @@ class ProductosController extends Controller
         require_once __DIR__ . '/ProductosSeriesModel.php';
         $seriesModel = new ProductosSeriesModel();
         $numeroSerie = $seriesModel->getSerieDelProducto((int)$id);
-        
+
         $categoriasModel = new CategoriasModel();
         $marcasModel     = new MarcasModel();
 
@@ -259,7 +259,7 @@ class ProductosController extends Controller
         if (!empty($errors)) {
             $categoriasModel = new CategoriasModel();
             $marcasModel     = new MarcasModel();
-            
+
             // ✅ Obtener número de serie para mantenerlo en caso de error
             require_once __DIR__ . '/ProductosSeriesModel.php';
             $seriesModel = new ProductosSeriesModel();
@@ -328,20 +328,20 @@ class ProductosController extends Controller
 
         try {
             $this->model->actualizar((int)$id, $payload);
-            
+
             // ✅ Guardar o actualizar número de serie si se proporcionó
             $numeroSerie = trim($data['numero_serie'] ?? '');
             $tipoProducto = $producto['tipo_producto'] ?? 'UNIDAD';
-            
+
             if ($tipoProducto === 'UNIDAD') {
                 require_once __DIR__ . '/ProductosSeriesModel.php';
                 $seriesModel = new ProductosSeriesModel();
-                
+
                 if (!empty($numeroSerie)) {
                     $seriesModel->guardarSerieUnica((int)$id, $numeroSerie);
                 }
             }
-            
+
             redirect("/admin/productos?ok=actualizado");
         } catch (Exception $e) {
             error_log("Error actualizando producto: " . $e->getMessage());

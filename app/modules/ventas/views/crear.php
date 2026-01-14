@@ -157,10 +157,26 @@
   </form>
 </div>
 
+<?php
+$series_existentes = $series_existentes ?? [];
+?>
 <script>
   // Datos PHP a JavaScript
   const clientesData = <?= json_encode($clientes) ?>;
-  const productosData = <?= json_encode($productos) ?>;
+  const productosData = <?= json_encode(array_map(function($p) use ($series_existentes) {
+    $data = [
+      'id' => (int)$p['id'],
+      'nombre' => $p['nombre'],
+      'sku' => $p['sku'] ?? '',
+      'stock' => (int)($p['stock'] ?? 0),
+      'precio' => (float)($p['precio_venta'] ?? 0),
+      'numero_serie' => '',
+    ];
+    if (isset($series_existentes[$p['id']])) {
+      $data['numero_serie'] = $series_existentes[$p['id']];
+    }
+    return $data;
+  }, $productos)) ?>;
 
   // Estado
   let productosSeleccionados = [];
@@ -255,7 +271,8 @@
     const resultados = productosData.filter(producto => {
       const nombre = (producto.nombre || '').toLowerCase();
       const sku = (producto.sku || '').toLowerCase();
-      return nombre.includes(termino) || sku.includes(termino);
+      const serie = (producto.numero_serie || '').toLowerCase();
+      return nombre.includes(termino) || sku.includes(termino) || serie.includes(termino);
     });
 
     if (resultados.length === 0) {

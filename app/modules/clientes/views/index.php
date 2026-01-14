@@ -85,14 +85,14 @@
         <tbody>
           <?php if (!empty($clientes)): ?>
             <?php foreach ($clientes as $c): ?>
-              <tr 
+              <tr
                 class="cliente-row"
                 data-nombre="<?= e($c['nombre'] . ' ' . $c['apellido']) ?>"
                 data-telefono="<?= e($c['telefono']) ?>"
                 data-nit="<?= e($c['nit'] ?? '') ?>"
                 data-direccion="<?= e($c['direccion'] ?? '') ?>"
-                style="border-bottom: 1px solid #e9ecef; transition: background 0.2s;" 
-                onmouseover="this.style.background='#f8f9fa'" 
+                style="border-bottom: 1px solid #e9ecef; transition: background 0.2s;"
+                onmouseover="this.style.background='#f8f9fa'"
                 onmouseout="this.style.background='white'">
                 <td style="padding: 1rem; color: #6c757d; font-weight: 600;">#<?= e($c['id']) ?></td>
                 <td style="padding: 1rem; color: #495057; font-weight: 600;">
@@ -185,14 +185,14 @@
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
     const tableRows = document.querySelectorAll('tbody tr');
-    
+
     // Filtrar solo las filas con clase cliente-row (excluir el mensaje de "no hay clientes")
     const clienteRows = Array.from(tableRows).filter(row => row.classList.contains('cliente-row'));
     const totalClientes = clienteRows.length;
 
     searchInput.addEventListener('input', function() {
       const searchTerm = this.value.toLowerCase().trim();
-      
+
       if (!searchTerm) {
         // Mostrar todos
         clienteRows.forEach(row => row.classList.remove('hidden'));
@@ -207,9 +207,9 @@
         const telefono = row.getAttribute('data-telefono') || '';
         const nit = row.getAttribute('data-nit') || '';
         const direccion = row.getAttribute('data-direccion') || '';
-        
+
         const searchText = `${nombre} ${telefono} ${nit} ${direccion}`.toLowerCase();
-        
+
         if (searchText.includes(searchTerm)) {
           row.classList.remove('hidden');
           visibleCount++;

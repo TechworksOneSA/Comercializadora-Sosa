@@ -107,7 +107,7 @@ class ComprasController extends Controller
                 'descuento'      => $desc,
                 'subtotal'       => $subtotal,
             ];
-            
+
             // ✅ Si el producto aplica serie y se proporcionó, almacenarla
             if ($tipo === 'UNIDAD' && !empty($serie)) {
                 $seriesPorProducto[$pid] = $serie; // Ahora es una cadena, no array
@@ -153,11 +153,11 @@ class ComprasController extends Controller
         ];
 
         $compra_id = $this->model->crearCompra($header, $detalles);
-        
+
         // ✅ Guardar/actualizar la serie única de cada producto si se proporcionó
         if (!empty($seriesPorProducto) && $compra_id) {
             $seriesModel = new ProductosSeriesModel();
-            
+
             foreach ($seriesPorProducto as $producto_id => $serie) {
                 // $serie es una cadena única, no un array
                 if (!empty(trim($serie))) {
