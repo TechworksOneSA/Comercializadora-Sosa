@@ -145,27 +145,34 @@ $kpis = $kpis ?? [];
       </button>
     </div>
 
-    <div class="filters-advanced-bar" style="z-index:10001; position:relative;">
-
+    <div class="filters-advanced-bar">
 
       <div class="filter-group">
         <span class="filter-label">🏷️ Categoría:</span>
-        <select id="fCategoria" class="filter-select">
-          <option value="0">Todas</option>
-          <?php foreach ($categorias as $cat): ?>
-            <option value="<?= (int)$cat['id'] ?>" <?= ((int)($filters['categoria_id'] ?? 0) === (int)$cat['id']) ? 'selected' : '' ?>><?= htmlspecialchars($cat['nombre']) ?></option>
-          <?php endforeach; ?>
-        </select>
+        <div class="fbselect" id="fbCat">
+          <input
+            type="text"
+            id="fCategoriaTxt"
+            class="filter-input"
+            autocomplete="off"
+            placeholder="Todas">
+          <input type="hidden" id="fCategoria" value="<?= (int)($filters['categoria_id'] ?? 0) ?>">
+          <div class="fbselect-menu" id="fbCatMenu" role="listbox" aria-label="Categorías"></div>
+        </div>
       </div>
 
       <div class="filter-group">
         <span class="filter-label">🔖 Marca:</span>
-        <select id="fMarca" class="filter-select">
-          <option value="0">Todas</option>
-          <?php foreach ($marcas as $marca): ?>
-            <option value="<?= (int)$marca['id'] ?>" <?= ((int)($filters['marca_id'] ?? 0) === (int)$marca['id']) ? 'selected' : '' ?>><?= htmlspecialchars($marca['nombre']) ?></option>
-          <?php endforeach; ?>
-        </select>
+        <div class="fbselect" id="fbMarca">
+          <input
+            type="text"
+            id="fMarcaTxt"
+            class="filter-input"
+            autocomplete="off"
+            placeholder="Todas">
+          <input type="hidden" id="fMarca" value="<?= (int)($filters['marca_id'] ?? 0) ?>">
+          <div class="fbselect-menu" id="fbMarcaMenu" role="listbox" aria-label="Marcas"></div>
+        </div>
       </div>
 
       <div class="filter-group">
@@ -272,292 +279,178 @@ $kpis = $kpis ?? [];
 </div>
 
 <style>
-  /* Mejora visual para los menús de selección de filtros (categoría, marca) */
-  .fbselect {
-    position: relative;
-    z-index: 10002;
-  }
-
-  .fbselect-menu {
-    position: fixed !important;
-    left: 0;
-    top: 0;
-    background: #fff;
-    border: 1px solid #e3eafc;
-    border-radius: 0 0 8px 8px;
-    box-shadow: 0 8px 24px rgba(10, 36, 99, 0.10);
-    z-index: 999999 !important;
-    max-height: 260px;
-    overflow-y: auto;
-    min-width: 160px;
-    display: none;
-    width: auto;
-  }
-
-  .fbselect.open .fbselect-menu {
-    display: block;
-  }
-
-  .fbselect-item {
-    display: block;
-    width: 100%;
-    padding: 10px 16px;
-    background: none;
-    border: none;
-    text-align: left;
-    font-size: 1rem;
-    color: #222;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-
-  .fbselect-item:hover,
-  .fbselect-item[aria-selected="true"] {
-    background: #e3eafc;
-    color: #0a2463;
-  }
-
-  .filter-input:focus {
-    outline: 2px solid #1565c0;
-    z-index: 10011;
-    position: relative;
-  }
-
-  /* Corrige stacking context de la tabla */
-  .productos-table-modern,
-  .table-layer,
-  .table-container {
-    z-index: 1 !important;
-    position: relative;
-  }
-
-  /* Elimina overflow-x del contenedor padre, solo la tabla puede tenerlo */
-  .table-container {
-    overflow-x: visible !important;
-  }
-
-  .table-productos-modern {
-    display: block;
-    overflow-x: auto;
-    width: 100%;
-    min-width: 800px;
-  }
-
   /* Estilos para los modales personalizados */
-</style>
-<script>
-  // Portaliza el menú de selección para que siempre esté por encima de todo
-  function positionFbSelectMenus() {
-    document.querySelectorAll('.fbselect').forEach(function(fbselect) {
-      const menu = fbselect.querySelector('.fbselect-menu');
-      if (!menu) return;
-      if (fbselect.classList.contains('open')) {
-        // Obtener posición absoluta del input
-        const input = fbselect.querySelector('input.filter-input');
-        const rect = input ? input.getBoundingClientRect() : fbselect.getBoundingClientRect();
-        menu.style.left = rect.left + 'px';
-        menu.style.top = (rect.bottom + window.scrollY) + 'px';
-        menu.style.width = rect.width + 'px';
-        menu.style.position = 'fixed';
-        menu.style.zIndex = 999999;
-      } else {
-        menu.style.display = 'none';
-      }
-    });
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
   }
-  document.addEventListener('click', function(e) {
-    // Cierra todos los menús si se hace click fuera
-    document.querySelectorAll('.fbselect').forEach(function(fbselect) {
-      if (!fbselect.contains(e.target)) {
-        fbselect.classList.remove('open');
-        positionFbSelectMenus();
-      }
-    });
-  });
-  document.querySelectorAll('.fbselect .filter-input').forEach(function(input) {
-    input.addEventListener('focus', function(e) {
-      const fbselect = e.target.closest('.fbselect');
-      fbselect.classList.add('open');
-      positionFbSelectMenus();
-    });
-    input.addEventListener('input', function(e) {
-      positionFbSelectMenus();
-    });
-  });
-  window.addEventListener('resize', positionFbSelectMenus);
-  window.addEventListener('scroll', positionFbSelectMenus, true);
-</script>
-.modal-overlay {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0, 0, 0, 0.6);
-backdrop-filter: blur(4px);
-z-index: 10000;
-align-items: center;
-justify-content: center;
-opacity: 0;
-transition: all 0.3s ease;
-}
 
-.modal-overlay.show {
-display: flex;
-opacity: 1;
-}
+  .modal-overlay.show {
+    display: flex;
+    opacity: 1;
+  }
 
-.modal-content {
-background: white;
-border-radius: 16px;
-box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-max-width: 450px;
-width: 90%;
-transform: translateY(-20px) scale(0.95);
-transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-border: 2px solid rgba(220, 53, 69, 0.1);
-}
+  .modal-content {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    max-width: 450px;
+    width: 90%;
+    transform: translateY(-20px) scale(0.95);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 2px solid rgba(220, 53, 69, 0.1);
+  }
 
-.modal-overlay.show .modal-content {
-transform: translateY(0) scale(1);
-}
+  .modal-overlay.show .modal-content {
+    transform: translateY(0) scale(1);
+  }
 
-.modal-header {
-background: linear-gradient(135deg, #0a2463 0%, #1565c0 100%);
-padding: 24px 28px;
-border-radius: 14px 14px 0 0;
-text-align: center;
-position: relative;
-overflow: hidden;
-}
+  .modal-header {
+    background: linear-gradient(135deg, #0a2463 0%, #1565c0 100%);
+    padding: 24px 28px;
+    border-radius: 14px 14px 0 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
 
-#modalEliminarProducto .modal-header {
-background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-}
+  #modalEliminarProducto .modal-header {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  }
 
-.modal-header::before {
-content: '';
-position: absolute;
-top: -50%;
-left: -50%;
-width: 200%;
-height: 200%;
-background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-animation: shimmer 3s ease-in-out infinite;
-}
+  .modal-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: shimmer 3s ease-in-out infinite;
+  }
 
-@keyframes shimmer {
+  @keyframes shimmer {
 
-0%,
-100% {
-transform: translate(-50%, -50%) rotate(0deg);
-}
+    0%,
+    100% {
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
 
-50% {
-transform: translate(-50%, -50%) rotate(180deg);
-}
-}
+    50% {
+      transform: translate(-50%, -50%) rotate(180deg);
+    }
+  }
 
-.modal-icon {
-width: 64px;
-height: 64px;
-background: rgba(255, 255, 255, 0.2);
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-margin: 0 auto 16px;
-border: 3px solid rgba(255, 255, 255, 0.3);
-position: relative;
-z-index: 1;
-}
+  .modal-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    z-index: 1;
+  }
 
-.modal-title {
-font-size: 1.5rem;
-font-weight: 700;
-color: white;
-margin: 0;
-text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-position: relative;
-z-index: 1;
-}
+  .modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+  }
 
-.modal-body {
-padding: 28px;
-text-align: center;
-}
+  .modal-body {
+    padding: 28px;
+    text-align: center;
+  }
 
-.modal-message {
-font-size: 1.1rem;
-color: #495057;
-line-height: 1.6;
-margin: 0 0 8px 0;
-font-weight: 500;
-}
+  .modal-message {
+    font-size: 1.1rem;
+    color: #495057;
+    line-height: 1.6;
+    margin: 0 0 8px 0;
+    font-weight: 500;
+  }
 
-.modal-submessage {
-font-size: 0.95rem;
-color: #6c757d;
-margin: 0;
-line-height: 1.5;
-}
+  .modal-submessage {
+    font-size: 0.95rem;
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.5;
+  }
 
-.modal-actions {
-padding: 0 28px 28px;
-display: flex;
-gap: 12px;
-justify-content: center;
-}
+  .modal-actions {
+    padding: 0 28px 28px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
 
-.modal-btn {
-padding: 12px 24px;
-border: none;
-border-radius: 10px;
-font-weight: 600;
-font-size: 0.95rem;
-cursor: pointer;
-transition: all 0.3s ease;
-position: relative;
-overflow: hidden;
-min-width: 120px;
-}
+  .modal-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-width: 120px;
+  }
 
-.modal-btn-cancel {
-background: #f8f9fa;
-color: #6c757d;
-border: 2px solid #e9ecef;
-}
+  .modal-btn-cancel {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 2px solid #e9ecef;
+  }
 
-.modal-btn-cancel:hover {
-background: #e9ecef;
-border-color: #dee2e6;
-transform: translateY(-1px);
-}
+  .modal-btn-cancel:hover {
+    background: #e9ecef;
+    border-color: #dee2e6;
+    transform: translateY(-1px);
+  }
 
-.modal-btn-confirm {
-background: linear-gradient(135deg, #0a2463 0%, #1565c0 100%);
-color: white;
-box-shadow: 0 4px 12px rgba(10, 36, 99, 0.3);
-}
+  .modal-btn-confirm {
+    background: linear-gradient(135deg, #0a2463 0%, #1565c0 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(10, 36, 99, 0.3);
+  }
 
-#modalEliminarProducto .modal-btn-confirm {
-background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-}
+  #modalEliminarProducto .modal-btn-confirm {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+  }
 
-.modal-btn-confirm:hover {
-transform: translateY(-2px);
-box-shadow: 0 6px 16px rgba(10, 36, 99, 0.4);
-}
+  .modal-btn-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(10, 36, 99, 0.4);
+  }
 
-#modalEliminarProducto .modal-btn-confirm:hover {
-box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
-}
+  #modalEliminarProducto .modal-btn-confirm:hover {
+    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
+  }
 
-.modal-btn-confirm:active {
-transform: translateY(0);
-}
+  .modal-btn-confirm:active {
+    transform: translateY(0);
+  }
 </style>
 
 <script>
