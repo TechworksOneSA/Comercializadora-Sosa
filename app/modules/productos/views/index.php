@@ -4,6 +4,11 @@ $filters = $filters ?? ["categoria_id" => 0, "marca_id" => 0, "stock" => "all", 
 $categorias = $categorias ?? [];
 $marcas = $marcas ?? [];
 $q = $q ?? "";
+$kpis = $kpis ?? [];
+?>
+
+<!-- CSS del módulo -->
+<link rel="stylesheet" href="<?= url('/assets/css/productos.css?v=' . time()) ?>">
 
 <!-- JavaScript del módulo -->
 <script>
@@ -15,8 +20,14 @@ $q = $q ?? "";
   };
   window.__categorias = <?= json_encode(array_values($categorias), JSON_UNESCAPED_UNICODE) ?>;
   window.__marcas = <?= json_encode(array_values($marcas), JSON_UNESCAPED_UNICODE) ?>;
+</script>
+<script src="<?= url('/assets/js/productos.js') ?>"></script>
+<script src="<?= url('/assets/js/modal.js') ?>"></script>
 
 <div class="productos-modern">
+
+  <?php if (isset($_GET['msg'])): ?>
+    <div class="alert alert-ok">
       <p><?= htmlspecialchars($_GET['msg']) ?></p>
     </div>
   <?php endif; ?>
@@ -25,14 +36,26 @@ $q = $q ?? "";
     <div class="alert alert-error">
       <p><?= htmlspecialchars($_GET['error']) ?></p>
     </div>
+  <?php endif; ?>
+
+  <?php if (isset($_SESSION['ok'])): ?>
     <div class="alert alert-ok">
+      <p><?= htmlspecialchars($_SESSION['ok']) ?></p>
+    </div>
+    <?php unset($_SESSION['ok']); ?>
   <?php endif; ?>
 
   <?php if (isset($_SESSION['err'])): ?>
     <div class="alert alert-error">
       <p><?= htmlspecialchars($_SESSION['err']) ?></p>
     </div>
+    <?php unset($_SESSION['err']); ?>
+  <?php endif; ?>
 
+
+  <!-- =======================
+        HEADER (PRO)
+  ======================== -->
   <div class="productos-header-modern">
     <div class="productos-header-flex">
 
@@ -41,8 +64,21 @@ $q = $q ?? "";
           <!-- Icono inventario -->
           <svg viewBox="0 0 24 24" fill="none">
             <path d="M4 7L12 3l8 4-8 4-8-4Z" stroke="white" stroke-width="1.6" />
-          <h1 class="productos-title-modern">Inventario</h1>
+            <path d="M4 7v10l8 4 8-4V7" stroke="white" stroke-width="1.6" />
+            <path d="M12 11v10" stroke="white" stroke-width="1.6" />
+          </svg>
+        </div>
 
+        <div>
+          <h1 class="productos-title-modern">Inventario</h1>
+          <p class="productos-subtitle-modern">Gestión completa de productos, stock y valorización</p>
+        </div>
+      </div>
+
+      <!-- ✅ LINK A PÁGINA CREAR -->
+      <a
+        href="<?= url('/admin/productos/crear') ?>"
+        class="btn-nuevo-producto">
         Nuevo Producto
       </a>
 
@@ -54,6 +90,9 @@ $q = $q ?? "";
         KPIs
   ======================== -->
   <div class="productos-kpis-grid">
+    <div class="kpi-card-producto kpi-total">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-value"><?= number_format($kpis['total_productos'] ?? 0) ?></div>
       <div class="kpi-label">Total Productos</div>
     </div>
 
@@ -61,21 +100,36 @@ $q = $q ?? "";
       <div class="kpi-icon">💵</div>
       <div class="kpi-value">Q <?= number_format($kpis['valor_inventario'] ?? 0, 2) ?></div>
       <div class="kpi-label">Valor Inventario</div>
+    </div>
+
+    <div class="kpi-card-producto kpi-ganancia">
       <div class="kpi-icon">📈</div>
       <div class="kpi-value">Q <?= number_format(($kpis['valor_inventario'] ?? 0) - ($kpis['costo_inversion'] ?? 0), 2) ?></div>
+      <div class="kpi-label">Ganancia Potencial</div>
+    </div>
+
     <div class="kpi-card-producto kpi-stock">
       <div class="kpi-icon">⚠️</div>
       <div class="kpi-value"><?= number_format($kpis['stock_bajo'] ?? 0) ?></div>
       <div class="kpi-label">Stock Bajo</div>
     </div>
+  </div>
+
+
   <!-- =======================
         BUSCADOR + FILTROS
   ======================== -->
   <div class="productos-search-modern">
+
+    <div class="search-main-bar">
+      <div class="search-input-wrapper">
         <span class="search-icon">🔍</span>
         <input
           type="text"
           id="qLive"
+          class="search-input-main"
+          value="<?= htmlspecialchars($q) ?>"
+          placeholder="Busque por SKU, Código de Barras o Nombre del Producto..."
           autocomplete="off"
           autofocus>
       </div>
@@ -86,21 +140,43 @@ $q = $q ?? "";
         id="btnClearFilters"
         onclick="clearAllFilters()"
         title="Limpiar filtros">
+        <span class="clear-icon">✕</span>
+        <span class="clear-text">Limpiar</span>
+      </button>
     </div>
 
     <div class="filters-advanced-bar" style="z-index:10001; position:relative;">
+
+
+      <div class="filter-group">
         <span class="filter-label">🏷️ Categoría:</span>
         <select id="fCategoria" class="filter-select">
           <option value="0">Todas</option>
+          <?php foreach ($categorias as $cat): ?>
+            <option value="<?= (int)$cat['id'] ?>" <?= ((int)($filters['categoria_id'] ?? 0) === (int)$cat['id']) ? 'selected' : '' ?>><?= htmlspecialchars($cat['nombre']) ?></option>
+          <?php endforeach; ?>
         </select>
       </div>
 
+      <div class="filter-group">
+        <span class="filter-label">🔖 Marca:</span>
+        <select id="fMarca" class="filter-select">
           <option value="0">Todas</option>
           <?php foreach ($marcas as $marca): ?>
+            <option value="<?= (int)$marca['id'] ?>" <?= ((int)($filters['marca_id'] ?? 0) === (int)$marca['id']) ? 'selected' : '' ?>><?= htmlspecialchars($marca['nombre']) ?></option>
+          <?php endforeach; ?>
+        </select>
       </div>
 
+      <div class="filter-group">
+        <span class="filter-label">📦 Stock:</span>
+        <select id="fStock" class="filter-select">
           <option value="all" <?= (($filters['stock'] ?? 'all') === 'all') ? 'selected' : '' ?>>Todos</option>
+          <option value="bajo" <?= (($filters['stock'] ?? 'all') === 'bajo') ? 'selected' : '' ?>>Bajo</option>
+          <option value="cero" <?= (($filters['stock'] ?? 'all') === 'cero') ? 'selected' : '' ?>>En Cero</option>
+        </select>
       </div>
+
       <!-- Filtro de estado eliminado -->
 
     </div>
