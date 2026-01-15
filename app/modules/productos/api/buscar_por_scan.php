@@ -15,29 +15,53 @@ if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
 
-/**
- * ✅ RUTAS CORRECTAS SEGÚN SU SERVIDOR:
- * /srv/apps/comercializadora/app/config/database.php
- * /srv/apps/comercializadora/app/core/Auth.php
- * env.php puede estar en /config o /app/config; aquí cargamos primero el root y si no, el app.
- */
-$envRoot = __DIR__ . '/../../../config/env.php';
-$envApp  = __DIR__ . '/../../../app/config/env.php';
-
-if (file_exists($envRoot)) {
-  require_once $envRoot;
-} elseif (file_exists($envApp)) {
-  require_once $envApp;
-}
-
-require_once __DIR__ . '/../../../app/config/database.php';
-require_once __DIR__ . '/../../../app/core/Auth.php';
-
 function respond(int $code, array $payload): void {
   http_response_code($code);
   echo json_encode($payload, JSON_UNESCAPED_UNICODE);
   exit;
 }
+
+/**
+ * Base real del proyecto:
+ * __DIR__ = /srv/apps/comercializadora/app/modules/productos/api
+ * subir 4 niveles => /srv/apps/comercializadora/app
+ */
+$APP_BASE = realpath(__DIR__ . '/../../../..'); // .../app
+if (!$APP_BASE) {
+  // fallback duro por si realpath falla
+  $APP_BASE = '/srv/apps/comercializadora/app';
+}
+
+/**
+ * env.php: en su server existe en dos lugares:
+ * - /srv/apps/comercializadora/config/env.php
+ * - /srv/apps/comercializadora/app/config/env.php
+ * Cargamos primero el root (mejor práctica), si no existe usamos el de /app.
+ */
+$ENV_ROOT = dirname($APP_BASE) . '/config/env.php';
+$ENV_APP  = $APP_BASE . '/config/env.php';
+
+if (file_exists($ENV_ROOT)) {
+  require_once $ENV_ROOT;
+} elseif (file_exists($ENV_APP)) {
+  require_once $ENV_APP;
+} else {
+  respond(500, ['success' => false, 'message' => 'env.php no encontrado']);
+}
+
+// Rutas correctas (según su find)
+$DB_FILE   = $APP_BASE . '/config/database.php';
+$AUTH_FILE = $APP_BASE . '/core/Auth.php';
+
+if (!file_exists($DB_FILE)) {
+  respond(500, ['success' => false, 'message' => 'database.php no encontrado en app/config']);
+}
+if (!file_exists($AUTH_FILE)) {
+  respond(500, ['success' => false, 'message' => 'Auth.php no encontrado en app/core']);
+}
+
+require_once $DB_FILE;
+require_once $AUTH_FILE;
 
 // Seguridad
 if (empty($_SESSION['user'])) {
@@ -48,7 +72,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
   respond(405, ['success' => false, 'message' => 'Método no permitido']);
 }
 
-$raw = file_get_contents('php://input') ?: '';
+$raw  = file_get_contents('php://input') ?: '';
 $data = json_decode($raw, true);
 
 if (!is_array($data)) {
