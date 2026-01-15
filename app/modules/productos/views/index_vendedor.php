@@ -195,6 +195,7 @@ $kpis = $kpis ?? [];
         position: relative;
         z-index: 10002;
     }
+
     .fbselect-menu {
         position: fixed !important;
         left: 0;
@@ -202,7 +203,7 @@ $kpis = $kpis ?? [];
         background: #fff;
         border: 1px solid #e3eafc;
         border-radius: 0 0 8px 8px;
-        box-shadow: 0 8px 24px rgba(10,36,99,0.10);
+        box-shadow: 0 8px 24px rgba(10, 36, 99, 0.10);
         z-index: 999999 !important;
         max-height: 260px;
         overflow-y: auto;
@@ -210,11 +211,12 @@ $kpis = $kpis ?? [];
         display: none;
         width: auto;
     }
+
     .fbselect.open .fbselect-menu {
         display: block;
     }
-    </style>
-    <script>
+</style>
+<script>
     // Portaliza el menú de selección para que siempre esté por encima de todo
     function positionFbSelectMenus() {
         document.querySelectorAll('.fbselect').forEach(function(fbselect) {
@@ -255,7 +257,7 @@ $kpis = $kpis ?? [];
     });
     window.addEventListener('resize', positionFbSelectMenus);
     window.addEventListener('scroll', positionFbSelectMenus, true);
-    </script>
+</script>
 </style>
 
 <!-- Modal Global -->
