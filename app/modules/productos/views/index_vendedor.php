@@ -138,7 +138,7 @@ $kpis = $kpis ?? [];
     <!-- =======================
         FILTROS AVANZADOS (fuera de la tabla)
     ======================== -->
-    <div class="filters-advanced-bar">
+    <div class="filters-advanced-bar" style="z-index:10001; position:relative;">
         <div class="filter-group">
             <span class="filter-label">🏷️ Categoría:</span>
             <div class="fbselect" id="fbCat">
@@ -208,7 +208,7 @@ $kpis = $kpis ?? [];
     /* Mejora visual para los menús de selección de filtros (categoría, marca) */
     .fbselect {
         position: relative;
-        z-index: 20;
+        z-index: 10002;
     }
     .fbselect-menu {
         position: absolute;
@@ -219,7 +219,7 @@ $kpis = $kpis ?? [];
         border: 1px solid #e3eafc;
         border-radius: 0 0 8px 8px;
         box-shadow: 0 8px 24px rgba(10,36,99,0.10);
-        z-index: 9999;
+        z-index: 10010;
         max-height: 260px;
         overflow-y: auto;
         min-width: 160px;
@@ -246,8 +246,23 @@ $kpis = $kpis ?? [];
     }
     .filter-input:focus {
         outline: 2px solid #1565c0;
-        z-index: 21;
+        z-index: 10011;
         position: relative;
+    }
+    /* Corrige stacking context de la tabla */
+    .productos-table-modern, .table-layer, .table-container {
+        z-index: 1 !important;
+        position: relative;
+    }
+    /* Elimina overflow-x del contenedor padre, solo la tabla puede tenerlo */
+    .table-container {
+        overflow-x: visible !important;
+    }
+    .table-productos-modern {
+        display: block;
+        overflow-x: auto;
+        width: 100%;
+        min-width: 800px;
     }
 </style>
 
