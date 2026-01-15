@@ -204,6 +204,53 @@ $kpis = $kpis ?? [];
 
 </div>
 
+<style>
+    /* Mejora visual para los menús de selección de filtros (categoría, marca) */
+    .fbselect {
+        position: relative;
+        z-index: 20;
+    }
+    .fbselect-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #e3eafc;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 8px 24px rgba(10,36,99,0.10);
+        z-index: 9999;
+        max-height: 260px;
+        overflow-y: auto;
+        min-width: 160px;
+        display: none;
+    }
+    .fbselect.open .fbselect-menu {
+        display: block;
+    }
+    .fbselect-item {
+        display: block;
+        width: 100%;
+        padding: 10px 16px;
+        background: none;
+        border: none;
+        text-align: left;
+        font-size: 1rem;
+        color: #222;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .fbselect-item:hover, .fbselect-item[aria-selected="true"] {
+        background: #e3eafc;
+        color: #0a2463;
+    }
+    .filter-input:focus {
+        outline: 2px solid #1565c0;
+        z-index: 21;
+        position: relative;
+    }
+</style>
+
 <!-- Modal Global -->
 <div id="bmModal" class="bm-modal" aria-hidden="true">
     <div class="bm-modal__backdrop" data-close="1"></div>
