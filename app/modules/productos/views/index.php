@@ -147,32 +147,25 @@ $kpis = $kpis ?? [];
 
     <div class="filters-advanced-bar" style="z-index:10001; position:relative;">
 
+
       <div class="filter-group">
         <span class="filter-label">🏷️ Categoría:</span>
-        <div class="fbselect" id="fbCat">
-          <input
-            type="text"
-            id="fCategoriaTxt"
-            class="filter-input"
-            autocomplete="off"
-            placeholder="Todas">
-          <input type="hidden" id="fCategoria" value="<?= (int)($filters['categoria_id'] ?? 0) ?>">
-          <div class="fbselect-menu" id="fbCatMenu" role="listbox" aria-label="Categorías"></div>
-        </div>
+        <select id="fCategoria" class="filter-select">
+          <option value="0">Todas</option>
+          <?php foreach ($categorias as $cat): ?>
+            <option value="<?= (int)$cat['id'] ?>" <?= ((int)($filters['categoria_id'] ?? 0) === (int)$cat['id']) ? 'selected' : '' ?>><?= htmlspecialchars($cat['nombre']) ?></option>
+          <?php endforeach; ?>
+        </select>
       </div>
 
       <div class="filter-group">
         <span class="filter-label">🔖 Marca:</span>
-        <div class="fbselect" id="fbMarca">
-          <input
-            type="text"
-            id="fMarcaTxt"
-            class="filter-input"
-            autocomplete="off"
-            placeholder="Todas">
-          <input type="hidden" id="fMarca" value="<?= (int)($filters['marca_id'] ?? 0) ?>">
-          <div class="fbselect-menu" id="fbMarcaMenu" role="listbox" aria-label="Marcas"></div>
-        </div>
+        <select id="fMarca" class="filter-select">
+          <option value="0">Todas</option>
+          <?php foreach ($marcas as $marca): ?>
+            <option value="<?= (int)$marca['id'] ?>" <?= ((int)($filters['marca_id'] ?? 0) === (int)$marca['id']) ? 'selected' : '' ?>><?= htmlspecialchars($marca['nombre']) ?></option>
+          <?php endforeach; ?>
+        </select>
       </div>
 
       <div class="filter-group">
