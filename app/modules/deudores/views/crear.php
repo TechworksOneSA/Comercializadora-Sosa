@@ -74,7 +74,7 @@
             <input
               type="text"
               id="buscarProducto"
-              placeholder="🔍 Buscar por nombre o código de barras..."
+              placeholder="🔍 Buscar por nombre"
               autocomplete="off"
               style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
               onfocus="this.style.borderColor='#dc3545'; mostrarResultadosProductos()"
@@ -163,7 +163,7 @@
 
 <script>
   // Datos PHP a JavaScript
-  const clientesData  = <?= json_encode($clientes) ?>;
+  const clientesData = <?= json_encode($clientes) ?>;
   const productosData = <?= json_encode($productos) ?>;
 
   // Estado
@@ -177,8 +177,8 @@
     const colors = {
       success: '#28a745',
       warning: '#ffc107',
-      error:   '#dc3545',
-      info:    '#17a2b8'
+      error: '#dc3545',
+      info: '#17a2b8'
     };
 
     const toast = document.createElement('div');
@@ -630,13 +630,13 @@
   window.addEventListener('DOMContentLoaded', function() {
     // Elementos del DOM (ahora sí existen)
     const buscarProductoInput = document.getElementById('buscarProducto');
-    const inputCantidad       = document.getElementById('inputCantidad');
-    const btnAgregarProducto  = document.getElementById('btnAgregarProducto');
-    const tablaProductos      = document.getElementById('tablaProductos');
-    const inputsProductos     = document.getElementById('inputsProductos');
-    const totalDisplay        = document.getElementById('totalDisplay');
-    const formDeuda           = document.getElementById('formDeuda');
-    const clienteIdInput      = document.getElementById('cliente_id');
+    const inputCantidad = document.getElementById('inputCantidad');
+    const btnAgregarProducto = document.getElementById('btnAgregarProducto');
+    const tablaProductos = document.getElementById('tablaProductos');
+    const inputsProductos = document.getElementById('inputsProductos');
+    const totalDisplay = document.getElementById('totalDisplay');
+    const formDeuda = document.getElementById('formDeuda');
+    const clienteIdInput = document.getElementById('cliente_id');
 
     // Guard-rails
     if (!btnAgregarProducto || !tablaProductos || !inputsProductos || !totalDisplay || !formDeuda || !clienteIdInput) {
@@ -670,7 +670,9 @@
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
               },
-              body: JSON.stringify({ q: serie })
+              body: JSON.stringify({
+                q: serie
+              })
             })
             .then(res => res.json())
             .then(data => {
@@ -690,7 +692,9 @@
             .finally(() => {
               scannerInput.value = '';
               scannerInput.focus();
-              setTimeout(() => { processingScan = false; }, 120);
+              setTimeout(() => {
+                processingScan = false;
+              }, 120);
             });
         }
       });
@@ -740,12 +744,24 @@
 </script>
 
 <style>
-  .card { animation: fadeIn 0.3s ease-in; }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
+  .card {
+    animation: fadeIn 0.3s ease-in;
   }
 
-  input:focus, select:focus { outline: none; }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  input:focus,
+  select:focus {
+    outline: none;
+  }
 </style>

@@ -70,7 +70,7 @@
             <input
               type="text"
               id="buscarProducto"
-              placeholder="🔍 Buscar por nombre o código de barras..."
+              placeholder="🔍 Buscar por nombre"
               autocomplete="off"
               style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
               onfocus="this.style.borderColor='#0a3d91'; mostrarResultadosProductos()"
