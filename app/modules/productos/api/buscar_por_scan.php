@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
@@ -15,7 +16,8 @@ if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
 
-function respond(int $code, array $payload): void {
+function respond(int $code, array $payload): void
+{
   http_response_code($code);
   echo json_encode($payload, JSON_UNESCAPED_UNICODE);
   exit;
@@ -24,9 +26,9 @@ function respond(int $code, array $payload): void {
 /**
  * Base real del proyecto:
  * __DIR__ = /srv/apps/comercializadora/app/modules/productos/api
- * subir 4 niveles => /srv/apps/comercializadora/app
+ * subir 3 niveles => /srv/apps/comercializadora/app
  */
-$APP_BASE = realpath(__DIR__ . '/../../../..'); // .../app
+$APP_BASE = realpath(__DIR__ . '/../../..'); // .../app
 if (!$APP_BASE) {
   // fallback duro por si realpath falla
   $APP_BASE = '/srv/apps/comercializadora/app';
@@ -36,10 +38,10 @@ if (!$APP_BASE) {
  * env.php: en su server existe en dos lugares:
  * - /srv/apps/comercializadora/config/env.php
  * - /srv/apps/comercializadora/app/config/env.php
- * Cargamos primero el root (mejor práctica), si no existe usamos el de /app.
+ * Cargamos primero el root (si existe), si no usamos el de /app.
  */
-$ENV_ROOT = dirname($APP_BASE) . '/config/env.php';
-$ENV_APP  = $APP_BASE . '/config/env.php';
+$ENV_ROOT = dirname($APP_BASE) . '/config/env.php'; // /srv/apps/comercializadora/config/env.php
+$ENV_APP  = $APP_BASE . '/config/env.php';          // /srv/apps/comercializadora/app/config/env.php
 
 if (file_exists($ENV_ROOT)) {
   require_once $ENV_ROOT;
@@ -63,7 +65,7 @@ if (!file_exists($AUTH_FILE)) {
 require_once $DB_FILE;
 require_once $AUTH_FILE;
 
-// Seguridad
+// Seguridad (sesión)
 if (empty($_SESSION['user'])) {
   respond(401, ['success' => false, 'message' => 'No autorizado']);
 }
@@ -117,7 +119,6 @@ try {
     'producto' => $row,
     'match' => 'sku/codigo_barra/numero_serie'
   ]);
-
 } catch (Throwable $e) {
   error_log("buscar_por_scan ERROR: " . $e->getMessage());
   respond(500, ['success' => false, 'message' => 'Error interno']);
