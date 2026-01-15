@@ -106,11 +106,11 @@ $kpis = $kpis ?? [];
     </div>
 
 
+
     <!-- =======================
         BUSCADOR + FILTROS
     ======================== -->
     <div class="productos-search-modern">
-
         <div class="search-main-bar">
             <div class="search-input-wrapper">
                 <span class="search-icon">🔍</span>
@@ -123,7 +123,6 @@ $kpis = $kpis ?? [];
                     autocomplete="off"
                     autofocus>
             </div>
-
             <button
                 type="button"
                 class="btn-clear-filters"
@@ -134,55 +133,53 @@ $kpis = $kpis ?? [];
                 <span class="clear-text">Limpiar</span>
             </button>
         </div>
+    </div>
 
-        <div class="filters-advanced-bar">
-
-            <div class="filter-group">
-                <span class="filter-label">🏷️ Categoría:</span>
-                <div class="fbselect" id="fbCat">
-                    <input
-                        type="text"
-                        id="fCategoriaTxt"
-                        class="filter-input"
-                        autocomplete="off"
-                        placeholder="Todas">
-                    <input type="hidden" id="fCategoria" value="<?= (int)($filters['categoria_id'] ?? 0) ?>">
-                    <div class="fbselect-menu" id="fbCatMenu" role="listbox" aria-label="Categorías"></div>
-                </div>
+    <!-- =======================
+        FILTROS AVANZADOS (fuera de la tabla)
+    ======================== -->
+    <div class="filters-advanced-bar">
+        <div class="filter-group">
+            <span class="filter-label">🏷️ Categoría:</span>
+            <div class="fbselect" id="fbCat">
+                <input
+                    type="text"
+                    id="fCategoriaTxt"
+                    class="filter-input"
+                    autocomplete="off"
+                    placeholder="Todas">
+                <input type="hidden" id="fCategoria" value="<?= (int)($filters['categoria_id'] ?? 0) ?>">
+                <div class="fbselect-menu" id="fbCatMenu" role="listbox" aria-label="Categorías"></div>
             </div>
-
-            <div class="filter-group">
-                <span class="filter-label">🔖 Marca:</span>
-                <div class="fbselect" id="fbMarca">
-                    <input
-                        type="text"
-                        id="fMarcaTxt"
-                        class="filter-input"
-                        autocomplete="off"
-                        placeholder="Todas">
-                    <input type="hidden" id="fMarca" value="<?= (int)($filters['marca_id'] ?? 0) ?>">
-                    <div class="fbselect-menu" id="fbMarcaMenu" role="listbox" aria-label="Marcas"></div>
-                </div>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">🔖 Marca:</span>
+            <div class="fbselect" id="fbMarca">
+                <input
+                    type="text"
+                    id="fMarcaTxt"
+                    class="filter-input"
+                    autocomplete="off"
+                    placeholder="Todas">
+                <input type="hidden" id="fMarca" value="<?= (int)($filters['marca_id'] ?? 0) ?>">
+                <div class="fbselect-menu" id="fbMarcaMenu" role="listbox" aria-label="Marcas"></div>
             </div>
-
-            <div class="filter-group">
-                <span class="filter-label">📦 Stock:</span>
-                <select id="fStock" class="filter-select">
-                    <option value="all" <?= (($filters['stock'] ?? 'all') === 'all') ? 'selected' : '' ?>>Todos</option>
-                    <option value="bajo" <?= (($filters['stock'] ?? 'all') === 'bajo') ? 'selected' : '' ?>>Bajo</option>
-                    <option value="cero" <?= (($filters['stock'] ?? 'all') === 'cero') ? 'selected' : '' ?>>En Cero</option>
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <span class="filter-label">🔘 Estado:</span>
-                <select id="fEstado" class="filter-select">
-                    <option value="ALL" <?= (($filters['estado'] ?? 'ALL') === 'ALL') ? 'selected' : '' ?>>Todos</option>
-                    <option value="ACTIVO" <?= (($filters['estado'] ?? 'ALL') === 'ACTIVO') ? 'selected' : '' ?>>Activos</option>
-                    <option value="INACTIVO" <?= (($filters['estado'] ?? 'ALL') === 'INACTIVO') ? 'selected' : '' ?>>Desactivados</option>
-                </select>
-            </div>
-
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">📦 Stock:</span>
+            <select id="fStock" class="filter-select">
+                <option value="all" <?= (($filters['stock'] ?? 'all') === 'all') ? 'selected' : '' ?>>Todos</option>
+                <option value="bajo" <?= (($filters['stock'] ?? 'all') === 'bajo') ? 'selected' : '' ?>>Bajo</option>
+                <option value="cero" <?= (($filters['stock'] ?? 'all') === 'cero') ? 'selected' : '' ?>>En Cero</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">🔘 Estado:</span>
+            <select id="fEstado" class="filter-select">
+                <option value="ALL" <?= (($filters['estado'] ?? 'ALL') === 'ALL') ? 'selected' : '' ?>>Todos</option>
+                <option value="ACTIVO" <?= (($filters['estado'] ?? 'ALL') === 'ACTIVO') ? 'selected' : '' ?>>Activos</option>
+                <option value="INACTIVO" <?= (($filters['estado'] ?? 'ALL') === 'INACTIVO') ? 'selected' : '' ?>>Desactivados</option>
+            </select>
         </div>
     </div>
 
