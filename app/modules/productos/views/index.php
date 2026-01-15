@@ -145,7 +145,7 @@ $kpis = $kpis ?? [];
       </button>
     </div>
 
-    <div class="filters-advanced-bar">
+    <div class="filters-advanced-bar" style="z-index:10001; position:relative;">
 
       <div class="filter-group">
         <span class="filter-label">🏷️ Categoría:</span>
@@ -279,7 +279,109 @@ $kpis = $kpis ?? [];
 </div>
 
 <style>
+  /* Mejora visual para los menús de selección de filtros (categoría, marca) */
+  .fbselect {
+    position: relative;
+    z-index: 10002;
+  }
+  .fbselect-menu {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    background: #fff;
+    border: 1px solid #e3eafc;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 8px 24px rgba(10,36,99,0.10);
+    z-index: 999999 !important;
+    max-height: 260px;
+    overflow-y: auto;
+    min-width: 160px;
+    display: none;
+    width: auto;
+  }
+  .fbselect.open .fbselect-menu {
+    display: block;
+  }
+  .fbselect-item {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 1rem;
+    color: #222;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .fbselect-item:hover, .fbselect-item[aria-selected="true"] {
+    background: #e3eafc;
+    color: #0a2463;
+  }
+  .filter-input:focus {
+    outline: 2px solid #1565c0;
+    z-index: 10011;
+    position: relative;
+  }
+  /* Corrige stacking context de la tabla */
+  .productos-table-modern, .table-layer, .table-container {
+    z-index: 1 !important;
+    position: relative;
+  }
+  /* Elimina overflow-x del contenedor padre, solo la tabla puede tenerlo */
+  .table-container {
+    overflow-x: visible !important;
+  }
+  .table-productos-modern {
+    display: block;
+    overflow-x: auto;
+    width: 100%;
+    min-width: 800px;
+  }
   /* Estilos para los modales personalizados */
+  </style>
+  <script>
+  // Portaliza el menú de selección para que siempre esté por encima de todo
+  function positionFbSelectMenus() {
+    document.querySelectorAll('.fbselect').forEach(function(fbselect) {
+      const menu = fbselect.querySelector('.fbselect-menu');
+      if (!menu) return;
+      if (fbselect.classList.contains('open')) {
+        // Obtener posición absoluta del input
+        const input = fbselect.querySelector('input.filter-input');
+        const rect = input ? input.getBoundingClientRect() : fbselect.getBoundingClientRect();
+        menu.style.left = rect.left + 'px';
+        menu.style.top = (rect.bottom + window.scrollY) + 'px';
+        menu.style.width = rect.width + 'px';
+        menu.style.position = 'fixed';
+        menu.style.zIndex = 999999;
+      } else {
+        menu.style.display = 'none';
+      }
+    });
+  }
+  document.addEventListener('click', function(e) {
+    // Cierra todos los menús si se hace click fuera
+    document.querySelectorAll('.fbselect').forEach(function(fbselect) {
+      if (!fbselect.contains(e.target)) {
+        fbselect.classList.remove('open');
+        positionFbSelectMenus();
+      }
+    });
+  });
+  document.querySelectorAll('.fbselect .filter-input').forEach(function(input) {
+    input.addEventListener('focus', function(e) {
+      const fbselect = e.target.closest('.fbselect');
+      fbselect.classList.add('open');
+      positionFbSelectMenus();
+    });
+    input.addEventListener('input', function(e) {
+      positionFbSelectMenus();
+    });
+  });
+  window.addEventListener('resize', positionFbSelectMenus);
+  window.addEventListener('scroll', positionFbSelectMenus, true);
+  </script>
   .modal-overlay {
     display: none;
     position: fixed;

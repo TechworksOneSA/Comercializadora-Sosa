@@ -1,11 +1,11 @@
 <?php
 // recibe: $productos
 ?>
-<div class="productos-table-modern">
-        <div class="table-scroll-navbar-wrapper">
-            <div class="table-scroll-navbar" id="tableScrollNavbar"></div>
-            <div class="table-container" style="overflow-x: auto;">
-                <table class="table-productos-modern">
+<div class="productos-table-modern" style="z-index:0;position:relative;">
+        <div class="table-scroll-navbar-wrapper" style="z-index:0;position:relative;">
+            <div class="table-scroll-navbar" id="tableScrollNavbar" style="z-index:0;position:relative;"></div>
+            <div class="table-container" style="overflow-x: auto;z-index:0;position:relative;">
+                <table class="table-productos-modern" style="z-index:0;position:relative;">
             <thead>
                 <tr>
                     <th style="width: 100px;">Imagen</th>
@@ -158,8 +158,19 @@
         </div>
 </div>
 
-<style>
+    <style>
     /* Barra de desplazamiento visual para tablas en móvil */
+    .productos-table-modern,
+    .table-scroll-navbar-wrapper,
+    .table-scroll-navbar,
+    .table-container,
+    .table-productos-modern,
+    .table-productos-modern th,
+    .table-productos-modern td,
+    .table-productos-modern tr {
+        z-index: 0 !important;
+        position: relative;
+    }
     .table-scroll-navbar-wrapper {
         position: relative;
     }
