@@ -211,23 +211,66 @@ $kpis = $kpis ?? [];
         z-index: 10002;
     }
     .fbselect-menu {
-        position: absolute;
-        top: 100%;
+        position: fixed !important;
         left: 0;
-        right: 0;
+        top: 0;
         background: #fff;
         border: 1px solid #e3eafc;
         border-radius: 0 0 8px 8px;
         box-shadow: 0 8px 24px rgba(10,36,99,0.10);
-        z-index: 10010;
+        z-index: 999999 !important;
         max-height: 260px;
         overflow-y: auto;
         min-width: 160px;
         display: none;
+        width: auto;
     }
     .fbselect.open .fbselect-menu {
         display: block;
     }
+    </style>
+    <script>
+    // Portaliza el menú de selección para que siempre esté por encima de todo
+    function positionFbSelectMenus() {
+        document.querySelectorAll('.fbselect').forEach(function(fbselect) {
+            const menu = fbselect.querySelector('.fbselect-menu');
+            if (!menu) return;
+            if (fbselect.classList.contains('open')) {
+                // Obtener posición absoluta del input
+                const input = fbselect.querySelector('input.filter-input');
+                const rect = input ? input.getBoundingClientRect() : fbselect.getBoundingClientRect();
+                menu.style.left = rect.left + 'px';
+                menu.style.top = (rect.bottom + window.scrollY) + 'px';
+                menu.style.width = rect.width + 'px';
+                menu.style.position = 'fixed';
+                menu.style.zIndex = 999999;
+            } else {
+                menu.style.display = 'none';
+            }
+        });
+    }
+    document.addEventListener('click', function(e) {
+        // Cierra todos los menús si se hace click fuera
+        document.querySelectorAll('.fbselect').forEach(function(fbselect) {
+            if (!fbselect.contains(e.target)) {
+                fbselect.classList.remove('open');
+                positionFbSelectMenus();
+            }
+        });
+    });
+    document.querySelectorAll('.fbselect .filter-input').forEach(function(input) {
+        input.addEventListener('focus', function(e) {
+            const fbselect = e.target.closest('.fbselect');
+            fbselect.classList.add('open');
+            positionFbSelectMenus();
+        });
+        input.addEventListener('input', function(e) {
+            positionFbSelectMenus();
+        });
+    });
+    window.addEventListener('resize', positionFbSelectMenus);
+    window.addEventListener('scroll', positionFbSelectMenus, true);
+    </script>
     .fbselect-item {
         display: block;
         width: 100%;
