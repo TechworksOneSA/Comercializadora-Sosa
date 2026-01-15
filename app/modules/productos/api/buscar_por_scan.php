@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
@@ -16,8 +15,7 @@ if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
 
-function respond(int $code, array $payload): void
-{
+function respond(int $code, array $payload): void {
   http_response_code($code);
   echo json_encode($payload, JSON_UNESCAPED_UNICODE);
   exit;
@@ -30,43 +28,64 @@ function respond(int $code, array $payload): void
  */
 $APP_BASE = realpath(__DIR__ . '/../../..'); // .../app
 if (!$APP_BASE) {
-  // fallback duro por si realpath falla
   $APP_BASE = '/srv/apps/comercializadora/app';
 }
 
 /**
- * env.php: en su server existe en dos lugares:
- * - /srv/apps/comercializadora/config/env.php
- * - /srv/apps/comercializadora/app/config/env.php
- * Cargamos primero el root (si existe), si no usamos el de /app.
+ * IMPORTANTE:
+ * Este endpoint normalmente se ejecuta dentro del Router (public/index.php),
+ * donde ya se cargan env.php, database.php y Auth.php.
+ * Por eso: solo cargamos si NO existe ya (evita "Constant already defined").
  */
-$ENV_ROOT = dirname($APP_BASE) . '/config/env.php'; // /srv/apps/comercializadora/config/env.php
-$ENV_APP  = $APP_BASE . '/config/env.php';          // /srv/apps/comercializadora/app/config/env.php
+$ENV_ROOT = dirname($APP_BASE) . '/config/env.php';
+$ENV_APP  = $APP_BASE . '/config/env.php';
 
-if (file_exists($ENV_ROOT)) {
-  require_once $ENV_ROOT;
-} elseif (file_exists($ENV_APP)) {
-  require_once $ENV_APP;
-} else {
-  respond(500, ['success' => false, 'message' => 'env.php no encontrado']);
+if (!defined('DB_HOST')) {
+  if (file_exists($ENV_ROOT)) {
+    require_once $ENV_ROOT;
+  } elseif (file_exists($ENV_APP)) {
+    require_once $ENV_APP;
+  } else {
+    respond(500, ['success' => false, 'message' => 'env.php no encontrado']);
+  }
 }
 
-// Rutas correctas (según su find)
 $DB_FILE   = $APP_BASE . '/config/database.php';
 $AUTH_FILE = $APP_BASE . '/core/Auth.php';
 
-if (!file_exists($DB_FILE)) {
-  respond(500, ['success' => false, 'message' => 'database.php no encontrado en app/config']);
-}
-if (!file_exists($AUTH_FILE)) {
-  respond(500, ['success' => false, 'message' => 'Auth.php no encontrado en app/core']);
+if (!class_exists('Database')) {
+  if (!file_exists($DB_FILE)) {
+    respond(500, ['success' => false, 'message' => 'database.php no encontrado en app/config']);
+  }
+  require_once $DB_FILE;
 }
 
-require_once $DB_FILE;
-require_once $AUTH_FILE;
+if (!class_exists('Auth')) {
+  if (!file_exists($AUTH_FILE)) {
+    respond(500, ['success' => false, 'message' => 'Auth.php no encontrado en app/core']);
+  }
+  require_once $AUTH_FILE;
+}
 
-// Seguridad (sesión)
-if (empty($_SESSION['user'])) {
+/** =========================
+ *  Seguridad / Sesión
+ *  ========================= */
+$autorizado = false;
+
+// Si existe Auth::check(), úselo (es el estándar del proyecto)
+if (class_exists('Auth') && method_exists('Auth', 'check')) {
+  try {
+    $autorizado = (bool) Auth::check();
+  } catch (Throwable $e) {
+    // fallback a sesión si algo raro pasa
+    $autorizado = !empty($_SESSION['user']) || !empty($_SESSION['usuario']) || !empty($_SESSION['auth']);
+  }
+} else {
+  // fallback
+  $autorizado = !empty($_SESSION['user']) || !empty($_SESSION['usuario']) || !empty($_SESSION['auth']);
+}
+
+if (!$autorizado) {
   respond(401, ['success' => false, 'message' => 'No autorizado']);
 }
 
@@ -119,7 +138,11 @@ try {
     'producto' => $row,
     'match' => 'sku/codigo_barra/numero_serie'
   ]);
+
 } catch (Throwable $e) {
-  error_log("buscar_por_scan ERROR: " . $e->getMessage());
-  respond(500, ['success' => false, 'message' => 'Error interno']);
+  error_log("buscar_por_scan ERROR: " . $e->getMessage() . " @ " . $e->getFile() . ":" . $e->getLine());
+  respond(500, [
+    'success' => false,
+    'message' => 'Error interno'
+  ]);
 }
