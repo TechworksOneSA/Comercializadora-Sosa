@@ -139,22 +139,30 @@ $kpis = $kpis ?? [];
 
             <div class="filter-group">
                 <span class="filter-label">🏷️ Categoría:</span>
-                <select id="fCategoria" class="filter-select">
-                    <option value="0" <?= ((int)($filters['categoria_id'] ?? 0) === 0) ? 'selected' : '' ?>>Todas</option>
-                    <?php foreach ($categorias as $cat): ?>
-                        <option value="<?= $cat['id'] ?>" <?= ((int)($filters['categoria_id'] ?? 0) === (int)$cat['id']) ? 'selected' : '' ?>><?= htmlspecialchars($cat['nombre']) ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="fbselect" id="fbCat">
+                    <input
+                        type="text"
+                        id="fCategoriaTxt"
+                        class="filter-input"
+                        autocomplete="off"
+                        placeholder="Todas">
+                    <input type="hidden" id="fCategoria" value="<?= (int)($filters['categoria_id'] ?? 0) ?>">
+                    <div class="fbselect-menu" id="fbCatMenu" role="listbox" aria-label="Categorías"></div>
+                </div>
             </div>
 
             <div class="filter-group">
                 <span class="filter-label">🔖 Marca:</span>
-                <select id="fMarca" class="filter-select">
-                    <option value="0" <?= ((int)($filters['marca_id'] ?? 0) === 0) ? 'selected' : '' ?>>Todas</option>
-                    <?php foreach ($marcas as $marca): ?>
-                        <option value="<?= $marca['id'] ?>" <?= ((int)($filters['marca_id'] ?? 0) === (int)$marca['id']) ? 'selected' : '' ?>><?= htmlspecialchars($marca['nombre']) ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="fbselect" id="fbMarca">
+                    <input
+                        type="text"
+                        id="fMarcaTxt"
+                        class="filter-input"
+                        autocomplete="off"
+                        placeholder="Todas">
+                    <input type="hidden" id="fMarca" value="<?= (int)($filters['marca_id'] ?? 0) ?>">
+                    <div class="fbselect-menu" id="fbMarcaMenu" role="listbox" aria-label="Marcas"></div>
+                </div>
             </div>
 
             <div class="filter-group">
@@ -163,6 +171,15 @@ $kpis = $kpis ?? [];
                     <option value="all" <?= (($filters['stock'] ?? 'all') === 'all') ? 'selected' : '' ?>>Todos</option>
                     <option value="bajo" <?= (($filters['stock'] ?? 'all') === 'bajo') ? 'selected' : '' ?>>Bajo</option>
                     <option value="cero" <?= (($filters['stock'] ?? 'all') === 'cero') ? 'selected' : '' ?>>En Cero</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <span class="filter-label">🔘 Estado:</span>
+                <select id="fEstado" class="filter-select">
+                    <option value="ALL" <?= (($filters['estado'] ?? 'ALL') === 'ALL') ? 'selected' : '' ?>>Todos</option>
+                    <option value="ACTIVO" <?= (($filters['estado'] ?? 'ALL') === 'ACTIVO') ? 'selected' : '' ?>>Activos</option>
+                    <option value="INACTIVO" <?= (($filters['estado'] ?? 'ALL') === 'INACTIVO') ? 'selected' : '' ?>>Desactivados</option>
                 </select>
             </div>
 
