@@ -358,6 +358,8 @@ body {
   padding: 16px;
   backdrop-filter: blur(10px);
   margin-bottom: 14px;
+  position: relative;
+  z-index: 50;
 }
 
 .search-main-bar {
@@ -484,6 +486,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
+  z-index: 10;
 }
 
 .filter-label {
@@ -539,6 +543,7 @@ body {
 ========================================================= */
 .fbselect {
   position: relative;
+  z-index: 20;
 }
 
 .fbselect-menu {
