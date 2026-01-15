@@ -163,7 +163,7 @@
 
 <script>
   // Datos PHP a JavaScript
-  const clientesData = <?= json_encode($clientes) ?>;
+  const clientesData  = <?= json_encode($clientes) ?>;
   const productosData = <?= json_encode($productos) ?>;
 
   // Estado
@@ -177,8 +177,8 @@
     const colors = {
       success: '#28a745',
       warning: '#ffc107',
-      error: '#dc3545',
-      info: '#17a2b8'
+      error:   '#dc3545',
+      info:    '#17a2b8'
     };
 
     const toast = document.createElement('div');
@@ -256,6 +256,8 @@
       return false;
     }
 
+    if (!cantidad || cantidad <= 0) cantidad = 1;
+
     if (requiereSerie) {
       const serie = (q || '').trim();
       if (!serie) {
@@ -263,9 +265,28 @@
         return false;
       }
 
-      const yaExisteSerie = productosSeleccionados.some(p => (p.numero_serie || '') === serie);
-      if (yaExisteSerie) {
-        showToast('warning', 'Serie ya agregada');
+      // ✅ MODO POS: misma serie => sumar cantidad (no bloquear)
+      const existenteSerie = productosSeleccionados.find(p =>
+        String(p.id) === String(producto.id) &&
+        parseInt(p.requiere_serie || 0, 10) === 1 &&
+        String(p.numero_serie || '') === serie
+      );
+
+      if (existenteSerie) {
+        const actual = parseInt(existenteSerie.cantidad, 10) || 1;
+        const nuevaCantidad = actual + cantidad;
+
+        if (nuevaCantidad > stock) {
+          showToast('warning', `Sin stock (máx: ${stock})`);
+          return false;
+        }
+
+        existenteSerie.cantidad = nuevaCantidad;
+        return true;
+      }
+
+      if (cantidad > stock) {
+        showToast('warning', `Stock insuficiente (máx: ${stock})`);
         return false;
       }
 
@@ -273,7 +294,7 @@
         id: String(producto.id),
         nombre: producto.nombre,
         precio: precio,
-        cantidad: 1,
+        cantidad: cantidad, // ✅ ahora respeta cantidad
         stock: stock,
         numero_serie: serie,
         requiere_serie: 1
@@ -282,8 +303,11 @@
       return true;
     }
 
-    // Sin serie: sumar cantidad si ya existe
-    const existente = productosSeleccionados.find(p => String(p.id) == String(producto.id) && (!p.requiere_serie || p.requiere_serie == 0));
+    // Sin serie: sumar cantidad si ya existe (por ID)
+    const existente = productosSeleccionados.find(p =>
+      String(p.id) == String(producto.id) && (parseInt(p.requiere_serie || 0, 10) === 0)
+    );
+
     if (existente) {
       const nuevaCantidad = (parseInt(existente.cantidad, 10) || 0) + cantidad;
       if (nuevaCantidad > stock) {
@@ -363,11 +387,10 @@
             type="number"
             class="cantidad-input"
             data-index="${index}"
-            value="${requiereSerie ? 1 : prod.cantidad}"
+            value="${parseInt(prod.cantidad,10) || 1}"
             min="1"
-            max="${requiereSerie ? 1 : prod.stock}"
-            ${requiereSerie ? 'readonly' : ''}
-            style="width: 80px; padding: 0.5rem; border: 2px solid #e9ecef; border-radius: 0.375rem; text-align: center; ${requiereSerie ? 'background:#f8f9fa; cursor:not-allowed;' : ''}"
+            max="${parseInt(prod.stock,10) || 1}"
+            style="width: 80px; padding: 0.5rem; border: 2px solid #e9ecef; border-radius: 0.375rem; text-align: center;"
           >
         </td>
         <td style="padding: 0.75rem; text-align: right; color: #6c757d;">
@@ -391,7 +414,7 @@
 
       inputsHtml += `
       <input type="hidden" name="producto_id[]" value="${String(prod.id)}">
-      <input type="hidden" name="cantidad[]" class="hidden-cantidad-${index}" value="${requiereSerie ? 1 : (parseInt(prod.cantidad,10)||1)}">
+      <input type="hidden" name="cantidad[]" class="hidden-cantidad-${index}" value="${parseInt(prod.cantidad,10)||1}">
       <input type="hidden" name="numero_serie[]" value="${requiereSerie ? String(prod.numero_serie || '') : ''}">
     `;
     });
@@ -399,17 +422,12 @@
     tablaProductosEl.innerHTML = html;
     inputsProductosEl.innerHTML = inputsHtml;
 
-    // Cantidad (solo no-serie)
+    // Cantidad (aplica a TODOS, con validación de stock)
     document.querySelectorAll('.cantidad-input').forEach(input => {
       input.addEventListener('change', function() {
         const index = parseInt(this.dataset.index, 10);
         const prod = productosSeleccionados[index];
-        const requiereSerie = parseInt(prod.requiere_serie || 0, 10) === 1;
-
-        if (requiereSerie) {
-          this.value = 1;
-          return;
-        }
+        if (!prod) return;
 
         let cantidad = parseInt(this.value, 10);
         if (!cantidad || cantidad <= 0) {
@@ -417,9 +435,10 @@
           this.value = 1;
         }
 
-        if (cantidad > parseInt(prod.stock, 10)) {
-          showToast('warning', `Stock máximo: ${prod.stock}`);
-          cantidad = parseInt(prod.stock, 10);
+        const stock = parseInt(prod.stock, 10) || 0;
+        if (stock > 0 && cantidad > stock) {
+          showToast('warning', `Stock máximo: ${stock}`);
+          cantidad = stock;
           this.value = cantidad;
         }
 
@@ -483,7 +502,7 @@
         onmouseout="this.style.background='white'"
       >
         <div style="font-weight: 600; color: #495057;">${cliente.nombre} ${cliente.apellido}</div>
-        <div style="font-size: 0.85rem; color: #6c757d;">NIT: ${cliente.nit || 'N/A'} | 📞 ${cliente.telefono}</div>
+        <div style="font-size: 0.85rem; color: #6c757d;">NIT: ${cliente.nit || 'N/A'} | 📞 ${cliente.telefono || ''}</div>
       </div>
     `;
     });
@@ -550,7 +569,8 @@
 
     let html = '';
     resultados.forEach(producto => {
-      const stockColor = producto.stock > 10 ? '#28a745' : (producto.stock > 0 ? '#ffc107' : '#dc3545');
+      const stockNum = parseInt(producto.stock || 0, 10);
+      const stockColor = stockNum > 10 ? '#28a745' : (stockNum > 0 ? '#ffc107' : '#dc3545');
       html += `
       <div
         onclick='seleccionarProducto(${JSON.stringify(producto)})'
@@ -561,10 +581,10 @@
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
             <div style="font-weight: 600; color: #495057;">${producto.nombre}</div>
-            <div style="font-size: 0.85rem; color: #6c757d;">SKU: ${producto.sku || 'N/A'} | Q ${parseFloat(producto.precio_venta).toFixed(2)}</div>
+            <div style="font-size: 0.85rem; color: #6c757d;">SKU: ${producto.sku || 'N/A'} | Q ${parseFloat(producto.precio_venta || 0).toFixed(2)}</div>
           </div>
           <div style="font-weight: 700; color: ${stockColor}; font-size: 0.9rem;">
-            Stock: ${producto.stock}
+            Stock: ${stockNum}
           </div>
         </div>
       </div>
@@ -610,15 +630,15 @@
   window.addEventListener('DOMContentLoaded', function() {
     // Elementos del DOM (ahora sí existen)
     const buscarProductoInput = document.getElementById('buscarProducto');
-    const inputCantidad = document.getElementById('inputCantidad');
-    const btnAgregarProducto = document.getElementById('btnAgregarProducto');
-    const tablaProductos = document.getElementById('tablaProductos');
-    const inputsProductos = document.getElementById('inputsProductos');
-    const totalDisplay = document.getElementById('totalDisplay');
-    const formDeuda = document.getElementById('formDeuda');
-    const clienteIdInput = document.getElementById('cliente_id');
+    const inputCantidad       = document.getElementById('inputCantidad');
+    const btnAgregarProducto  = document.getElementById('btnAgregarProducto');
+    const tablaProductos      = document.getElementById('tablaProductos');
+    const inputsProductos     = document.getElementById('inputsProductos');
+    const totalDisplay        = document.getElementById('totalDisplay');
+    const formDeuda           = document.getElementById('formDeuda');
+    const clienteIdInput      = document.getElementById('cliente_id');
 
-    // Guard-rails (si algo no existe, no explotamos)
+    // Guard-rails
     if (!btnAgregarProducto || !tablaProductos || !inputsProductos || !totalDisplay || !formDeuda || !clienteIdInput) {
       console.error('Faltan elementos del DOM (IDs). Revise: btnAgregarProducto/tablaProductos/inputsProductos/totalDisplay/formDeuda/cliente_id');
       return;
@@ -639,50 +659,28 @@
 
           processingScan = true;
 
-          // Buscar producto por número de serie en productosData (JS, búsqueda local primero)
-          let productoEncontrado = null;
-          for (const prod of productosData) {
-            if (prod.requiere_serie == 1 && prod.series && Array.isArray(prod.series)) {
-              if (prod.series.includes(serie)) {
-                productoEncontrado = prod;
-                break;
-              }
-            }
-          }
+          // Cantidad base del scanner: por defecto 1
+          const cant = 1;
 
-          if (productoEncontrado) {
-            const ok = agregarProductoPOS(productoEncontrado, serie, 1);
-            if (ok) {
-              renderizarTabla(tablaProductos, inputsProductos, totalDisplay);
-              showToast('success', 'Producto agregado');
-            } else {
-              showToast('warning', 'No se pudo agregar el producto');
-            }
-            scannerInput.value = '';
-            scannerInput.focus();
-            setTimeout(() => {
-              processingScan = false;
-            }, 120);
-            return;
-          }
-
-          // Si no se encuentra localmente, buscar en backend (endpoint público en /api)
+          // Si no se encuentra localmente, buscar en backend
           fetch('<?= url("/admin/productos/api/buscar_por_scan") ?>', {
               method: 'POST',
+              credentials: 'same-origin',
               headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
               },
-              body: JSON.stringify({
-                q: serie
-              })
+              body: JSON.stringify({ q: serie })
             })
             .then(res => res.json())
             .then(data => {
               if (data && data.success && data.producto) {
-                const ok = agregarProductoPOS(data.producto, serie, 1);
+                const ok = agregarProductoPOS(data.producto, serie, cant);
                 if (ok) {
                   renderizarTabla(tablaProductos, inputsProductos, totalDisplay);
                   showToast('success', 'Producto agregado');
+                } else {
+                  showToast('warning', 'No se pudo agregar el producto');
                 }
               } else {
                 showToast('error', (data && data.message) ? data.message : 'No encontrado');
@@ -692,9 +690,7 @@
             .finally(() => {
               scannerInput.value = '';
               scannerInput.focus();
-              setTimeout(() => {
-                processingScan = false;
-              }, 120);
+              setTimeout(() => { processingScan = false; }, 120);
             });
         }
       });
@@ -744,24 +740,12 @@
 </script>
 
 <style>
-  .card {
-    animation: fadeIn 0.3s ease-in;
-  }
+  .card { animation: fadeIn 0.3s ease-in; }
 
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
-  input:focus,
-  select:focus {
-    outline: none;
-  }
+  input:focus, select:focus { outline: none; }
 </style>
