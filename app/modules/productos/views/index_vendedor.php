@@ -106,11 +106,11 @@ $kpis = $kpis ?? [];
     </div>
 
 
-
     <!-- =======================
         BUSCADOR + FILTROS
     ======================== -->
     <div class="productos-search-modern">
+
         <div class="search-main-bar">
             <div class="search-input-wrapper">
                 <span class="search-icon">🔍</span>
@@ -123,6 +123,7 @@ $kpis = $kpis ?? [];
                     autocomplete="off"
                     autofocus>
             </div>
+
             <button
                 type="button"
                 class="btn-clear-filters"
@@ -133,39 +134,56 @@ $kpis = $kpis ?? [];
                 <span class="clear-text">Limpiar</span>
             </button>
         </div>
-    </div>
 
-    <!-- =======================
-        FILTROS AVANZADOS (fuera de la tabla)
-    ======================== -->
-    <div class="filters-advanced-bar" style="z-index:10001; position:relative;">
-        <div class="filter-group">
-            <span class="filter-label">🏷️ Categoría:</span>
-            <select id="fCategoria" class="filter-select">
-                <option value="0">Todas</option>
-                <?php foreach ($categorias as $cat): ?>
-                    <option value="<?= (int)$cat['id'] ?>" <?= ((int)($filters['categoria_id'] ?? 0) === (int)$cat['id']) ? 'selected' : '' ?>><?= htmlspecialchars($cat['nombre']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="filter-group">
-            <span class="filter-label">🔖 Marca:</span>
-            <select id="fMarca" class="filter-select">
-                <option value="0">Todas</option>
-                <?php foreach ($marcas as $marca): ?>
-                    <option value="<?= (int)$marca['id'] ?>" <?= ((int)($filters['marca_id'] ?? 0) === (int)$marca['id']) ? 'selected' : '' ?>><?= htmlspecialchars($marca['nombre']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="filter-group">
-            <span class="filter-label">📦 Stock:</span>
-            <select id="fStock" class="filter-select">
-                <option value="all" <?= (($filters['stock'] ?? 'all') === 'all') ? 'selected' : '' ?>>Todos</option>
-                <option value="bajo" <?= (($filters['stock'] ?? 'all') === 'bajo') ? 'selected' : '' ?>>Bajo</option>
-                <option value="cero" <?= (($filters['stock'] ?? 'all') === 'cero') ? 'selected' : '' ?>>En Cero</option>
-            </select>
-        </div>
+        <div class="filters-advanced-bar">
 
+            <div class="filter-group">
+                <span class="filter-label">🏷️ Categoría:</span>
+                <div class="fbselect" id="fbCat">
+                    <input
+                        type="text"
+                        id="fCategoriaTxt"
+                        class="filter-input"
+                        autocomplete="off"
+                        placeholder="Todas">
+                    <input type="hidden" id="fCategoria" value="<?= (int)($filters['categoria_id'] ?? 0) ?>">
+                    <div class="fbselect-menu" id="fbCatMenu" role="listbox" aria-label="Categorías"></div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <span class="filter-label">🔖 Marca:</span>
+                <div class="fbselect" id="fbMarca">
+                    <input
+                        type="text"
+                        id="fMarcaTxt"
+                        class="filter-input"
+                        autocomplete="off"
+                        placeholder="Todas">
+                    <input type="hidden" id="fMarca" value="<?= (int)($filters['marca_id'] ?? 0) ?>">
+                    <div class="fbselect-menu" id="fbMarcaMenu" role="listbox" aria-label="Marcas"></div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <span class="filter-label">📦 Stock:</span>
+                <select id="fStock" class="filter-select">
+                    <option value="all" <?= (($filters['stock'] ?? 'all') === 'all') ? 'selected' : '' ?>>Todos</option>
+                    <option value="bajo" <?= (($filters['stock'] ?? 'all') === 'bajo') ? 'selected' : '' ?>>Bajo</option>
+                    <option value="cero" <?= (($filters['stock'] ?? 'all') === 'cero') ? 'selected' : '' ?>>En Cero</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <span class="filter-label">🔘 Estado:</span>
+                <select id="fEstado" class="filter-select">
+                    <option value="ALL" <?= (($filters['estado'] ?? 'ALL') === 'ALL') ? 'selected' : '' ?>>Todos</option>
+                    <option value="ACTIVO" <?= (($filters['estado'] ?? 'ALL') === 'ACTIVO') ? 'selected' : '' ?>>Activos</option>
+                    <option value="INACTIVO" <?= (($filters['estado'] ?? 'ALL') === 'INACTIVO') ? 'selected' : '' ?>>Desactivados</option>
+                </select>
+            </div>
+
+        </div>
     </div>
 
 
@@ -188,77 +206,6 @@ $kpis = $kpis ?? [];
     </div>
 
 </div>
-
-<style>
-    /* Mejora visual para los menús de selección de filtros (categoría, marca) */
-    .fbselect {
-        position: relative;
-        z-index: 10002;
-    }
-
-    .fbselect-menu {
-        position: fixed !important;
-        left: 0;
-        top: 0;
-        background: #fff;
-        border: 1px solid #e3eafc;
-        border-radius: 0 0 8px 8px;
-        box-shadow: 0 8px 24px rgba(10, 36, 99, 0.10);
-        z-index: 999999 !important;
-        max-height: 260px;
-        overflow-y: auto;
-        min-width: 160px;
-        display: none;
-        width: auto;
-    }
-
-    .fbselect.open .fbselect-menu {
-        display: block;
-    }
-</style>
-<script>
-    // Portaliza el menú de selección para que siempre esté por encima de todo
-    function positionFbSelectMenus() {
-        document.querySelectorAll('.fbselect').forEach(function(fbselect) {
-            const menu = fbselect.querySelector('.fbselect-menu');
-            if (!menu) return;
-            if (fbselect.classList.contains('open')) {
-                // Obtener posición absoluta del input
-                const input = fbselect.querySelector('input.filter-input');
-                const rect = input ? input.getBoundingClientRect() : fbselect.getBoundingClientRect();
-                menu.style.left = rect.left + 'px';
-                menu.style.top = (rect.bottom + window.scrollY) + 'px';
-                menu.style.width = rect.width + 'px';
-                menu.style.position = 'fixed';
-                menu.style.zIndex = 999999;
-            } else {
-                menu.style.display = 'none';
-            }
-        });
-    }
-    document.addEventListener('click', function(e) {
-        // Cierra todos los menús si se hace click fuera
-        document.querySelectorAll('.fbselect').forEach(function(fbselect) {
-            if (!fbselect.contains(e.target)) {
-                fbselect.classList.remove('open');
-                positionFbSelectMenus();
-            }
-        });
-    });
-    document.querySelectorAll('.fbselect .filter-input').forEach(function(input) {
-        input.addEventListener('focus', function(e) {
-            const fbselect = e.target.closest('.fbselect');
-            fbselect.classList.add('open');
-            positionFbSelectMenus();
-        });
-        input.addEventListener('input', function(e) {
-            positionFbSelectMenus();
-        });
-    });
-    window.addEventListener('resize', positionFbSelectMenus);
-    window.addEventListener('scroll', positionFbSelectMenus, true);
-</script>
-</style>
 
 <!-- Modal Global -->
 <div id="bmModal" class="bm-modal" aria-hidden="true">
