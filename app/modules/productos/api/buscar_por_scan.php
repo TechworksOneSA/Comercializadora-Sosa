@@ -22,22 +22,21 @@ function respond(int $code, array $payload): void {
 }
 
 /**
- * Base real del proyecto:
  * __DIR__ = /srv/apps/comercializadora/app/modules/productos/api
- * subir 4 niveles => /srv/apps/comercializadora/app
+ * subir 3 niveles => /srv/apps/comercializadora/app
  */
-$APP_BASE = realpath(__DIR__ . '/../../../..'); // .../app
+$APP_BASE = realpath(__DIR__ . '/../../..'); // ✅ .../app
 if (!$APP_BASE) {
   $APP_BASE = '/srv/apps/comercializadora/app';
 }
 
 /**
- * env.php: en su server existe en dos lugares:
+ * env.php existe en:
  * - /srv/apps/comercializadora/config/env.php
  * - /srv/apps/comercializadora/app/config/env.php
  */
-$ENV_ROOT = dirname($APP_BASE) . '/config/env.php';
-$ENV_APP  = $APP_BASE . '/config/env.php';
+$ENV_ROOT = dirname($APP_BASE) . '/config/env.php'; // ✅ .../comercializadora/config/env.php
+$ENV_APP  = $APP_BASE . '/config/env.php';          // ✅ .../app/config/env.php
 
 if (file_exists($ENV_ROOT)) {
   require_once $ENV_ROOT;
@@ -48,8 +47,8 @@ if (file_exists($ENV_ROOT)) {
 }
 
 // Rutas correctas (según su find)
-$DB_FILE   = $APP_BASE . '/config/database.php';
-$AUTH_FILE = $APP_BASE . '/core/Auth.php';
+$DB_FILE   = $APP_BASE . '/config/database.php'; // ✅ /srv/apps/comercializadora/app/config/database.php
+$AUTH_FILE = $APP_BASE . '/core/Auth.php';       // ✅ /srv/apps/comercializadora/app/core/Auth.php
 
 if (!file_exists($DB_FILE)) {
   respond(500, ['success' => false, 'message' => 'database.php no encontrado en app/config']);
@@ -61,7 +60,7 @@ if (!file_exists($AUTH_FILE)) {
 require_once $DB_FILE;
 require_once $AUTH_FILE;
 
-// Seguridad (si su Auth maneja sesión, úselo; si no, dejamos fallback)
+// Seguridad
 if (class_exists('Auth') && method_exists('Auth', 'check')) {
   if (!Auth::check()) {
     respond(401, ['success' => false, 'message' => 'No autorizado']);
@@ -91,11 +90,7 @@ if ($q === '') {
 try {
   $pdo = Database::connect();
 
-  /**
-   * IMPORTANTE:
-   * PDO MySQL suele fallar con HY093 si usted reutiliza el mismo placeholder nombrado (:q) varias veces
-   * cuando no hay emulación. Por eso usamos placeholders posicionales (?).
-   */
+  // ✅ Evita HY093: usamos placeholders posicionales (?)
   $sql = "
     SELECT
       id,
@@ -129,7 +124,6 @@ try {
   ]);
 
 } catch (Throwable $e) {
-  // Log detallado al server (para auditoría técnica)
   error_log("buscar_por_scan ERROR: " . $e->getMessage() . " @ " . $e->getFile() . ":" . $e->getLine());
   respond(500, ['success' => false, 'message' => 'Error interno']);
 }
