@@ -144,6 +144,35 @@ $fechaFin = $fechaFin ?? date('Y-m-d');
         border-radius: 1rem;
         padding: 1.5rem;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 70vh;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-card::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .table-card::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+    }
+
+    .table-card::-webkit-scrollbar-thumb {
+        background: rgba(102, 126, 234, 0.3);
+        border-radius: 10px;
+        border: 2px solid #f1f5f9;
+    }
+
+    .table-card::-webkit-scrollbar-thumb:hover {
+        background: rgba(102, 126, 234, 0.5);
+    }
+
+    .table-card {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(102, 126, 234, 0.3) #f1f5f9;
     }
 
     .table-title {
@@ -157,11 +186,15 @@ $fechaFin = $fechaFin ?? date('Y-m-d');
 
     .reportes-table {
         width: 100%;
+        min-width: 800px;
         border-collapse: collapse;
     }
 
     .reportes-table thead {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: sticky;
+        top: 0;
+        z-index: 10;
     }
 
     .reportes-table th {
@@ -170,6 +203,7 @@ $fechaFin = $fechaFin ?? date('Y-m-d');
         font-weight: 600;
         font-size: 0.9rem;
         color: white;
+        white-space: nowrap;
     }
 
     .reportes-table thead tr th:first-child {

@@ -196,15 +196,48 @@ $fechaFin = $fechaFin ?? date('Y-m-d');
         border-radius: 1rem;
         padding: 1.5rem;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 70vh;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .balance-table-container::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .balance-table-container::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+    }
+
+    .balance-table-container::-webkit-scrollbar-thumb {
+        background: rgba(10, 61, 145, 0.3);
+        border-radius: 10px;
+        border: 2px solid #f1f5f9;
+    }
+
+    .balance-table-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(10, 61, 145, 0.5);
+    }
+
+    .balance-table-container {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(10, 61, 145, 0.3) #f1f5f9;
     }
 
     .balance-table {
         width: 100%;
+        min-width: 800px;
         border-collapse: collapse;
     }
 
     .balance-table thead {
         background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%);
+        position: sticky;
+        top: 0;
+        z-index: 10;
     }
 
     .balance-table th {
@@ -213,6 +246,7 @@ $fechaFin = $fechaFin ?? date('Y-m-d');
         font-weight: 600;
         font-size: 0.9rem;
         color: white;
+        white-space: nowrap;
     }
 
     .balance-table thead tr th:first-child {

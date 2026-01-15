@@ -92,17 +92,18 @@
 
     <!-- Tabla de usuarios -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creado</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                </tr>
-            </thead>
+        <div class="overflow-x-auto overflow-y-auto" style="max-height: 70vh;">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50 sticky top-0 z-10">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creado</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 <?php if (empty($usuarios)): ?>
                     <tr>
@@ -197,6 +198,7 @@
                 <?php endif; ?>
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 
@@ -253,6 +255,38 @@
 
     .modal-icon-activar {
         @apply mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100;
+    }
+
+    /* Estilos para scroll de tabla en móvil */
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(59, 130, 246, 0.3) rgba(243, 244, 246, 1);
+    }
+
+    .overflow-x-auto::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .overflow-x-auto::-webkit-scrollbar-track {
+        background: rgba(243, 244, 246, 1);
+        border-radius: 10px;
+    }
+
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: rgba(59, 130, 246, 0.3);
+        border-radius: 10px;
+        border: 2px solid rgba(243, 244, 246, 1);
+    }
+
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+        background: rgba(59, 130, 246, 0.5);
+    }
+
+    /* Asegurar que el header sticky funcione correctamente */
+    thead.sticky {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 </style>
 

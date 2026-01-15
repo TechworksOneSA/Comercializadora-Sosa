@@ -147,8 +147,34 @@ $filtro = $filtro ?? 'todos';
 
     .table-container {
         overflow-x: auto;
-        max-height: 600px;
+        max-height: 70vh;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-container::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .table-container::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+        background: rgba(59, 130, 246, 0.3);
+        border-radius: 10px;
+        border: 2px solid #f1f5f9;
+    }
+
+    .table-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(59, 130, 246, 0.5);
+    }
+
+    .table-container {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(59, 130, 246, 0.3) #f1f5f9;
     }
 
     table {
