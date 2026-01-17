@@ -109,16 +109,25 @@ class DeudoresModel extends Model
         try {
             $this->db->beginTransaction();
 
-            // 1) Insert deuda
+            // ✅ FECHA: si viene en $data['fecha'], úsela; si no, cae a NOW()
+            // Debe venir como 'Y-m-d H:i:s' (ya lo normalizamos en el Controller)
+            $fecha = $data['fecha'] ?? null;
+            if (!$fecha) {
+                // fallback a fecha actual si no mandan fecha
+                $fecha = (new DateTime())->format('Y-m-d H:i:s');
+            }
+
+            // 1) Insert deuda (ANTES estaba NOW() fijo)
             $sql = "INSERT INTO {$this->table}
                         (cliente_id, usuario_id, fecha, total, descripcion)
                     VALUES
-                        (:cliente_id, :usuario_id, NOW(), :total, :descripcion)";
+                        (:cliente_id, :usuario_id, :fecha, :total, :descripcion)";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
                 ':cliente_id'  => (int)$data['cliente_id'],
                 ':usuario_id'  => (int)$data['usuario_id'],
+                ':fecha'       => (string)$fecha,
                 ':total'       => (float)$data['total'],
                 ':descripcion' => (string)($data['descripcion'] ?? ''),
             ]);
@@ -149,6 +158,10 @@ class DeudoresModel extends Model
                            (producto_id, tipo, cantidad, costo_unitario, origen, origen_id, motivo, usuario_id, created_at)
                            VALUES (:producto_id, 'SALIDA', :cantidad, :costo_unitario, 'DEUDA', :origen_id, :motivo, :usuario_id, NOW())";
                 $stmtMov = $this->db->prepare($sqlMov);
+
+                // (Opcional performance) preparar statement de costo una sola vez
+                $sqlCosto = "SELECT costo FROM productos WHERE id = :producto_id";
+                $stmtCosto = $this->db->prepare($sqlCosto);
 
                 foreach ($data['detalles'] as $detalle) {
                     $productoId = (int)($detalle['producto_id'] ?? 0);
@@ -181,9 +194,6 @@ class DeudoresModel extends Model
                     }
 
                     // Registrar movimiento de inventario (SALIDA por deuda)
-                    // Obtener costo del producto para el registro correcto
-                    $sqlCosto = "SELECT costo FROM productos WHERE id = :producto_id";
-                    $stmtCosto = $this->db->prepare($sqlCosto);
                     $stmtCosto->execute([':producto_id' => $productoId]);
                     $productoCosto = $stmtCosto->fetchColumn();
                     $costoUnitario = $productoCosto !== false ? (float)$productoCosto : $precioU;
@@ -292,6 +302,8 @@ class DeudoresModel extends Model
             $sql = "INSERT INTO {$this->tablePagos} (deuda_id, monto, metodo_pago, fecha, usuario_id)
                     VALUES (:deuda_id, :monto, :metodo_pago, NOW(), :usuario_id)";
 
+            // ✅ FIX: aquí faltaba preparar $stmt
+            $stmt = $this->db->prepare($sql);
             $stmt->execute([
                 ':deuda_id'    => $deudaId,
                 ':monto'       => $monto,

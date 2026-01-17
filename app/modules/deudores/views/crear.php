@@ -1,5 +1,5 @@
 <?php
-// recibe: $clientes, $productos, $errors
+// recibe: $clientes, $productos, $errors, $old
 ?>
 <div class="card" style="max-width: 1200px; margin: 0 auto;">
   <!-- HEADER -->
@@ -52,13 +52,29 @@
           </div>
         </div>
 
+        <!-- FECHA -->
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">
+            Fecha <span style="color: #dc3545;">*</span>
+          </label>
+          <input
+            type="datetime-local"
+            name="fecha"
+            required
+            value="<?= htmlspecialchars($old['fecha'] ?? date('Y-m-d\TH:i')) ?>"
+            style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
+            onfocus="this.style.borderColor='#dc3545';"
+            onblur="this.style.borderColor='#e9ecef';"
+          >
+        </div>
+
         <!-- DESCRIPCIÓN -->
         <div>
           <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">Descripción (opcional)</label>
           <textarea
             name="descripcion"
             style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; min-height: 80px;"
-            placeholder="Notas o detalles adicionales..."></textarea>
+            placeholder="Notas o detalles adicionales..."><?= htmlspecialchars($old['descripcion'] ?? '') ?></textarea>
         </div>
       </div>
     </div>
@@ -294,7 +310,7 @@
         id: String(producto.id),
         nombre: producto.nombre,
         precio: precio,
-        cantidad: cantidad, // ✅ ahora respeta cantidad
+        cantidad: cantidad,
         stock: stock,
         numero_serie: serie,
         requiere_serie: 1
@@ -494,9 +510,10 @@
 
     let html = '';
     resultados.forEach(cliente => {
+      const nombreCompleto = `${cliente.nombre} ${cliente.apellido}`.replace(/'/g, "\\'");
       html += `
       <div
-        onclick="seleccionarCliente(${cliente.id}, '${cliente.nombre} ${cliente.apellido}')"
+        onclick="seleccionarCliente(${cliente.id}, '${nombreCompleto}')"
         style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #e9ecef; transition: background 0.2s;"
         onmouseover="this.style.background='#f8f9fa'"
         onmouseout="this.style.background='white'"
@@ -625,10 +642,9 @@
   }
 
   /* =========================================================
-   * INIT (corre cuando DOM ya existe)
+   * INIT
    * ========================================================= */
   window.addEventListener('DOMContentLoaded', function() {
-    // Elementos del DOM (ahora sí existen)
     const buscarProductoInput = document.getElementById('buscarProducto');
     const inputCantidad = document.getElementById('inputCantidad');
     const btnAgregarProducto = document.getElementById('btnAgregarProducto');
@@ -638,7 +654,6 @@
     const formDeuda = document.getElementById('formDeuda');
     const clienteIdInput = document.getElementById('cliente_id');
 
-    // Guard-rails
     if (!btnAgregarProducto || !tablaProductos || !inputsProductos || !totalDisplay || !formDeuda || !clienteIdInput) {
       console.error('Faltan elementos del DOM (IDs). Revise: btnAgregarProducto/tablaProductos/inputsProductos/totalDisplay/formDeuda/cliente_id');
       return;
@@ -658,11 +673,8 @@
           if (!serie) return;
 
           processingScan = true;
-
-          // Cantidad base del scanner: por defecto 1
           const cant = 1;
 
-          // Si no se encuentra localmente, buscar en backend
           fetch('<?= url("/admin/productos/api/buscar_por_scan") ?>', {
               method: 'POST',
               credentials: 'same-origin',
@@ -670,9 +682,7 @@
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
               },
-              body: JSON.stringify({
-                q: serie
-              })
+              body: JSON.stringify({ q: serie })
             })
             .then(res => res.json())
             .then(data => {
@@ -692,15 +702,13 @@
             .finally(() => {
               scannerInput.value = '';
               scannerInput.focus();
-              setTimeout(() => {
-                processingScan = false;
-              }, 120);
+              setTimeout(() => { processingScan = false; }, 120);
             });
         }
       });
     }
 
-    /* ===== Agregar manual (botón) ===== */
+    /* ===== Agregar manual ===== */
     btnAgregarProducto.addEventListener('click', function() {
       if (!productoSeleccionado) {
         showToast('warning', 'Seleccione un producto primero');
@@ -738,30 +746,15 @@
       }
     });
 
-    // Inicializar tabla
     renderizarTabla(tablaProductos, inputsProductos, totalDisplay);
   });
 </script>
 
 <style>
-  .card {
-    animation: fadeIn 0.3s ease-in;
-  }
-
+  .card { animation: fadeIn 0.3s ease-in; }
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-
-  input:focus,
-  select:focus {
-    outline: none;
-  }
+  input:focus, select:focus { outline: none; }
 </style>

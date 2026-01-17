@@ -73,6 +73,30 @@ class DeudoresController extends Controller
             $errors[] = "Debe seleccionar un cliente";
         }
 
+        // ✅ NUEVO: validar y normalizar fecha (datetime-local => datetime MariaDB)
+        $fechaInput = trim($data['fecha'] ?? '');
+        if ($fechaInput === '') {
+            $errors[] = "Debe seleccionar la fecha";
+        }
+
+        $fechaDb = null;
+        if ($fechaInput !== '') {
+            // datetime-local suele venir como: 2026-01-17T11:30
+            $fechaInputNormalizada = str_replace('T', ' ', $fechaInput);
+            $dt = DateTime::createFromFormat('Y-m-d H:i', $fechaInputNormalizada);
+
+            // Si no calza con minutos exactos, intentamos segundos también
+            if (!$dt) {
+                $dt = DateTime::createFromFormat('Y-m-d H:i:s', $fechaInputNormalizada);
+            }
+
+            if (!$dt) {
+                $errors[] = "Fecha inválida. Use un formato válido.";
+            } else {
+                $fechaDb = $dt->format('Y-m-d H:i:s'); // MariaDB compatible
+            }
+        }
+
         $productosIds = $data['producto_id'] ?? [];
         $cantidades = $data['cantidad'] ?? [];
 
@@ -141,6 +165,7 @@ class DeudoresController extends Controller
             $deudaData = [
                 'cliente_id' => (int)$data['cliente_id'],
                 'usuario_id' => (int)$_SESSION['user']['id'],
+                'fecha' => $fechaDb, // ✅ NUEVO
                 'total' => $subtotal,
                 'descripcion' => $data['descripcion'] ?? '',
                 'detalles' => $detalles,
