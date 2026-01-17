@@ -643,4 +643,112 @@ class VentasModel extends Model
             throw $e;
         }
     }
+public function anularVenta(int $ventaId, int $usuarioId): bool
+{
+    try {
+        $this->db->beginTransaction();
+
+        // 1) Traer venta y validar estado
+        $sqlV = "SELECT id, cliente_id, estado, total
+                 FROM {$this->tableVentas}
+                 WHERE id = :id
+                 LIMIT 1";
+        $stmtV = $this->db->prepare($sqlV);
+        $this->execChecked($stmtV, [':id' => $ventaId], "ANULAR_GET_VENTA");
+        $venta = $stmtV->fetch(PDO::FETCH_ASSOC);
+
+        if (!$venta) {
+            throw new Exception("Venta no encontrada");
+        }
+
+        if (($venta['estado'] ?? '') !== 'CONFIRMADA') {
+            return false; // Solo anulamos confirmadas
+        }
+
+        // 2) Traer detalle (para revertir stock)
+        $detalle = $this->getVentaDetalle($ventaId);
+        if (empty($detalle)) {
+            throw new Exception("No hay detalle de venta para revertir stock");
+        }
+
+        // 3) Marcar venta ANULADA (+ auditoría si existe)
+        $tieneAnuladaAt  = $this->hasColumn($this->tableVentas, 'anulada_at');
+        $tieneAnuladaPor = $this->hasColumn($this->tableVentas, 'anulada_por');
+
+        $set = ["estado = 'ANULADA'"];
+        $paramsUpd = [':id' => $ventaId];
+
+        if ($tieneAnuladaAt) {
+            $set[] = "anulada_at = NOW()";
+        }
+        if ($tieneAnuladaPor) {
+            $set[] = "anulada_por = :uid";
+            $paramsUpd[':uid'] = $usuarioId;
+        }
+
+        $sqlU = "UPDATE {$this->tableVentas}
+                 SET " . implode(", ", $set) . "
+                 WHERE id = :id AND estado = 'CONFIRMADA'";
+        $stmtU = $this->db->prepare($sqlU);
+        $this->execChecked($stmtU, $paramsUpd, "ANULAR_UPDATE_VENTA");
+
+        if ($stmtU->rowCount() === 0) {
+            $this->db->rollBack();
+            return false;
+        }
+
+        // 4) Revertir stock (+) y registrar movimiento inventario (ENTRADA)
+        $stmtStock = $this->db->prepare(
+            "UPDATE productos
+             SET stock = stock + :cantidad
+             WHERE id = :pid"
+        );
+
+        $stmtMov = $this->db->prepare(
+            "INSERT INTO movimientos_inventario
+             (producto_id, tipo, cantidad, costo_unitario, origen, origen_id, motivo, usuario_id, created_at)
+             VALUES (:pid, 'ENTRADA', :cantidad, :costo, 'VENTA', :origen_id, :motivo, :uid, NOW())"
+        );
+
+        foreach ($detalle as $d) {
+            $pid = (int)$d['producto_id'];
+            $qty = (float)$d['cantidad'];
+            $pu  = (float)$d['precio_unitario'];
+
+            $this->execChecked($stmtStock, [
+                ':cantidad' => $qty,
+                ':pid'      => $pid,
+            ], "ANULAR_STOCK_PID_{$pid}");
+
+            $this->execChecked($stmtMov, [
+                ':pid'       => $pid,
+                ':cantidad'  => $qty,
+                ':costo'     => $pu,
+                ':origen_id' => $ventaId,
+                ':motivo'    => "Anulación venta #{$ventaId}",
+                ':uid'       => $usuarioId,
+            ], "ANULAR_MOV_PID_{$pid}");
+        }
+
+        // 5) Revertir total_gastado del cliente (no bajar de 0)
+        $stmtCli = $this->db->prepare(
+            "UPDATE clientes
+             SET total_gastado = GREATEST(total_gastado - :total, 0)
+             WHERE id = :cid"
+        );
+
+        $this->execChecked($stmtCli, [
+            ':total' => (float)$venta['total'],
+            ':cid'   => (int)$venta['cliente_id'],
+        ], "ANULAR_CLIENTE_TOTAL_GASTADO");
+
+        $this->db->commit();
+        return true;
+
+    } catch (Throwable $e) {
+        if ($this->db->inTransaction()) $this->db->rollBack();
+        throw $e;
+    }
+}
+
 }
