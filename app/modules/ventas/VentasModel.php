@@ -648,105 +648,124 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
     try {
         $this->db->beginTransaction();
 
-        // 1) Traer venta y validar estado
-        $sqlV = "SELECT id, cliente_id, estado, total
-                 FROM {$this->tableVentas}
-                 WHERE id = :id
-                 LIMIT 1";
-        $stmtV = $this->db->prepare($sqlV);
-        $this->execChecked($stmtV, [':id' => $ventaId], "ANULAR_GET_VENTA");
-        $venta = $stmtV->fetch(PDO::FETCH_ASSOC);
+        // 1) Obtener venta (con lock)
+        $sqlVenta = "SELECT * FROM {$this->tableVentas} WHERE id = :id LIMIT 1 FOR UPDATE";
+        $stmtVenta = $this->db->prepare($sqlVenta);
+        $this->execChecked($stmtVenta, [':id' => $ventaId], "ANULAR_VENTA_GET");
 
+        $venta = $stmtVenta->fetch(PDO::FETCH_ASSOC);
         if (!$venta) {
             throw new Exception("Venta no encontrada");
         }
 
-        if (($venta['estado'] ?? '') !== 'CONFIRMADA') {
-            return false; // Solo anulamos confirmadas
+        if (($venta['estado'] ?? '') === 'ANULADA') {
+            // Idempotente: ya está anulada
+            $this->db->commit();
+            return true;
         }
 
-        // 2) Traer detalle (para revertir stock)
+        // 2) Obtener detalle
         $detalle = $this->getVentaDetalle($ventaId);
         if (empty($detalle)) {
-            throw new Exception("No hay detalle de venta para revertir stock");
+            throw new Exception("La venta no tiene detalle");
         }
 
-        // 3) Marcar venta ANULADA (+ auditoría si existe)
-        $tieneAnuladaAt  = $this->hasColumn($this->tableVentas, 'anulada_at');
-        $tieneAnuladaPor = $this->hasColumn($this->tableVentas, 'anulada_por');
+        // 3) Revertir stock + movimientos inventario (ENTRADA)
+        $sqlStock = "UPDATE productos
+                     SET stock = stock + :cantidad
+                     WHERE id = :producto_id";
+        $stmtStock = $this->db->prepare($sqlStock);
 
-        $set = ["estado = 'ANULADA'"];
-        $paramsUpd = [':id' => $ventaId];
+        // Nota: su tabla de movimientos inventario existe: movimientos_inventario
+        // Ajuste columnas si su esquema difiere. Aquí uso las que usted ya usó en otros módulos.
+        $sqlMovInv = "INSERT INTO movimientos_inventario
+                      (producto_id, tipo, cantidad, costo_unitario, origen, origen_id, motivo, usuario_id, created_at)
+                      VALUES (:producto_id, 'ENTRADA', :cantidad, :costo_unitario, 'VENTA_ANULADA', :origen_id, :motivo, :usuario_id, NOW())";
+        $stmtMovInv = $this->db->prepare($sqlMovInv);
 
-        if ($tieneAnuladaAt) {
-            $set[] = "anulada_at = NOW()";
-        }
-        if ($tieneAnuladaPor) {
-            $set[] = "anulada_por = :uid";
-            $paramsUpd[':uid'] = $usuarioId;
-        }
-
-        $sqlU = "UPDATE {$this->tableVentas}
-                 SET " . implode(", ", $set) . "
-                 WHERE id = :id AND estado = 'CONFIRMADA'";
-        $stmtU = $this->db->prepare($sqlU);
-        $this->execChecked($stmtU, $paramsUpd, "ANULAR_UPDATE_VENTA");
-
-        if ($stmtU->rowCount() === 0) {
-            $this->db->rollBack();
-            return false;
-        }
-
-        // 4) Revertir stock (+) y registrar movimiento inventario (ENTRADA)
-        $stmtStock = $this->db->prepare(
-            "UPDATE productos
-             SET stock = stock + :cantidad
-             WHERE id = :pid"
-        );
-
-        $stmtMov = $this->db->prepare(
-            "INSERT INTO movimientos_inventario
-             (producto_id, tipo, cantidad, costo_unitario, origen, origen_id, motivo, usuario_id, created_at)
-             VALUES (:pid, 'ENTRADA', :cantidad, :costo, 'VENTA', :origen_id, :motivo, :uid, NOW())"
-        );
+        $sqlCosto = "SELECT costo FROM productos WHERE id = :producto_id LIMIT 1";
+        $stmtCosto = $this->db->prepare($sqlCosto);
 
         foreach ($detalle as $d) {
             $pid = (int)$d['producto_id'];
             $qty = (float)$d['cantidad'];
-            $pu  = (float)$d['precio_unitario'];
 
+            // stock +
             $this->execChecked($stmtStock, [
-                ':cantidad' => $qty,
-                ':pid'      => $pid,
-            ], "ANULAR_STOCK_PID_{$pid}");
+                ':cantidad'   => $qty,
+                ':producto_id'=> $pid,
+            ], "ANULAR_STOCK_RESTORE_PID_{$pid}");
 
-            $this->execChecked($stmtMov, [
-                ':pid'       => $pid,
-                ':cantidad'  => $qty,
-                ':costo'     => $pu,
-                ':origen_id' => $ventaId,
-                ':motivo'    => "Anulación venta #{$ventaId}",
-                ':uid'       => $usuarioId,
-            ], "ANULAR_MOV_PID_{$pid}");
+            // costo_unitario para auditoría
+            $this->execChecked($stmtCosto, [':producto_id' => $pid], "ANULAR_GET_COSTO_PID_{$pid}");
+            $costo = $stmtCosto->fetchColumn();
+            $costoUnit = $costo !== false ? (float)$costo : (float)$d['precio_unitario'];
+
+            // movimiento inventario entrada
+            $this->execChecked($stmtMovInv, [
+                ':producto_id'   => $pid,
+                ':cantidad'      => $qty,
+                ':costo_unitario'=> $costoUnit,
+                ':origen_id'     => $ventaId,
+                ':motivo'        => "Reverso por anulación de venta #{$ventaId}",
+                ':usuario_id'    => $usuarioId,
+            ], "ANULAR_MOV_INV_PID_{$pid}");
         }
 
-        // 5) Revertir total_gastado del cliente (no bajar de 0)
-        $stmtCli = $this->db->prepare(
-            "UPDATE clientes
-             SET total_gastado = GREATEST(total_gastado - :total, 0)
-             WHERE id = :cid"
-        );
+        // 4) Marcar venta como ANULADA
+        // Usamos columnas que existen según su SELECT: anulada_at, anulada_por, estado
+        $sqlUpd = "UPDATE {$this->tableVentas}
+                   SET estado = 'ANULADA',
+                       anulada_at = NOW(),
+                       anulada_por = :usuario_id
+                   WHERE id = :id";
+        $stmtUpd = $this->db->prepare($sqlUpd);
+        $this->execChecked($stmtUpd, [
+            ':usuario_id' => $usuarioId,
+            ':id'         => $ventaId
+        ], "ANULAR_VENTA_UPDATE");
 
-        $this->execChecked($stmtCli, [
-            ':total' => (float)$venta['total'],
-            ':cid'   => (int)$venta['cliente_id'],
-        ], "ANULAR_CLIENTE_TOTAL_GASTADO");
+        // 5) Reverso de caja (si hubo cobro)
+        $totalPagado = (float)($venta['total_pagado'] ?? 0);
+
+        if ($totalPagado > 0) {
+            // Verificar si ya existe reverso (idempotencia)
+            $sqlExisteRev = "SELECT id
+                             FROM movimientos_caja
+                             WHERE venta_id = :venta_id
+                               AND tipo = 'gasto'
+                               AND concepto LIKE :concepto
+                             LIMIT 1";
+            $stmtExisteRev = $this->db->prepare($sqlExisteRev);
+            $stmtExisteRev->execute([
+                ':venta_id'  => $ventaId,
+                ':concepto'  => "Reverso por anulación de venta #{$ventaId}%"
+            ]);
+            $yaExiste = $stmtExisteRev->fetchColumn();
+
+            if (!$yaExiste) {
+                $sqlCaja = "INSERT INTO movimientos_caja
+                            (tipo, concepto, monto, metodo_pago, observaciones, venta_id, usuario_id, fecha)
+                            VALUES
+                            ('gasto', :concepto, :monto, :metodo_pago, :obs, :venta_id, :usuario_id, NOW())";
+                $stmtCaja = $this->db->prepare($sqlCaja);
+                $stmtCaja->execute([
+                    ':concepto'    => "Reverso por anulación de venta #{$ventaId}",
+                    ':monto'       => $totalPagado,
+                    ':metodo_pago' => (string)($venta['metodo_pago'] ?? 'Efectivo'),
+                    ':obs'         => "Reverso automático del cobro al anular la venta.",
+                    ':venta_id'    => $ventaId,
+                    ':usuario_id'  => $usuarioId
+                ]);
+            }
+        }
 
         $this->db->commit();
         return true;
 
-    } catch (Throwable $e) {
+    } catch (Exception $e) {
         if ($this->db->inTransaction()) $this->db->rollBack();
+        error_log("🚨 [VentasModel] Error anularVenta: " . $e->getMessage());
         throw $e;
     }
 }
