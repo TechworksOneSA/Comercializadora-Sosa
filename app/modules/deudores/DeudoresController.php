@@ -74,6 +74,7 @@ class DeudoresController extends Controller
         }
 
         // ✅ NUEVO: validar y normalizar fecha (datetime-local => datetime MariaDB)
+// ✅ FECHA: solo DATE => guardamos a medianoche
         $fechaInput = trim($data['fecha'] ?? '');
         if ($fechaInput === '') {
             $errors[] = "Debe seleccionar la fecha";
@@ -81,19 +82,11 @@ class DeudoresController extends Controller
 
         $fechaDb = null;
         if ($fechaInput !== '') {
-            // datetime-local suele venir como: 2026-01-17T11:30
-            $fechaInputNormalizada = str_replace('T', ' ', $fechaInput);
-            $dt = DateTime::createFromFormat('Y-m-d H:i', $fechaInputNormalizada);
-
-            // Si no calza con minutos exactos, intentamos segundos también
+            $dt = DateTime::createFromFormat('Y-m-d', $fechaInput);
             if (!$dt) {
-                $dt = DateTime::createFromFormat('Y-m-d H:i:s', $fechaInputNormalizada);
-            }
-
-            if (!$dt) {
-                $errors[] = "Fecha inválida. Use un formato válido.";
+                $errors[] = "Fecha inválida.";
             } else {
-                $fechaDb = $dt->format('Y-m-d H:i:s'); // MariaDB compatible
+                $fechaDb = $dt->format('Y-m-d') . ' 00:00:00';
             }
         }
 

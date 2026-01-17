@@ -52,21 +52,21 @@
           </div>
         </div>
 
-        <!-- FECHA -->
-        <div style="margin-bottom: 1rem;">
-          <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">
-            Fecha <span style="color: #dc3545;">*</span>
-          </label>
-          <input
-            type="datetime-local"
-            name="fecha"
-            required
-            value="<?= htmlspecialchars($old['fecha'] ?? date('Y-m-d\TH:i')) ?>"
-            style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
-            onfocus="this.style.borderColor='#dc3545';"
-            onblur="this.style.borderColor='#e9ecef';"
-          >
-        </div>
+      <!-- FECHA -->
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">
+          Fecha <span style="color: #dc3545;">*</span>
+        </label>
+        <input
+          type="date"
+          name="fecha"
+          required
+          value="<?= htmlspecialchars($old['fecha'] ?? date('Y-m-d')) ?>"
+          style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
+          onfocus="this.style.borderColor='#dc3545';"
+          onblur="this.style.borderColor='#e9ecef';"
+        >
+      </div>
 
         <!-- DESCRIPCIÓN -->
         <div>
