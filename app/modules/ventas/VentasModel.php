@@ -703,11 +703,10 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
                      WHERE id = :producto_id";
         $stmtStock = $this->db->prepare($sqlStock);
 
-        // Nota: su tabla de movimientos inventario existe: movimientos_inventario
-        // Ajuste columnas si su esquema difiere. Aquí uso las que usted ya usó en otros módulos.
+        // ✅ Movimientos de inventario - columnas correctas (created_at tiene DEFAULT)
         $sqlMovInv = "INSERT INTO movimientos_inventario
-                      (producto_id, tipo, cantidad, costo_unitario, origen, origen_id, motivo, usuario_id, created_at)
-                      VALUES (:producto_id, 'ENTRADA', :cantidad, :costo_unitario, 'VENTA_ANULADA', :origen_id, :motivo, :usuario_id, NOW())";
+                      (producto_id, tipo, cantidad, costo_unitario, origen, origen_id, motivo, usuario_id)
+                      VALUES (:producto_id, 'ENTRADA', :cantidad, :costo_unitario, 'DEVOLUCION', :origen_id, :motivo, :usuario_id)";
         $stmtMovInv = $this->db->prepare($sqlMovInv);
 
         $sqlCosto = "SELECT costo FROM productos WHERE id = :producto_id LIMIT 1";
@@ -769,6 +768,7 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
             $yaExiste = $stmtExisteRev->fetchColumn();
 
             if (!$yaExiste) {
+                // ✅ movimientos_caja usa 'fecha' no 'created_at', y SÍ tiene venta_id
                 $sqlCaja = "INSERT INTO movimientos_caja
                             (tipo, concepto, monto, metodo_pago, observaciones, venta_id, usuario_id, fecha)
                             VALUES
