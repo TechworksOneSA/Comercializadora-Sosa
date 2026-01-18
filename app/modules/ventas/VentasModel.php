@@ -753,6 +753,8 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
         $totalPagado = (float)($venta['total_pagado'] ?? 0);
 
         if ($totalPagado > 0) {
+            error_log("🔍 [VentasModel] Venta #{$ventaId} tiene total_pagado: Q {$totalPagado}. Verificando reverso...");
+            
             // Verificar si ya existe reverso (idempotencia)
             $sqlExisteRev = "SELECT id
                              FROM movimientos_caja
@@ -768,21 +770,39 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
             $yaExiste = $stmtExisteRev->fetchColumn();
 
             if (!$yaExiste) {
+                error_log("✅ [VentasModel] Creando movimiento de caja reverso para venta #{$ventaId}");
+                
                 // ✅ movimientos_caja usa 'fecha' no 'created_at', y SÍ tiene venta_id
                 $sqlCaja = "INSERT INTO movimientos_caja
                             (tipo, concepto, monto, metodo_pago, observaciones, venta_id, usuario_id, fecha)
                             VALUES
                             ('gasto', :concepto, :monto, :metodo_pago, :obs, :venta_id, :usuario_id, NOW())";
                 $stmtCaja = $this->db->prepare($sqlCaja);
-                $stmtCaja->execute([
+                
+                $paramsCaja = [
                     ':concepto'    => "Reverso por anulación de venta #{$ventaId}",
                     ':monto'       => $totalPagado,
                     ':metodo_pago' => (string)($venta['metodo_pago'] ?? 'Efectivo'),
                     ':obs'         => "Reverso automático del cobro al anular la venta.",
                     ':venta_id'    => $ventaId,
                     ':usuario_id'  => $usuarioId
-                ]);
+                ];
+                
+                $resultado = $stmtCaja->execute($paramsCaja);
+                
+                if ($resultado) {
+                    $lastId = $this->db->lastInsertId();
+                    error_log("✅ [VentasModel] Movimiento de caja reverso creado con ID: {$lastId}");
+                } else {
+                    $errorInfo = $stmtCaja->errorInfo();
+                    error_log("❌ [VentasModel] Error al crear movimiento de caja reverso: " . json_encode($errorInfo));
+                    throw new Exception("Error al crear movimiento de caja reverso: " . implode(", ", $errorInfo));
+                }
+            } else {
+                error_log("ℹ️ [VentasModel] Ya existe un reverso para la venta #{$ventaId}, saltando creación");
             }
+        } else {
+            error_log("ℹ️ [VentasModel] Venta #{$ventaId} no tiene pagos (total_pagado: 0), no se crea reverso");
         }
 
         $this->db->commit();
