@@ -151,4 +151,158 @@ class VentasController extends Controller
             redirect('/admin/cotizaciones');
         }
     }
+
+    // =========================
+    // CREAR VENTA (FORMULARIO)
+    // =========================
+    public function crear()
+    {
+        RoleMiddleware::requireAdminOrVendedor();
+
+        require_once __DIR__ . '/../clientes/ClientesModel.php';
+        require_once __DIR__ . '/../productos/ProductosModel.php';
+
+        $clientesModel = new ClientesModel();
+        $productosModel = new ProductosModel();
+
+        // Obtener todos los clientes
+        $clientes = $clientesModel->listar();
+
+        // Obtener todos los productos activos
+        $productos = $productosModel->buscar("", ["estado" => "ACTIVO"]);
+
+        // Series existentes (si aplica, para productos que requieren serie)
+        $series_existentes = [];
+
+        $this->viewWithLayout("ventas/views/crear", [
+            "title" => "Nueva Venta",
+            "user" => $_SESSION['user'],
+            "clientes" => $clientes,
+            "productos" => $productos,
+            "series_existentes" => $series_existentes,
+            "errors" => [],
+            "old" => []
+        ]);
+    }
+
+    // =========================
+    // GUARDAR VENTA
+    // =========================
+    public function guardar()
+    {
+        RoleMiddleware::requireAdminOrVendedor();
+
+        $errors = [];
+        $old = $_POST;
+
+        // Validar datos básicos
+        $clienteId = (int)($_POST['cliente_id'] ?? 0);
+        $fechaVenta = trim($_POST['fecha_venta'] ?? '');
+        $productosIds = $_POST['producto_id'] ?? [];
+        $cantidades = $_POST['cantidad'] ?? [];
+        $numerosSerie = $_POST['numero_serie'] ?? [];
+
+        if ($clienteId <= 0) {
+            $errors[] = "Debe seleccionar un cliente";
+        }
+
+        if (empty($fechaVenta)) {
+            $errors[] = "Debe especificar la fecha de la venta";
+        }
+
+        if (empty($productosIds) || !is_array($productosIds)) {
+            $errors[] = "Debe agregar al menos un producto";
+        }
+
+        // Si hay errores, recargar el formulario
+        if (!empty($errors)) {
+            require_once __DIR__ . '/../clientes/ClientesModel.php';
+            require_once __DIR__ . '/../productos/ProductosModel.php';
+
+            $clientesModel = new ClientesModel();
+            $productosModel = new ProductosModel();
+
+            $clientes = $clientesModel->listar();
+            $productos = $productosModel->buscar("", ["estado" => "ACTIVO"]);
+
+            $this->viewWithLayout("ventas/views/crear", [
+                "title" => "Nueva Venta",
+                "user" => $_SESSION['user'],
+                "clientes" => $clientes,
+                "productos" => $productos,
+                "series_existentes" => [],
+                "errors" => $errors,
+                "old" => $old
+            ]);
+            return;
+        }
+
+        try {
+            require_once __DIR__ . '/../productos/ProductosModel.php';
+            $productosModel = new ProductosModel();
+
+            // Preparar detalles
+            $detalles = [];
+            $subtotal = 0;
+
+            foreach ($productosIds as $index => $productoId) {
+                $productoId = (int)$productoId;
+                $cantidad = (int)($cantidades[$index] ?? 0);
+                $numeroSerie = trim($numerosSerie[$index] ?? '');
+
+                if ($productoId <= 0 || $cantidad <= 0) {
+                    continue;
+                }
+
+                // Obtener info del producto
+                $producto = $productosModel->obtenerPorId($productoId);
+                if (!$producto) {
+                    $errors[] = "Producto #{$productoId} no encontrado";
+                    continue;
+                }
+
+                $precioUnitario = (float)$producto['precio_venta'];
+                $subtotalLinea = $precioUnitario * $cantidad;
+                $subtotal += $subtotalLinea;
+
+                $detalles[] = [
+                    'producto_id' => $productoId,
+                    'cantidad' => $cantidad,
+                    'precio_unitario' => $precioUnitario,
+                    'subtotal' => $subtotalLinea,
+                    'numero_serie' => $numeroSerie ?: null
+                ];
+            }
+
+            if (empty($detalles)) {
+                throw new Exception("No se pudieron procesar los productos");
+            }
+
+            $total = $subtotal; // Por ahora sin descuentos adicionales
+
+            // Preparar datos para el modelo
+            $ventaData = [
+                'cliente_id' => $clienteId,
+                'usuario_id' => (int)$_SESSION['user']['id'],
+                'metodo_pago' => 'Efectivo', // Por defecto, se puede ajustar
+                'subtotal' => $subtotal,
+                'total' => $total,
+                'fecha_venta' => $fechaVenta,
+                'detalles' => $detalles
+            ];
+
+            // Crear la venta
+            $ventaId = $this->model->crearVentaManual($ventaData);
+
+            $_SESSION['flash_success'] = "Venta #{$ventaId} creada exitosamente";
+            redirect('/admin/ventas/ver?id=' . $ventaId);
+
+        } catch (Throwable $e) {
+            error_log("❌ [VentasController@guardar] Error: " . $e->getMessage());
+            error_log("❌ Stack trace: " . $e->getTraceAsString());
+
+            $_SESSION['flash_error'] = "Error al crear la venta: " . $e->getMessage();
+            redirect('/admin/ventas/crear');
+        }
+    }
 }
