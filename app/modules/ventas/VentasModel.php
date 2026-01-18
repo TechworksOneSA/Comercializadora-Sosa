@@ -471,16 +471,25 @@ class VentasModel extends Model
                        VALUES (:producto_id, 'SALIDA', :cantidad, :costo_unitario, 'VENTA', :origen_id, :motivo, :usuario_id, NOW())";
             $stmtMov = $this->db->prepare($sqlMov);
 
+            // 2.2 Statement para actualizar serie (productos_series)
+            $sqlUpdateSerie = "UPDATE productos_series 
+                              SET estado = 'VENDIDO', venta_id = :venta_id, fecha_venta = NOW()
+                              WHERE numero_serie = :numero_serie AND producto_id = :producto_id AND estado = 'EN_STOCK'";
+            $stmtUpdateSerie = $this->db->prepare($sqlUpdateSerie);
+
             // 3. Procesar cada detalle
             foreach ($detalles as $i => $detalle) {
                 $productoId = (int)($detalle['producto_id'] ?? 0);
                 $cantidad = (int)($detalle['cantidad'] ?? 0);
                 $precioUnitario = (float)($detalle['precio_unitario'] ?? 0);
                 $subtotalLinea = (float)($detalle['subtotal'] ?? 0);
+                $numeroSerie = trim((string)($detalle['numero_serie'] ?? '')); // ✅ Guardar como STRING
 
                 if ($productoId <= 0 || $cantidad <= 0) {
                     throw new Exception("Detalle inválido en producto #{$i}");
                 }
+
+                error_log("🔍 [VentasModel] Procesando detalle #{$i}: producto_id={$productoId}, cantidad={$cantidad}, numero_serie='{$numeroSerie}'");
 
                 // 3.1 Insertar detalle de venta
                 $this->execChecked($stmtDetVenta, [
@@ -491,7 +500,25 @@ class VentasModel extends Model
                     ':subtotal' => $subtotalLinea
                 ], "VENTA_DETALLE_MANUAL_PID_{$productoId}");
 
-                // 3.2 Actualizar stock
+                // 3.2 Si tiene número de serie, actualizar en productos_series
+                if (!empty($numeroSerie)) {
+                    error_log("🔍 [VentasModel] Actualizando serie '{$numeroSerie}' para producto #{$productoId}");
+                    
+                    $this->execChecked($stmtUpdateSerie, [
+                        ':venta_id' => $ventaId,
+                        ':numero_serie' => $numeroSerie, // ✅ Se guarda como STRING (VARCHAR)
+                        ':producto_id' => $productoId
+                    ], "UPDATE_SERIE_{$numeroSerie}_PID_{$productoId}");
+
+                    if ($stmtUpdateSerie->rowCount() == 0) {
+                        error_log("⚠️ [VentasModel] No se encontró la serie '{$numeroSerie}' en productos_series para el producto #{$productoId}");
+                        // No lanzamos excepción para permitir continuar si la serie no existe en la tabla
+                    } else {
+                        error_log("✅ [VentasModel] Serie '{$numeroSerie}' marcada como VENDIDA");
+                    }
+                }
+
+                // 3.3 Actualizar stock
                 $this->execChecked($stmtStock, [
                     ':cantidad'       => $cantidad,
                     ':producto_id'    => $productoId,
@@ -503,7 +530,7 @@ class VentasModel extends Model
                     throw new Exception("Stock insuficiente para producto ID: {$productoId}");
                 }
 
-                // 3.3 Registrar movimiento de inventario (SALIDA por venta)
+                // 3.4 Registrar movimiento de inventario (SALIDA por venta)
                 // Obtener costo del producto para el registro correcto
                 $sqlCosto = "SELECT costo FROM productos WHERE id = :producto_id";
                 $stmtCosto = $this->db->prepare($sqlCosto);

@@ -248,7 +248,7 @@ class VentasController extends Controller
             foreach ($productosIds as $index => $productoId) {
                 $productoId = (int)$productoId;
                 $cantidad = (int)($cantidades[$index] ?? 0);
-                $numeroSerie = trim($numerosSerie[$index] ?? '');
+                $numeroSerie = trim((string)($numerosSerie[$index] ?? '')); // ✅ Mantener como STRING
 
                 if ($productoId <= 0 || $cantidad <= 0) {
                     continue;
@@ -265,12 +265,17 @@ class VentasController extends Controller
                 $subtotalLinea = $precioUnitario * $cantidad;
                 $subtotal += $subtotalLinea;
 
+                // Log para debug de series largas
+                if (!empty($numeroSerie)) {
+                    error_log("🔍 [VentasController] Serie recibida: '{$numeroSerie}' (longitud: " . strlen($numeroSerie) . ")");
+                }
+
                 $detalles[] = [
                     'producto_id' => $productoId,
                     'cantidad' => $cantidad,
                     'precio_unitario' => $precioUnitario,
                     'subtotal' => $subtotalLinea,
-                    'numero_serie' => $numeroSerie ?: null
+                    'numero_serie' => $numeroSerie // ✅ Se pasa como STRING
                 ];
             }
 

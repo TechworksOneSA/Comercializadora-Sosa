@@ -28,12 +28,15 @@ if (empty($_SESSION['user'])) {
 $raw = file_get_contents('php://input');
 $data = json_decode($raw ?: '[]', true);
 
-$q = trim((string)($data['q'] ?? ''));
+$q = trim((string)($data['q'] ?? '')); // ✅ Forzar como STRING
 if ($q === '') {
     http_response_code(422);
     echo json_encode(['success' => false, 'message' => 'Parámetro q requerido']);
     exit;
 }
+
+// Log para debug de números largos
+error_log("🔍 [buscar_por_scan] Búsqueda: '{$q}' (longitud: " . strlen($q) . ")");
 
 try {
     $pdo = Database::connect();
@@ -77,9 +80,11 @@ try {
     if ($hasSeriesTable && $seriesTableName) {
         $sql = "SELECT p.id, p.nombre, p.sku, p.precio_venta, p.stock" . ($hasRequiereSerie ? ", p.requiere_serie" : ", 0 AS requiere_serie") . " FROM `$seriesTableName` s INNER JOIN productos p ON p.id = s.`$seriesProdCol` WHERE s.`$seriesCol` = :q LIMIT 1";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([':q' => $q]);
+        $stmt->bindValue(':q', $q, PDO::PARAM_STR); // ✅ Bind como STRING
+        $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row) {
+            error_log("✅ [buscar_por_scan] Producto encontrado por SERIE: '{$q}' -> Producto #{$row['id']}");
             echo json_encode(['success' => true, 'producto' => $row, 'match' => 'serie'], JSON_UNESCAPED_UNICODE);
             exit;
         }
@@ -90,9 +95,11 @@ try {
     if ($hasCodigoBarras) $where .= " OR p.codigo_barras = :q";
     $sql2 = "SELECT p.id, p.nombre, p.sku, p.precio_venta, p.stock" . ($hasRequiereSerie ? ", p.requiere_serie" : ", 0 AS requiere_serie") . " FROM productos p WHERE ($where) LIMIT 1";
     $stmt2 = $pdo->prepare($sql2);
-    $stmt2->execute([':q' => $q]);
+    $stmt2->bindValue(':q', $q, PDO::PARAM_STR); // ✅ Bind como STRING
+    $stmt2->execute();
     $row2 = $stmt2->fetch(PDO::FETCH_ASSOC);
     if ($row2) {
+        error_log("✅ [buscar_por_scan] Producto encontrado por SKU/CODIGO: '{$q}' -> Producto #{$row2['id']}");
         echo json_encode(['success' => true, 'producto' => $row2, 'match' => 'sku/codigo_barras'], JSON_UNESCAPED_UNICODE);
         exit;
     }
