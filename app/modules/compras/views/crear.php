@@ -424,6 +424,29 @@ foreach ($productos as $p) {
         border-bottom: none;
     }
 
+    /* Estilos para el input del scanner */
+    .scanner-input {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    #productoScanner {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid #0a3d91;
+        border-radius: 0.75rem;
+        font-size: 0.95rem;
+        background: #fff;
+        transition: all 0.3s;
+    }
+
+    #productoScanner:focus {
+        outline: none;
+        border-color: #1565c0;
+        box-shadow: 0 0 0 4px rgba(10, 61, 145, 0.15);
+        background: #f0f9ff;
+    }
+
     /* Facebook-style Selectors */
     .fbselect {
         position: relative;
@@ -862,10 +885,14 @@ foreach ($productos as $p) {
             <div class="section-title">📋 Productos de la Compra</div>
 
             <!-- Buscador/Scanner -->
-            <div class="scanner-input">
+            <div class="scanner-input" style="margin-bottom: 1.5rem;">
+                <label class="form-label" style="margin-bottom: 0.5rem; display: block; font-weight: 600; color: #1e293b;">
+                    🔍 Buscar Producto por Serie / Código de Barras / SKU / Nombre
+                </label>
                 <input type="text" id="productoScanner"
-                    placeholder="Escanee código de barras o busque por nombre/SKU del producto..."
-                    autocomplete="off">
+                    placeholder="Escanee código de barras, serie, SKU o escriba el nombre del producto..."
+                    autocomplete="off"
+                    style="width: 100%; padding: 0.875rem 1rem; border: 2px solid #0a3d91; border-radius: 0.75rem; font-size: 0.95rem; background: #fff; transition: all 0.3s;">
                 <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
             </div>
 
@@ -934,6 +961,46 @@ foreach ($productos as $p) {
     const PRODUCTOS = <?= json_encode($productosJs) ?>;
     let productosEnCompra = [];
     let currentProductoIndex = null;
+
+    // Toast simple para notificaciones
+    function showToast(type, message) {
+        const colors = {
+            success: '#28a745',
+            warning: '#ffc107',
+            error:   '#dc3545',
+            info:    '#17a2b8'
+        };
+
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.position = 'fixed';
+        toast.style.right = '18px';
+        toast.style.top = '18px';
+        toast.style.zIndex = '99999';
+        toast.style.padding = '12px 14px';
+        toast.style.borderRadius = '10px';
+        toast.style.color = '#fff';
+        toast.style.fontWeight = '700';
+        toast.style.fontSize = '0.95rem';
+        toast.style.boxShadow = '0 8px 18px rgba(0,0,0,0.18)';
+        toast.style.background = colors[type] || colors.info;
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.transition = 'all .18s ease';
+
+        document.body.appendChild(toast);
+
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        });
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-10px)';
+            setTimeout(() => toast.remove(), 200);
+        }, 1600);
+    }
 
     // Función para mostrar alerta de serie
     function showAlertSerie(producto) {
@@ -1019,10 +1086,12 @@ foreach ($productos as $p) {
         ).slice(0, 10);
     }
 
-    // Autocompletado
+    // Autocompletado y búsqueda por scanner
     const scanner = document.getElementById('productoScanner');
     const dropdown = document.getElementById('autocompleteDropdown');
+    let processingScan = false;
 
+    // Event listener para búsqueda en tiempo real (autocomplete)
     scanner.addEventListener('input', function() {
         const resultados = buscarProducto(this.value);
 
@@ -1042,6 +1111,71 @@ foreach ($productos as $p) {
             dropdown.style.display = 'block';
         } else {
             dropdown.style.display = 'none';
+        }
+    });
+
+    // Event listener para scanner (Enter o Tab)
+    scanner.addEventListener('keydown', function(e) {
+        if ((e.key === 'Enter' || e.key === 'Tab') && !e.repeat) {
+            e.preventDefault();
+            if (processingScan) return;
+
+            const code = (scanner.value || '').trim();
+            if (!code) return;
+
+            processingScan = true;
+
+            // Primero buscar localmente
+            const productoLocal = PRODUCTOS.find(p =>
+                p.sku === code ||
+                p.codigo_barra === code ||
+                p.numero_serie === code
+            );
+
+            if (productoLocal) {
+                agregarProducto(productoLocal);
+                scanner.value = '';
+                dropdown.style.display = 'none';
+                processingScan = false;
+                scanner.focus();
+                return;
+            }
+
+            // Si no se encuentra localmente, buscar en la API
+            fetch('<?= url("/admin/productos/api/buscar_por_scan") ?>', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ q: code })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.success && data.producto) {
+                    // Convertir el producto de la API al formato local
+                    const producto = {
+                        id: data.producto.id,
+                        nombre: data.producto.nombre,
+                        sku: data.producto.sku || '',
+                        codigo_barra: data.producto.codigo_barra || '',
+                        stock_actual: data.producto.stock || 0,
+                        tipo_producto: data.producto.requiere_serie ? 'UNIDAD' : 'MISC',
+                        costo: data.producto.precio_venta || 0, // usar precio de venta como referencia
+                        numero_serie: code // guardar el código escaneado si es una serie
+                    };
+                    
+                    agregarProducto(producto);
+                    showToast('success', '✅ Producto agregado');
+                } else {
+                    showToast('error', '❌ ' + ((data && data.message) ? data.message : 'No encontrado'));
+                }
+            })
+            .catch(() => showToast('error', '❌ Error de red'))
+            .finally(() => {
+                scanner.value = '';
+                dropdown.style.display = 'none';
+                scanner.focus();
+                setTimeout(() => { processingScan = false; }, 120);
+            });
         }
     });
 

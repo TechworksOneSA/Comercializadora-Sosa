@@ -740,16 +740,14 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
         }
 
         // 4) Marcar venta como ANULADA
-        // Usamos columnas que existen según su SELECT: anulada_at, anulada_por, estado
+        // ✅ Solo actualizar estado (las columnas anulada_at y anulada_por no existen en la tabla)
         $sqlUpd = "UPDATE {$this->tableVentas}
                    SET estado = 'ANULADA',
-                       anulada_at = NOW(),
-                       anulada_por = :usuario_id
+                       updated_at = NOW()
                    WHERE id = :id";
         $stmtUpd = $this->db->prepare($sqlUpd);
         $this->execChecked($stmtUpd, [
-            ':usuario_id' => $usuarioId,
-            ':id'         => $ventaId
+            ':id' => $ventaId
         ], "ANULAR_VENTA_UPDATE");
 
         // 5) Reverso de caja (si hubo cobro)
