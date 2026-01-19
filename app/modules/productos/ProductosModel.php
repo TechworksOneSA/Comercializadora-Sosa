@@ -165,6 +165,9 @@ class ProductosModel extends Model
             }
             
             // Debug
+            require_once __DIR__ . '/../../core/Logger.php';
+            Logger::log("numero_serie a guardar: " . ($numeroSerie ?? 'NULL'));
+            Logger::log("Tiene columna numero_serie: " . ($tieneNumeroSerie ? 'SI' : 'NO'));
             error_log("numero_serie a guardar: " . ($numeroSerie ?? 'NULL'));
             error_log("Tiene columna numero_serie: " . ($tieneNumeroSerie ? 'SI' : 'NO'));
 

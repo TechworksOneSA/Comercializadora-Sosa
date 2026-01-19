@@ -233,8 +233,17 @@ html, body {
    TABLA
 ===================================================== */
 .table-layer {
+<<<<<<< HEAD
   margin-top: 20px;
   overflow-x: auto;
+=======
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow-x: auto;
+  overflow-y: auto;
+>>>>>>> 85ddb97 (deslizabel tabla)
 }
 
 .table-layer table {

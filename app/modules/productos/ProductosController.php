@@ -126,6 +126,16 @@ class ProductosController extends Controller
         RoleMiddleware::requireAdminOrVendedor();
 
         $data = $this->sanitizar($_POST);
+<<<<<<< HEAD
+=======
+        
+        // Debug: Log de datos recibidos
+        require_once __DIR__ . '/../../core/Logger.php';
+        Logger::log("POST datos recibidos", $_POST);
+        Logger::log("numero_serie recibido: " . ($data["numero_serie"] ?? 'NO ENVIADO'));
+        error_log("POST datos recibidos: " . json_encode($_POST));
+        error_log("numero_serie recibido: " . ($data["numero_serie"] ?? 'NO ENVIADO'));
+>>>>>>> 85ddb97 (deslizabel tabla)
 
         $tipoProducto = strtoupper(trim($data["tipo_producto"] ?? "UNIDAD"));
         if (!in_array($tipoProducto, ['UNIDAD', 'MISC'], true)) {
@@ -202,6 +212,13 @@ class ProductosController extends Controller
             "imagen_path"      => $imagenPath,
         ];
 
+<<<<<<< HEAD
+=======
+        // Debug: Log del payload antes de crear
+        Logger::log("Payload para crear producto", $payload);
+        error_log("Payload para crear producto: " . json_encode($payload));
+
+>>>>>>> 85ddb97 (deslizabel tabla)
         try {
             $result = $this->model->crear($payload);
             if (!$result) {
