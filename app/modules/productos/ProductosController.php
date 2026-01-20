@@ -126,23 +126,13 @@ class ProductosController extends Controller
         RoleMiddleware::requireAdminOrVendedor();
 
         $data = $this->sanitizar($_POST);
-<<<<<<< HEAD
-=======
-        
-        // Debug: Log de datos recibidos
-        require_once __DIR__ . '/../../core/Logger.php';
-        Logger::log("POST datos recibidos", $_POST);
-        Logger::log("numero_serie recibido: " . ($data["numero_serie"] ?? 'NO ENVIADO'));
-        error_log("POST datos recibidos: " . json_encode($_POST));
-        error_log("numero_serie recibido: " . ($data["numero_serie"] ?? 'NO ENVIADO'));
->>>>>>> 85ddb97 (deslizabel tabla)
 
         $tipoProducto = strtoupper(trim($data["tipo_producto"] ?? "UNIDAD"));
         if (!in_array($tipoProducto, ['UNIDAD', 'MISC'], true)) {
             $tipoProducto = 'UNIDAD';
         }
 
-        $skuGenerado  = $this->generarSKU();
+        $skuGenerado = $this->generarSKU();
 
         $errors = $this->validar($data);
         if (!empty($errors)) {
@@ -173,7 +163,7 @@ class ProductosController extends Controller
         $marcaId = (int)($data["marca_id"] ?? 0);
         $marcaId = $marcaId > 0 ? $marcaId : null;
 
-        // Serie: 1 por producto (en productos.numero_serie)
+        // Serie: 1 por producto (en productos.numero_serie) solo para UNIDAD
         $numeroSerie = trim($data["numero_serie"] ?? '');
         if ($tipoProducto !== 'UNIDAD') {
             $numeroSerie = '';
@@ -212,13 +202,6 @@ class ProductosController extends Controller
             "imagen_path"      => $imagenPath,
         ];
 
-<<<<<<< HEAD
-=======
-        // Debug: Log del payload antes de crear
-        Logger::log("Payload para crear producto", $payload);
-        error_log("Payload para crear producto: " . json_encode($payload));
-
->>>>>>> 85ddb97 (deslizabel tabla)
         try {
             $result = $this->model->crear($payload);
             if (!$result) {
@@ -251,14 +234,14 @@ class ProductosController extends Controller
         $marcasModel     = new MarcasModel();
 
         $this->viewWithLayout("productos/views/editar", [
-            "title"      => "Editar Producto",
-            "user"       => $_SESSION["user"],
-            "producto"   => $producto,
+            "title"        => "Editar Producto",
+            "user"         => $_SESSION["user"],
+            "producto"     => $producto,
             // ✅ ahora la serie viene del mismo producto
             "numero_serie" => $producto['numero_serie'] ?? '',
-            "categorias" => $categoriasModel->listarActivas(),
-            "marcas"     => $marcasModel->listarActivas(),
-            "errors"     => [],
+            "categorias"   => $categoriasModel->listarActivas(),
+            "marcas"       => $marcasModel->listarActivas(),
+            "errors"       => [],
         ]);
     }
 
@@ -283,13 +266,13 @@ class ProductosController extends Controller
             $marcasModel     = new MarcasModel();
 
             $this->viewWithLayout("productos/views/editar", [
-                "title"      => "Editar Producto",
-                "user"       => $_SESSION["user"],
-                "errors"     => $errors,
-                "producto"   => array_merge($producto, $data),
+                "title"        => "Editar Producto",
+                "user"         => $_SESSION["user"],
+                "errors"       => $errors,
+                "producto"     => array_merge($producto, $data),
                 "numero_serie" => $producto['numero_serie'] ?? '',
-                "categorias" => $categoriasModel->listarActivas(),
-                "marcas"     => $marcasModel->listarActivas(),
+                "categorias"   => $categoriasModel->listarActivas(),
+                "marcas"       => $marcasModel->listarActivas(),
             ]);
             return;
         }
@@ -306,7 +289,7 @@ class ProductosController extends Controller
                 }
             }
             $imagen_path = null;
-        } else if (isset($_FILES['imagen']) && ($_FILES['imagen']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+        } elseif (isset($_FILES['imagen']) && ($_FILES['imagen']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
             // Si suben nueva imagen, reemplazar y borrar anterior
             $nuevo = $this->procesarImagenUnica($_FILES['imagen']);
             if ($nuevo) {
