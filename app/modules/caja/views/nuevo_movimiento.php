@@ -68,6 +68,12 @@ $old = $old ?? [];
         min-height: 100px;
     }
 
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+    }
+
     .btn-group {
         display: flex;
         gap: 1rem;
@@ -80,11 +86,11 @@ $old = $old ?? [];
         padding: 0.75rem 2rem;
         border-radius: 0.5rem;
         font-weight: 600;
-        text-decoration: none;
         border: none;
         cursor: pointer;
         transition: all 0.3s;
         font-size: 0.95rem;
+        text-decoration: none;
     }
 
     .btn-cancel {
@@ -134,25 +140,22 @@ $old = $old ?? [];
         margin-bottom: 0.25rem;
         font-size: 0.875rem;
     }
-
-    .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-    }
 </style>
 
 <div class="movimiento-container">
+
     <!-- Header -->
     <div class="movimiento-header">
-        <h1>📤 Nuevo Gasto/Movimiento</h1>
-        <p style="margin: 0; opacity: 0.9;">Registra gastos operativos y retiros de caja</p>
+        <h1>📤 Nuevo Gasto / Movimiento</h1>
+        <p style="margin:0;opacity:.9;">
+            Registro contable de gastos operativos o retiros de caja
+        </p>
     </div>
 
     <!-- Errores -->
     <?php if (!empty($errors)): ?>
         <div class="error-list">
-            <h4>❌ Errores encontrados:</h4>
+            <h4>❌ Errores encontrados</h4>
             <ul>
                 <?php foreach ($errors as $error): ?>
                     <li><?= htmlspecialchars($error) ?></li>
@@ -165,80 +168,79 @@ $old = $old ?? [];
     <div class="form-card">
         <form method="POST" action="<?= url('/admin/caja/guardar-movimiento') ?>">
 
-            <!-- Tipo y Concepto -->
+            <!-- Tipo / Método -->
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="tipo" class="form-label">📋 Tipo de Movimiento</label>
-                    <select id="tipo" name="tipo" class="form-select" required>
-                        <option value="">Seleccionar tipo...</option>
+                    <label class="form-label">📋 Tipo de Movimiento</label>
+                    <select name="tipo" class="form-select" required>
+                        <option value="">Seleccionar...</option>
                         <option value="gasto" <?= ($old['tipo'] ?? '') === 'gasto' ? 'selected' : '' ?>>
-                            � Gasto Operativo (Renta, Servicios, Compras, etc.)
+                            🧾 Gasto Operativo
                         </option>
                         <option value="retiro" <?= ($old['tipo'] ?? '') === 'retiro' ? 'selected' : '' ?>>
-                            💰 Retiro Personal (Dinero que sale del negocio)
+                            💰 Retiro Personal
                         </option>
                     </select>
-                    <small style="color: #64748b; font-size: 0.8rem; display: block; margin-top: 0.25rem;">
-                        <strong>Gasto:</strong> Pagos del negocio (luz, agua, compras). <strong>Retiro:</strong> Dinero que sacas para uso personal.
-                    </small>
                 </div>
 
                 <div class="form-group">
-                    <label for="metodo_pago" class="form-label">💳 Método de Pago</label>
-                    <select id="metodo_pago" name="metodo_pago" class="form-select" required>
-                        <option value="">Seleccionar método...</option>
-                        <option value="Efectivo" <?= ($old['metodo_pago'] ?? '') === 'Efectivo' ? 'selected' : '' ?>>
-                            💵 Efectivo
-                        </option>
-                        <option value="Transferencia" <?= ($old['metodo_pago'] ?? '') === 'Transferencia' ? 'selected' : '' ?>>
-                            🏦 Transferencia
-                        </option>
-                        <option value="Cheque" <?= ($old['metodo_pago'] ?? '') === 'Cheque' ? 'selected' : '' ?>>
-                            📝 Cheque
-                        </option>
+                    <label class="form-label">💳 Método de Pago</label>
+                    <select name="metodo_pago" class="form-select" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="Efectivo" <?= ($old['metodo_pago'] ?? '') === 'Efectivo' ? 'selected' : '' ?>>💵 Efectivo</option>
+                        <option value="Transferencia" <?= ($old['metodo_pago'] ?? '') === 'Transferencia' ? 'selected' : '' ?>>🏦 Transferencia</option>
+                        <option value="Cheque" <?= ($old['metodo_pago'] ?? '') === 'Cheque' ? 'selected' : '' ?>>📝 Cheque</option>
                     </select>
                 </div>
             </div>
 
             <!-- Concepto -->
             <div class="form-group">
-                <label for="concepto" class="form-label">📝 Concepto del Movimiento</label>
+                <label class="form-label">📝 Concepto</label>
                 <input
                     type="text"
-                    id="concepto"
                     name="concepto"
                     class="form-input"
-                    placeholder="Ej: Pago de luz, Pago de agua, Compra de insumos, Retiro personal del dueño..."
-                    value="<?= htmlspecialchars($old['concepto'] ?? '') ?>"
-                    required>
-                <small style="color: #64748b; font-size: 0.8rem;">
-                    💡 <strong>Detección automática:</strong> Gastos normales (luz, renta, compras) se registran como GASTO. Solo escribe "retiro personal" si sacas dinero para uso personal.
-                </small>
+                    required
+                    placeholder="Ej: Pago de luz, compra de insumos..."
+                    value="<?= htmlspecialchars($old['concepto'] ?? '') ?>">
             </div>
 
             <!-- Monto -->
             <div class="form-group">
-                <label for="monto" class="form-label">💰 Monto</label>
+                <label class="form-label">💰 Monto</label>
                 <input
                     type="number"
-                    id="monto"
                     name="monto"
                     class="form-input"
-                    placeholder="0.00"
                     step="0.01"
                     min="0.01"
-                    value="<?= htmlspecialchars($old['monto'] ?? '') ?>"
-                    required>
+                    required
+                    placeholder="0.00"
+                    value="<?= htmlspecialchars($old['monto'] ?? '') ?>">
+            </div>
+
+            <!-- Fecha -->
+            <div class="form-group">
+                <label class="form-label">📅 Fecha del Movimiento</label>
+                <input
+                    type="datetime-local"
+                    name="fecha"
+                    class="form-input"
+                    required
+                    value="<?= htmlspecialchars($old['fecha'] ?? date('Y-m-d\TH:i')) ?>">
+                <small style="color:#64748b;font-size:.8rem;">
+                    Permite registrar gastos de días anteriores (control contable real).
+                </small>
             </div>
 
             <!-- Observaciones -->
             <div class="form-group">
-                <label for="observaciones" class="form-label">📋 Observaciones (Opcional)</label>
+                <label class="form-label">📋 Observaciones (Opcional)</label>
                 <textarea
-                    id="observaciones"
                     name="observaciones"
                     class="form-textarea"
-                    placeholder="Detalles adicionales del movimiento..."><?= htmlspecialchars($old['observaciones'] ?? '') ?></textarea>
+                    placeholder="Detalles adicionales..."><?= htmlspecialchars($old['observaciones'] ?? '') ?></textarea>
             </div>
 
             <!-- Botones -->
@@ -250,11 +252,11 @@ $old = $old ?? [];
                     💾 Registrar Movimiento
                 </button>
             </div>
+
         </form>
     </div>
 </div>
 
 <script>
-    // Auto-focus en el concepto
-    document.getElementById('concepto').focus();
+    document.querySelector('input[name="concepto"]').focus();
 </script>
