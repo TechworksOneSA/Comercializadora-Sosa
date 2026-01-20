@@ -220,17 +220,17 @@ $old = $old ?? [];
                     value="<?= htmlspecialchars($old['monto'] ?? '') ?>">
             </div>
 
-            <!-- Fecha -->
+            <!-- Fecha (solo día) -->
             <div class="form-group">
                 <label class="form-label">📅 Fecha del Movimiento</label>
                 <input
-                    type="datetime-local"
+                    type="date"
                     name="fecha"
                     class="form-input"
                     required
-                    value="<?= htmlspecialchars($old['fecha'] ?? date('Y-m-d\TH:i')) ?>">
+                    value="<?= htmlspecialchars($old['fecha'] ?? date('Y-m-d')) ?>">
                 <small style="color:#64748b;font-size:.8rem;">
-                    Permite registrar gastos de días anteriores (control contable real).
+                    Seleccione el día. La hora la asigna automáticamente el sistema.
                 </small>
             </div>
 
