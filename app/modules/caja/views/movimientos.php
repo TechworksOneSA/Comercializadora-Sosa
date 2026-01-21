@@ -210,14 +210,22 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                             </td>
                             <td>
                                 <span class="badge <?= $movimiento['tipo'] ?>">
-                                    <?= $movimiento['tipo'] === 'gasto' ? '📤 Gasto' : '🏦 Retiro' ?>
+                                    <?php
+                                    if ($movimiento['tipo'] === 'ingreso') {
+                                        echo '💰 Ingreso (Venta)';
+                                    } elseif ($movimiento['tipo'] === 'gasto') {
+                                        echo '📤 Gasto';
+                                    } else {
+                                        echo '🏦 Retiro';
+                                    }
+                                    ?>
                                 </span>
                             </td>
                             <td>
                                 <strong><?= htmlspecialchars($movimiento['concepto']) ?></strong>
                             </td>
-                            <td style="font-weight: 700; color: #ef4444;">
-                                -Q <?= number_format($movimiento['monto'], 2) ?>
+                            <td style="font-weight: 700; color: <?= $movimiento['tipo'] === 'ingreso' ? '#10b981' : '#ef4444' ?>;">
+                                <?= $movimiento['tipo'] === 'ingreso' ? '+' : '-' ?>Q <?= number_format($movimiento['monto'], 2) ?>
                             </td>
                             <td><?= htmlspecialchars($movimiento['metodo_pago']) ?></td>
                             <td><?= htmlspecialchars($movimiento['usuario_nombre']) ?></td>
