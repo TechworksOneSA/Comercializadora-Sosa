@@ -198,6 +198,8 @@ class VentasController extends Controller
         // Validar datos básicos
         $clienteId = (int)($_POST['cliente_id'] ?? 0);
         $fechaVenta = trim($_POST['fecha_venta'] ?? '');
+        $serieFactura = trim($_POST['serie_factura'] ?? '');
+        $numeroFactura = trim($_POST['numero_factura'] ?? '');
         $productosIds = $_POST['producto_id'] ?? [];
         $cantidades = $_POST['cantidad'] ?? [];
         $numerosSerie = $_POST['numero_serie'] ?? [];
@@ -293,6 +295,8 @@ class VentasController extends Controller
                 'subtotal' => $subtotal,
                 'total' => $total,
                 'fecha_venta' => $fechaVenta,
+                'serie_factura' => $serieFactura,
+                'numero_factura' => $numeroFactura,
                 'detalles' => $detalles
             ];
 

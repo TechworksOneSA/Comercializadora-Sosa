@@ -53,6 +53,19 @@
               <strong style="color: #495057;">Venta #:</strong>
               <span style="color: #0a3d91; font-size: 1.25rem; font-weight: 700; margin-left: 0.5rem;"><?= e($venta['id']) ?></span>
             </div>
+            <?php if (!empty($venta['serie_factura']) || !empty($venta['numero_factura'])): ?>
+              <div>
+                <strong style="color: #495057;">Factura:</strong>
+                <span style="margin-left: 0.5rem; color: #0a3d91; font-weight: 600;">
+                  <?php if (!empty($venta['serie_factura'])): ?>
+                    <?= e($venta['serie_factura']) ?>
+                  <?php endif; ?>
+                  <?php if (!empty($venta['numero_factura'])): ?>
+                    <?php if (!empty($venta['serie_factura'])): ?>-<?php endif; ?><?= e($venta['numero_factura']) ?>
+                  <?php endif; ?>
+                </span>
+              </div>
+            <?php endif; ?>
             <div>
               <strong style="color: #495057;">Fecha:</strong>
               <span style="margin-left: 0.5rem; color: #6c757d;">

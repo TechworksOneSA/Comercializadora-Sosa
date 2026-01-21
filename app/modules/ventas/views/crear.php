@@ -28,33 +28,51 @@
     <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
       <h3 style="margin: 0 0 1rem 0; color: #495057; font-size: 1.1rem; font-weight: 700;">📋 Datos Generales</h3>
 
-      <div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
         <!-- FECHA DE LA VENTA -->
-        <div style="margin-bottom: 1rem;">
-          <label for="fecha_venta" style="font-weight: 500; color: #495057;">Fecha de la venta</label>
+        <div>
+          <label for="fecha_venta" style="display: block; font-weight: 500; color: #495057; margin-bottom: 0.5rem;">Fecha de la venta</label>
           <input type="date" name="fecha_venta" id="fecha_venta" class="form-control" required
             value="<?= isset($old['fecha_venta']) ? htmlspecialchars($old['fecha_venta']) : date('Y-m-d') ?>"
-            style="max-width: 220px; margin-left: 1rem;">
+            style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem;">
         </div>
 
-        <!-- CLIENTE -->
+        <!-- SERIE DE FACTURA -->
         <div>
-          <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">
-            Cliente <span style="color: #dc3545;">*</span>
-          </label>
-          <div style="position: relative;">
-            <input
-              type="text"
-              id="buscarCliente"
-              placeholder="🔍 Buscar por nombre o NIT..."
-              autocomplete="off"
-              style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
-              onfocus="this.style.borderColor='#0a3d91'; mostrarResultadosClientes()"
-              onblur="setTimeout(() => ocultarResultadosClientes(), 200)"
-              oninput="buscarClientes()">
-            <input type="hidden" name="cliente_id" id="cliente_id" required>
-            <div id="resultadosClientes" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 300px; overflow-y: auto; background: white; border: 2px solid #0a3d91; border-top: none; border-radius: 0 0 0.5rem 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;"></div>
-          </div>
+          <label for="serie_factura" style="display: block; font-weight: 500; color: #495057; margin-bottom: 0.5rem;">Serie de Factura</label>
+          <input type="text" name="serie_factura" id="serie_factura" class="form-control"
+            value="<?= isset($old['serie_factura']) ? htmlspecialchars($old['serie_factura']) : '' ?>"
+            placeholder="Ej: A"
+            style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem;">
+        </div>
+
+        <!-- NÚMERO DE FACTURA -->
+        <div>
+          <label for="numero_factura" style="display: block; font-weight: 500; color: #495057; margin-bottom: 0.5rem;">Número de Factura</label>
+          <input type="text" name="numero_factura" id="numero_factura" class="form-control"
+            value="<?= isset($old['numero_factura']) ? htmlspecialchars($old['numero_factura']) : '' ?>"
+            placeholder="Ej: 12345"
+            style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem;">
+        </div>
+      </div>
+
+      <!-- CLIENTE -->
+      <div style="margin-top: 1rem;">
+        <label style="display: block; font-weight: 600; color: #495057; margin-bottom: 0.5rem;">
+          Cliente <span style="color: #dc3545;">*</span>
+        </label>
+        <div style="position: relative;">
+          <input
+            type="text"
+            id="buscarCliente"
+            placeholder="🔍 Buscar por nombre o NIT..."
+            autocomplete="off"
+            style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
+            onfocus="this.style.borderColor='#0a3d91'; mostrarResultadosClientes()"
+            onblur="setTimeout(() => ocultarResultadosClientes(), 200)"
+            oninput="buscarClientes()">
+          <input type="hidden" name="cliente_id" id="cliente_id" required>
+          <div id="resultadosClientes" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 300px; overflow-y: auto; background: white; border: 2px solid #0a3d91; border-top: none; border-radius: 0 0 0.5rem 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;"></div>
         </div>
       </div>
     </div>

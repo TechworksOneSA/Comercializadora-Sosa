@@ -386,6 +386,8 @@ class VentasModel extends Model
             $total = (float)($ventaData['total'] ?? 0);
             $detalles = $ventaData['detalles'] ?? [];
             $fechaVenta = $ventaData['fecha_venta'] ?? null;
+            $serieFactura = $ventaData['serie_factura'] ?? null;
+            $numeroFactura = $ventaData['numero_factura'] ?? null;
 
             if ($clienteId <= 0 || $usuarioId <= 0 || empty($detalles)) {
                 throw new Exception("Datos incompletos para crear la venta");
@@ -395,6 +397,8 @@ class VentasModel extends Model
             $colMetodoPago = $this->hasColumn($this->tableVentas, 'metodo_pago');
             $colObservaciones = $this->hasColumn($this->tableVentas, 'observaciones');
             $colFechaVenta = $this->hasColumn($this->tableVentas, 'fecha_venta');
+            $colSerieFactura = $this->hasColumn($this->tableVentas, 'serie_factura');
+            $colNumeroFactura = $this->hasColumn($this->tableVentas, 'numero_factura');
 
             // 1. Crear encabezado de venta
             $cols = [
@@ -441,6 +445,18 @@ class VentasModel extends Model
                 // Si no existe la columna o no se envió, usar NOW()
                 $cols[] = "fecha_venta";
                 $vals[] = "NOW()";
+            }
+
+            if ($colSerieFactura && !empty($serieFactura)) {
+                $cols[] = "serie_factura";
+                $vals[] = ":serie_factura";
+                $paramsVenta[':serie_factura'] = $serieFactura;
+            }
+
+            if ($colNumeroFactura && !empty($numeroFactura)) {
+                $cols[] = "numero_factura";
+                $vals[] = ":numero_factura";
+                $paramsVenta[':numero_factura'] = $numeroFactura;
             }
 
             $sqlVenta = "INSERT INTO {$this->tableVentas} (" . implode(", ", $cols) . ")
