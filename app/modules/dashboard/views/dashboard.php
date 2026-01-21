@@ -121,7 +121,8 @@ $alertas = $alertas ?? [
         </div>
       </div>
 
-      <!-- Ganancia Real -->
+      <!-- Ganancia Real (Solo Admin) -->
+      <?php if ($user['rol'] === 'admin'): ?>
       <div class="metric-card ganancia">
         <div class="metric-icon"><?= $margenGanancia['ganancia_real'] >= 0 ? '📈' : '📉' ?></div>
         <div class="metric-label">Ganancia Real del Día</div>
@@ -133,6 +134,7 @@ $alertas = $alertas ?? [
           </span>
         </div>
       </div>
+      <?php endif; ?>
     </div>
   </section>
 
