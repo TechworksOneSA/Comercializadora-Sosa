@@ -230,7 +230,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
     <!-- Resumen de Caja del Día -->
     <div class="stats-cards">
-        <?php if ($user['rol'] === 'admin'): ?>
+        <?php if ($user['rol'] === 'ADMIN'): ?>
         <div class="stat-card ingresos">
             <div class="stat-label">💰 Ganancias Totales</div>
             <div class="stat-value">Q <?= number_format($resumenCaja['ganancias_totales'], 2) ?></div>
