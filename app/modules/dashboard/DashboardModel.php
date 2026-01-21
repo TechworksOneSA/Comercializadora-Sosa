@@ -76,7 +76,29 @@ class DashboardModel extends Model
     }
 
     /**
+     * Obtener retiros del día
+     */
+    public function obtenerRetirosHoy(): array
+    {
+        $sql = "SELECT
+                    COUNT(*) as cantidad_retiros,
+                    COALESCE(SUM(monto), 0) as total_retiros
+                FROM movimientos_caja
+                WHERE DATE(fecha) = CURDATE()
+                AND tipo = 'retiro'";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [
+            'cantidad_retiros' => 0,
+            'total_retiros' => 0
+        ];
+    }
+
+    /**
      * Calcular margen de ganancia del día
+     * Los retiros personales NO afectan la ganancia real
      */
     public function obtenerMargenGanancia(): array
     {
@@ -99,7 +121,7 @@ class DashboardModel extends Model
         $stmt->execute();
         $compras = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Gastos del día
+        // Gastos del día (solo gastos operativos, NO retiros)
         $sqlGastos = "SELECT COALESCE(SUM(monto), 0) as gastos
                       FROM movimientos_caja
                       WHERE DATE(fecha) = CURDATE()
@@ -113,6 +135,7 @@ class DashboardModel extends Model
         $totalCompras = (float)($compras['compras'] ?? 0);
         $totalGastos = (float)($gastos['gastos'] ?? 0);
 
+        // Ganancia Real = Ingresos - Compras - Gastos Operativos (SIN retiros)
         $gananciaReal = $totalIngresos - $totalCompras - $totalGastos;
         $porcentajeMargen = $totalIngresos > 0 ? ($gananciaReal / $totalIngresos) * 100 : 0;
 

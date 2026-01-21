@@ -3,6 +3,7 @@
 $ventasHoy = $ventasHoy ?? ['cantidad_ventas' => 0, 'total_ventas' => 0];
 $efectivoCaja = $efectivoCaja ?? 0;
 $gastosHoy = $gastosHoy ?? ['cantidad_gastos' => 0, 'total_gastos' => 0];
+$retirosHoy = $retirosHoy ?? ['cantidad_retiros' => 0, 'total_retiros' => 0];
 $margenGanancia = $margenGanancia ?? ['ganancia_real' => 0, 'porcentaje_margen' => 0];
 $alertas = $alertas ?? [
   'productos_bajo_stock' => 0,
@@ -107,6 +108,16 @@ $alertas = $alertas ?? [
         <div class="metric-value">Q <?= number_format($gastosHoy['total_gastos'], 2) ?></div>
         <div class="metric-detail">
           <?= $gastosHoy['cantidad_gastos'] ?> gastos operativos
+        </div>
+      </div>
+
+      <!-- Retiros del Día -->
+      <div class="metric-card retiros">
+        <div class="metric-icon">🏦</div>
+        <div class="metric-label">Retiros del Día</div>
+        <div class="metric-value">Q <?= number_format($retirosHoy['total_retiros'], 2) ?></div>
+        <div class="metric-detail">
+          <?= $retirosHoy['cantidad_retiros'] ?> retiros personales
         </div>
       </div>
 

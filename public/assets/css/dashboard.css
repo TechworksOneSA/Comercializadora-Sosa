@@ -103,6 +103,9 @@
 .metric-card.gastos {
   border-color: #ef4444;
 }
+.metric-card.retiros {
+  border-color: #f59e0b;
+}
 .metric-card.ganancia {
   border-color: #8b5cf6;
 }
@@ -159,6 +162,9 @@
 }
 .metric-card.gastos .metric-value {
   color: #ef4444;
+}
+.metric-card.retiros .metric-value {
+  color: #f59e0b;
 }
 .metric-card.ganancia .metric-value {
   color: #8b5cf6;
