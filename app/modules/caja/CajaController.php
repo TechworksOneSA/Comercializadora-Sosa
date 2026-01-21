@@ -57,12 +57,17 @@ class CajaController extends Controller
     {
         RoleMiddleware::requireAdminOrVendedor();
 
+        $tipo = $_POST['tipo'] ?? '';
         $concepto = trim($_POST['concepto'] ?? '');
         $monto = (float)($_POST['monto'] ?? 0);
         $metodoPago = $_POST['metodo_pago'] ?? '';
         $observaciones = trim($_POST['observaciones'] ?? '');
 
         $errors = [];
+
+        if (empty($tipo) || !in_array($tipo, ['gasto', 'retiro'])) {
+            $errors[] = "Debe seleccionar un tipo de movimiento válido";
+        }
 
         if (empty($concepto)) {
             $errors[] = "El concepto es obligatorio";
@@ -83,21 +88,6 @@ class CajaController extends Controller
             return;
         }
 
-        // Detectar automáticamente si es retiro o gasto basándose en el concepto
-        $conceptoLower = strtolower($concepto);
-        $tipo = 'gasto'; // Por defecto es gasto
-
-        // Solo es retiro si menciona explícitamente retiro personal/dueño
-        if (
-            strpos($conceptoLower, 'retiro') !== false &&
-            (strpos($conceptoLower, 'personal') !== false ||
-             strpos($conceptoLower, 'dueño') !== false ||
-             strpos($conceptoLower, 'dueno') !== false ||
-             strpos($conceptoLower, 'propietario') !== false)
-        ) {
-            $tipo = 'retiro';
-        }
-
         try {
             $this->model->registrarMovimiento([
                 'tipo' => $tipo,
@@ -108,7 +98,8 @@ class CajaController extends Controller
                 'usuario_id' => $_SESSION['user']['id']
             ]);
 
-            $_SESSION['flash_success'] = "Movimiento registrado exitosamente como " . strtoupper($tipo);
+            $tipoTexto = $tipo === 'retiro' ? 'RETIRO PERSONAL' : 'GASTO OPERATIVO';
+            $_SESSION['flash_success'] = "Movimiento registrado exitosamente como {$tipoTexto}";
             redirect('/admin/caja/movimientos');
         } catch (Exception $e) {
             $_SESSION['flash_error'] = "Error al registrar movimiento: " . $e->getMessage();
