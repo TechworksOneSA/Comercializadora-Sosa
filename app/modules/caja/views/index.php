@@ -36,7 +36,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
     .stats-cards {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
@@ -231,10 +231,34 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
     <!-- Resumen de Caja del Día -->
     <div class="stats-cards">
         <div class="stat-card ingresos">
-            <div class="stat-label">💰 Ganancias Totales</div>
+            <div class="stat-label">💰 Ingresos del Día</div>
             <div class="stat-value">Q <?= number_format($resumenCaja['ganancias_totales'], 2) ?></div>
             <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
                 Efectivo + Tarjeta + Transferencia
+            </div>
+        </div>
+
+        <div class="stat-card ingresos" style="border-color: #10b981;">
+            <div class="stat-label">✨ Ganancia Real</div>
+            <div class="stat-value" style="color: #10b981;">Q <?= number_format($resumenCaja['ganancias_reales'], 2) ?></div>
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
+                Ingresos - Gastos operativos
+            </div>
+        </div>
+
+        <div class="stat-card gastos">
+            <div class="stat-label">📤 Gastos del Día</div>
+            <div class="stat-value">Q <?= number_format($resumenCaja['total_gastos'], 2) ?></div>
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
+                Solo gastos operativos
+            </div>
+        </div>
+
+        <div class="stat-card retiros">
+            <div class="stat-label">🏦 Retiros del Día</div>
+            <div class="stat-value">Q <?= number_format($resumenCaja['total_retiros'], 2) ?></div>
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
+                Solo retiros personales
             </div>
         </div>
 
@@ -242,18 +266,8 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             <div class="stat-label">💵 Efectivo en Caja</div>
             <div class="stat-value">Q <?= number_format($resumenCaja['efectivo_en_caja'], 2) ?></div>
             <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">
-                Solo efectivo físico disponible
+                Efectivo físico disponible
             </div>
-        </div>
-
-        <div class="stat-card gastos">
-            <div class="stat-label">📤 Gastos del Día</div>
-            <div class="stat-value">Q <?= number_format($resumenCaja['total_gastos'], 2) ?></div>
-        </div>
-
-        <div class="stat-card retiros">
-            <div class="stat-label">🏦 Retiros del Día</div>
-            <div class="stat-value">Q <?= number_format($resumenCaja['total_retiros'], 2) ?></div>
         </div>
     </div>
 

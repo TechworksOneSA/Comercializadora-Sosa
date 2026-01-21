@@ -108,6 +108,7 @@ class CajaModel extends Model
     /**
      * Obtener resumen de caja (ingresos, gastos, saldo)
      * Diferencia entre efectivo físico en caja y ganancias totales
+     * Los retiros personales NO afectan la ganancia real, solo el efectivo disponible
      */
     public function obtenerResumenCaja(): array
     {
@@ -146,16 +147,20 @@ class CajaModel extends Model
         $totalGastosHistorico = (float)($movimientosTotal['total_gastos_historico'] ?? 0);
         $totalRetirosHistorico = (float)($movimientosTotal['total_retiros_historico'] ?? 0);
 
-        $gananciasTotales = $ingresosEfectivoHoy + $ingresosOtrosHoy;
-        $efectivoEnCaja = $totalIngresosEfectivo - $totalGastosHistorico - $totalRetirosHistorico; // Acumulativo
+        // Ganancia Real = Ingresos totales - Solo gastos operativos (NO incluye retiros personales)
+        $gananciasReales = $ingresosEfectivoHoy + $ingresosOtrosHoy - $totalGastosHoy;
+        
+        // Efectivo en Caja = Ingresos efectivo - Gastos - Retiros personales (acumulativo)
+        $efectivoEnCaja = $totalIngresosEfectivo - $totalGastosHistorico - $totalRetirosHistorico;
 
         return [
             'ingresos_efectivo' => $ingresosEfectivoHoy,
             'ingresos_otros' => $ingresosOtrosHoy,
-            'ganancias_totales' => $gananciasTotales, // Solo del día
-            'total_gastos' => $totalGastosHoy, // Solo del día
-            'total_retiros' => $totalRetirosHoy, // Solo del día
-            'efectivo_en_caja' => $efectivoEnCaja // Acumulativo histórico
+            'ganancias_totales' => $ingresosEfectivoHoy + $ingresosOtrosHoy, // Total de ingresos del día
+            'ganancias_reales' => $gananciasReales, // Ganancia después de gastos (NO retiros)
+            'total_gastos' => $totalGastosHoy, // Solo gastos operativos del día
+            'total_retiros' => $totalRetirosHoy, // Solo retiros personales del día
+            'efectivo_en_caja' => $efectivoEnCaja // Efectivo físico disponible (acumulativo)
         ];
     }
 
