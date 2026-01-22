@@ -16,13 +16,13 @@ foreach ($productos as $p) {
         'tipo_producto' => $p['tipo_producto'] ?? 'MISC',
         'costo' => isset($p['costo_actual']) ? (float)$p['costo_actual'] : 0,
         'stock_actual' => (int)($p['stock'] ?? 0),
-        'numero_serie' => '', // Inicializar vacío
+        'numero_serie' => '', // Inicializar vacío para búsqueda por serie
     ];
 
-    // ✅ Agregar serie existente si tiene
+    // ✅ Agregar serie existente si tiene (guardada en productos.numero_serie)
     if (isset($series_existentes[$p['id']])) {
         $productoData['serie_actual'] = $series_existentes[$p['id']];
-        $productoData['numero_serie'] = $series_existentes[$p['id']]; // Para búsqueda
+        $productoData['numero_serie'] = $series_existentes[$p['id']];
     }
 
     $productosJs[] = $productoData;
@@ -156,29 +156,6 @@ foreach ($productos as $p) {
         border-radius: 4px;
     }
 
-    .scanner-input {
-        position: relative;
-        margin-bottom: 1.5rem;
-    }
-
-    .scanner-input input {
-        width: 100%;
-        padding: 1rem 1rem 1rem 3rem;
-        border: 2px solid #0a3d91;
-        border-radius: 0.75rem;
-        font-size: 1rem;
-        font-weight: 600;
-    }
-
-    .scanner-input::before {
-        content: '🔍';
-        position: absolute;
-        left: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 1.25rem;
-    }
-
     .productos-table {
         width: 100%;
         border-collapse: collapse;
@@ -259,24 +236,6 @@ foreach ($productos as $p) {
     .btn-remove:hover {
         background: #dc2626;
         transform: scale(1.05);
-    }
-
-    .btn-add-row {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.75rem;
-        font-weight: 600;
-        cursor: pointer;
-        margin-bottom: 1.5rem;
-        transition: all 0.3s;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-
-    .btn-add-row:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
     }
 
     .totales-panel {
@@ -424,12 +383,7 @@ foreach ($productos as $p) {
         border-bottom: none;
     }
 
-    /* Estilos para el input del scanner */
-    .scanner-input {
-        position: relative;
-        margin-bottom: 1.5rem;
-    }
-
+    /* Scanner */
     #productoScanner {
         width: 100%;
         padding: 0.875rem 1rem;
@@ -545,25 +499,6 @@ foreach ($productos as $p) {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
     }
 
-    .fbselect-menu::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .fbselect-menu::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 3px;
-    }
-
-    .fbselect-menu::-webkit-scrollbar-thumb {
-        background: #94a3b8;
-        border-radius: 3px;
-        transition: background .3s ease;
-    }
-
-    .fbselect-menu::-webkit-scrollbar-thumb:hover {
-        background: #64748b;
-    }
-
     /* Alerta emergente para productos con serie */
     .alert-serie {
         position: relative;
@@ -579,18 +514,10 @@ foreach ($productos as $p) {
         animation: slideDown 0.3s ease-out;
     }
 
-    .alert-serie.show {
-        display: flex;
-    }
+    .alert-serie.show { display: flex; }
 
-    .alert-serie-icon {
-        font-size: 1.8rem;
-        flex-shrink: 0;
-    }
-
-    .alert-serie-content {
-        flex: 1;
-    }
+    .alert-serie-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .alert-serie-content { flex: 1; }
 
     .alert-serie-title {
         font-weight: 700;
@@ -623,43 +550,28 @@ foreach ($productos as $p) {
         transition: background 0.2s;
     }
 
-    .alert-serie-close:hover {
-        background: rgba(255, 255, 255, 0.5);
-    }
+    .alert-serie-close:hover { background: rgba(255, 255, 255, 0.5); }
 
     @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Modal para ingresar series */
+    /* Modal para ingresar serie (única) */
     .modal-overlay {
         display: none;
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0, 0, 0, 0.5);
         z-index: 9998;
         animation: fadeIn 0.3s ease-out;
     }
-
-    .modal-overlay.show {
-        display: block;
-    }
+    .modal-overlay.show { display: block; }
 
     .modal-series {
         display: none;
         position: fixed;
-        top: 50%;
-        left: 50%;
+        top: 50%; left: 50%;
         transform: translate(-50%, -50%) scale(0.9);
         background: white;
         border-radius: 1.5rem;
@@ -672,7 +584,6 @@ foreach ($productos as $p) {
         opacity: 0;
         transition: all 0.3s ease-out;
     }
-
     .modal-series.show {
         display: flex;
         flex-direction: column;
@@ -688,12 +599,7 @@ foreach ($productos as $p) {
         justify-content: space-between;
         align-items: center;
     }
-
-    .modal-header h3 {
-        margin: 0;
-        font-size: 1.25rem;
-        font-weight: 700;
-    }
+    .modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 700; }
 
     .modal-close {
         background: rgba(255, 255, 255, 0.2);
@@ -709,10 +615,7 @@ foreach ($productos as $p) {
         justify-content: center;
         transition: background 0.2s;
     }
-
-    .modal-close:hover {
-        background: rgba(255, 255, 255, 0.3);
-    }
+    .modal-close:hover { background: rgba(255, 255, 255, 0.3); }
 
     .modal-body {
         padding: 1.5rem;
@@ -720,9 +623,7 @@ foreach ($productos as $p) {
         flex: 1;
     }
 
-    .series-input-group {
-        margin-bottom: 1rem;
-    }
+    .series-input-group { margin-bottom: 1rem; }
 
     .series-input-label {
         display: block;
@@ -766,10 +667,7 @@ foreach ($productos as $p) {
         cursor: pointer;
         transition: all 0.2s;
     }
-
-    .btn-modal-cancel:hover {
-        background: #cbd5e1;
-    }
+    .btn-modal-cancel:hover { background: #cbd5e1; }
 
     .btn-modal-save {
         background: linear-gradient(135deg, #0a3d91 0%, #1565c0 100%);
@@ -782,27 +680,12 @@ foreach ($productos as $p) {
         transition: all 0.2s;
         box-shadow: 0 4px 12px rgba(10, 61, 145, 0.3);
     }
-
     .btn-modal-save:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(10, 61, 145, 0.4);
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    @keyframes scaleIn {
-        from {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.9);
-        }
-        to {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
-    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 
 <div class="compras-container">
@@ -827,7 +710,7 @@ foreach ($productos as $p) {
     </div>
 
     <div class="form-container">
-        <?php if ($errors): ?>
+        <?php if (!empty($errors)): ?>
             <div class="alert-errors">
                 <strong>⚠️ Errores encontrados:</strong>
                 <ul>
@@ -848,11 +731,11 @@ foreach ($productos as $p) {
                             placeholder="Buscar proveedor..."
                             class="fbselect-input"
                             autocomplete="off">
-                        <input type="hidden" name="proveedor_id" value="<?= $old['proveedor_id'] ?? '' ?>">
+                        <input type="hidden" name="proveedor_id" value="<?= htmlspecialchars($old['proveedor_id'] ?? '') ?>">
                         <div class="fbselect-menu">
                             <?php foreach ($proveedores as $prov): ?>
                                 <div class="fbselect-item"
-                                    data-value="<?= $prov['id'] ?>"
+                                    data-value="<?= (int)$prov['id'] ?>"
                                     data-search="<?= strtolower($prov['nombre'] . ' ' . $prov['nit']) ?>">
                                     <?= htmlspecialchars($prov['nombre']) ?> (<?= htmlspecialchars($prov['nit']) ?>)
                                 </div>
@@ -954,16 +837,14 @@ foreach ($productos as $p) {
     </div>
 </div>
 
-<!-- Modal para ingresar series -->
+<!-- Modal para ingresar serie única -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalSeries()"></div>
 <div class="modal-series" id="modalSeries">
     <div class="modal-header">
         <h3>📦 Número de Serie del Producto</h3>
         <button type="button" class="modal-close" onclick="closeModalSeries()">×</button>
     </div>
-    <div class="modal-body" id="modalSeriesBody">
-        <!-- Un solo input para la serie única del producto -->
-    </div>
+    <div class="modal-body" id="modalSeriesBody"></div>
     <div class="modal-footer">
         <button type="button" class="btn-modal-cancel" onclick="closeModalSeries()">Cancelar</button>
         <button type="button" class="btn-modal-save" onclick="saveSeriesModal()">Guardar Serie</button>
@@ -971,9 +852,9 @@ foreach ($productos as $p) {
 </div>
 
 <!-- JavaScript del módulo -->
-<script src="<?= url('/assets/js/facebook-selectors.js') ?>"></script>
+<script src="<?= url('/assets/js/facebook-selectors.js?v=' . time()) ?>"></script>
 <script>
-    const PRODUCTOS = <?= json_encode($productosJs) ?>;
+    const PRODUCTOS = <?= json_encode($productosJs, JSON_UNESCAPED_UNICODE) ?>;
     let productosEnCompra = [];
     let currentProductoIndex = null;
 
@@ -1017,31 +898,26 @@ foreach ($productos as $p) {
         }, 1600);
     }
 
-    // Función para mostrar alerta de serie
+    // Alerta de serie detectada
     function showAlertSerie(producto) {
         const alert = document.getElementById('alertSerie');
         document.getElementById('alertSerieProducto').textContent = producto.nombre;
         document.getElementById('alertSerieSku').textContent = producto.sku;
         alert.classList.add('show');
 
-        // Auto ocultar después de 5 segundos
-        setTimeout(() => {
-            closeAlertSerie();
-        }, 5000);
+        setTimeout(() => closeAlertSerie(), 5000);
     }
 
     function closeAlertSerie() {
         document.getElementById('alertSerie').classList.remove('show');
     }
 
-    // Función para abrir modal de series
+    // Modal de serie única
     function openModalSeries(index) {
         const producto = productosEnCompra[index];
         currentProductoIndex = index;
 
         const modalBody = document.getElementById('modalSeriesBody');
-
-        // ✅ Solo un input para la serie única del producto
         const serieActual = producto.serie || '';
 
         modalBody.innerHTML = `
@@ -1050,11 +926,11 @@ foreach ($productos as $p) {
                 <input type="text"
                        class="series-input"
                        id="serie_unica"
-                       value="${serieActual}"
-                       placeholder="Ingrese el número de serie (todas las unidades comparten esta serie)"
+                       value="${serieActual.replace(/"/g, '&quot;')}"
+                       placeholder="Ingrese el número de serie"
                        autocomplete="off">
                 <small style="color: #666; font-size: 0.85rem; margin-top: 8px; display: block;">
-                    📝 Este número de serie aplica a todas las ${Math.floor(producto.cantidad)} unidades del producto
+                    📝 Este número de serie se guardará para este producto.
                 </small>
             </div>
         `;
@@ -1062,10 +938,7 @@ foreach ($productos as $p) {
         document.getElementById('modalOverlay').classList.add('show');
         document.getElementById('modalSeries').classList.add('show');
 
-        // Focus en el input
-        setTimeout(() => {
-            document.getElementById('serie_unica')?.focus();
-        }, 100);
+        setTimeout(() => document.getElementById('serie_unica')?.focus(), 100);
     }
 
     function closeModalSeries() {
@@ -1076,32 +949,30 @@ foreach ($productos as $p) {
 
     function saveSeriesModal() {
         if (currentProductoIndex === null) return;
-
         const producto = productosEnCompra[currentProductoIndex];
         const input = document.getElementById('serie_unica');
         const serie = input?.value.trim() || '';
 
-        // ✅ Guardar la serie única (puede estar vacía)
-        producto.serie = serie;
+        producto.serie = serie; // ✅ string único
 
         closeModalSeries();
         renderizarTabla();
     }
 
-    // Función para buscar productos
+    // Buscar productos
     function buscarProducto(query) {
-        query = query.toLowerCase().trim();
+        query = (query || '').toLowerCase().trim();
         if (!query) return [];
 
         return PRODUCTOS.filter(p =>
-            p.nombre.toLowerCase().includes(query) ||
-            p.sku.toLowerCase().includes(query) ||
-            p.codigo_barra.toLowerCase().includes(query) ||
-            (p.numero_serie && p.numero_serie.toLowerCase().includes(query))
+            (p.nombre || '').toLowerCase().includes(query) ||
+            (p.sku || '').toLowerCase().includes(query) ||
+            (p.codigo_barra || '').toLowerCase().includes(query) ||
+            (p.numero_serie && (p.numero_serie || '').toLowerCase().includes(query))
         ).slice(0, 10);
     }
 
-    // ====== FUNCIONES PARA BÚSQUEDA MANUAL ======
+    // ====== BÚSQUEDA MANUAL ======
     function buscarProductos() {
         const buscarProductoInput = document.getElementById('buscarProducto');
         const resultadosProductosDiv = document.getElementById('resultadosProductos');
@@ -1126,9 +997,7 @@ foreach ($productos as $p) {
         let html = '';
         resultados.forEach(producto => {
             let infoExtra = `SKU: ${producto.sku} | Stock: ${producto.stock_actual}`;
-            if (producto.numero_serie) {
-                infoExtra += ` | Serie: ${producto.numero_serie}`;
-            }
+            if (producto.numero_serie) infoExtra += ` | Serie: ${producto.numero_serie}`;
             html += `
                 <div class="autocomplete-item" onclick="seleccionarProductoManual(${producto.id})" style="cursor: pointer;">
                     <div class="producto-nombre">${producto.nombre}</div>
@@ -1157,9 +1026,8 @@ foreach ($productos as $p) {
         const resultadosProductosDiv = document.getElementById('resultadosProductos');
         if (!buscarProductoInput || !resultadosProductosDiv) return;
 
-        if (buscarProductoInput.value) {
-            buscarProductos();
-        } else {
+        if (buscarProductoInput.value) buscarProductos();
+        else {
             resultadosProductosDiv.innerHTML = '<div style="padding: 1rem; color: #6c757d; text-align: center;">Escribe para buscar...</div>';
             resultadosProductosDiv.style.display = 'block';
         }
@@ -1169,29 +1037,26 @@ foreach ($productos as $p) {
         const resultadosProductosDiv = document.getElementById('resultadosProductos');
         if (resultadosProductosDiv) resultadosProductosDiv.style.display = 'none';
     }
-    // ====== FIN FUNCIONES BÚSQUEDA MANUAL ======
+    // ====== FIN BÚSQUEDA MANUAL ======
 
-    // Autocompletado y búsqueda por scanner
+    // Autocompletado scanner
     const scanner = document.getElementById('productoScanner');
     const dropdown = document.getElementById('autocompleteDropdown');
     let processingScan = false;
 
-    // Event listener para búsqueda en tiempo real (autocomplete)
     scanner.addEventListener('input', function() {
         const resultados = buscarProducto(this.value);
 
         if (resultados.length > 0) {
             dropdown.innerHTML = resultados.map(p => {
                 let infoExtra = `SKU: ${p.sku} | Stock: ${p.stock_actual}`;
-                if (p.numero_serie) {
-                    infoExtra += ` | Serie: ${p.numero_serie}`;
-                }
+                if (p.numero_serie) infoExtra += ` | Serie: ${p.numero_serie}`;
                 return `
-                <div class="autocomplete-item" data-id="${p.id}">
-                    <div class="producto-nombre">${p.nombre}</div>
-                    <div class="producto-sku">${infoExtra}</div>
-                </div>
-            `;
+                    <div class="autocomplete-item" data-id="${p.id}">
+                        <div class="producto-nombre">${p.nombre}</div>
+                        <div class="producto-sku">${infoExtra}</div>
+                    </div>
+                `;
             }).join('');
             dropdown.style.display = 'block';
         } else {
@@ -1199,7 +1064,6 @@ foreach ($productos as $p) {
         }
     });
 
-    // Event listener para scanner (Enter o Tab)
     scanner.addEventListener('keydown', function(e) {
         if ((e.key === 'Enter' || e.key === 'Tab') && !e.repeat) {
             e.preventDefault();
@@ -1210,7 +1074,6 @@ foreach ($productos as $p) {
 
             processingScan = true;
 
-            // Buscar producto por SKU, código de barra o serie
             const producto = PRODUCTOS.find(p =>
                 p.sku === code ||
                 p.codigo_barra === code ||
@@ -1223,7 +1086,6 @@ foreach ($productos as $p) {
                 dropdown.style.display = 'none';
                 showToast('success', '✅ Producto agregado');
             } else {
-                // Mostrar mensaje de no encontrado
                 dropdown.innerHTML = '<div style="padding: 1rem; color: #dc3545; text-align: center;">⚠️ Producto no encontrado</div>';
                 dropdown.style.display = 'block';
                 showToast('error', '❌ Producto no encontrado');
@@ -1241,7 +1103,7 @@ foreach ($productos as $p) {
     dropdown.addEventListener('click', function(e) {
         const item = e.target.closest('.autocomplete-item');
         if (item) {
-            const productoId = parseInt(item.dataset.id);
+            const productoId = parseInt(item.dataset.id, 10);
             const producto = PRODUCTOS.find(p => p.id === productoId);
             if (producto) {
                 agregarProducto(producto);
@@ -1251,7 +1113,6 @@ foreach ($productos as $p) {
         }
     });
 
-    // Cerrar dropdown al hacer clic fuera
     document.addEventListener('click', function(e) {
         if (!scanner.contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.style.display = 'none';
@@ -1259,7 +1120,6 @@ foreach ($productos as $p) {
     });
 
     function agregarProducto(producto) {
-        // Verificar si ya existe
         const existe = productosEnCompra.find(p => p.id === producto.id);
         if (existe) {
             existe.cantidad += 1;
@@ -1272,13 +1132,13 @@ foreach ($productos as $p) {
                 tipo_producto: producto.tipo_producto || 'MISC',
                 cantidad: 1,
                 costo_unitario: producto.costo || 0,
-                descuento: 0
+                descuento: 0,
+                serie: '' // ✅ string único
             };
 
             // ✅ Si aplica serie, cargar la serie existente o inicializar vacía
             if (nuevoProducto.tipo_producto === 'UNIDAD') {
                 nuevoProducto.serie = producto.serie_actual || '';
-                // Mostrar alerta de que es un producto con serie
                 showAlertSerie(nuevoProducto);
             }
 
@@ -1294,10 +1154,8 @@ foreach ($productos as $p) {
 
     function actualizarCantidad(index, valor) {
         const producto = productosEnCompra[index];
-        const nuevaCantidad = parseFloat(valor) || 0;
-        producto.cantidad = nuevaCantidad;
+        producto.cantidad = parseFloat(valor) || 0;
         renderizarTabla();
-        calcularTotales();
     }
 
     function actualizarCosto(index, valor) {
@@ -1322,34 +1180,24 @@ foreach ($productos as $p) {
         tbody.innerHTML = productosEnCompra.map((p, index) => {
             const subtotal = (p.cantidad * p.costo_unitario) - p.descuento;
 
-            // Indicador de series completadas
-            let seriesStatus = '';
-            if (p.tipo_producto === 'UNIDAD' && p.series) {
-                const seriesCompletas = p.series.filter(s => s.trim() !== '').length;
-                const totalSeries = Math.floor(p.cantidad);
-                const porcentaje = totalSeries > 0 ? (seriesCompletas / totalSeries * 100) : 0;
+            // ✅ Indicador de serie única (no array)
+            let serieStatus = '';
+            if (p.tipo_producto === 'UNIDAD') {
+                const filled = (p.serie && p.serie.trim() !== '');
+                const statusColor = filled ? '#10b981' : '#ef4444';
+                const statusText = filled ? 'Completa' : 'Pendiente';
 
-                let statusColor = '#ef4444'; // rojo
-                let statusText = 'Pendiente';
-                if (porcentaje === 100) {
-                    statusColor = '#10b981'; // verde
-                    statusText = 'Completo';
-                } else if (porcentaje > 0) {
-                    statusColor = '#f59e0b'; // amarillo
-                    statusText = 'Parcial';
-                }
-
-                seriesStatus = `
+                serieStatus = `
                     <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                         <span style="background: ${statusColor}; color: white; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">
-                            📋 Series: ${seriesCompletas}/${totalSeries} ${statusText}
+                            📋 Serie: ${statusText}
                         </span>
                         <button type="button"
                                 onclick="openModalSeries(${index})"
                                 style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: all 0.2s;"
                                 onmouseover="this.style.transform='scale(1.05)'"
                                 onmouseout="this.style.transform='scale(1)'">
-                            ✏️ Editar Series
+                            ✏️ Editar Serie
                         </button>
                     </div>
                 `;
@@ -1366,7 +1214,7 @@ foreach ($productos as $p) {
                             </div>
                             <div class="producto-sku">SKU: ${p.sku}</div>
                             <span class="stock-badge">Stock actual: ${p.stock_actual}</span>
-                            ${seriesStatus}
+                            ${serieStatus}
                         </div>
                     </div>
                 </td>
@@ -1376,12 +1224,12 @@ foreach ($productos as $p) {
                            style="text-align: center; font-weight: 600;">
                 </td>
                 <td>
-                    <input type="number" step="0.01" min="0" value="${p.costo_unitario.toFixed(2)}"
+                    <input type="number" step="0.01" min="0" value="${(parseFloat(p.costo_unitario) || 0).toFixed(2)}"
                            onchange="actualizarCosto(${index}, this.value)"
                            style="text-align: right;">
                 </td>
                 <td>
-                    <input type="number" step="0.01" min="0" value="${p.descuento.toFixed(2)}"
+                    <input type="number" step="0.01" min="0" value="${(parseFloat(p.descuento) || 0).toFixed(2)}"
                            onchange="actualizarDescuento(${index}, this.value)"
                            style="text-align: right;">
                 </td>
@@ -1398,17 +1246,13 @@ foreach ($productos as $p) {
         calcularTotales();
     }
 
-    function actualizarSerie(productoIndex, serieIndex, valor) {
-        productosEnCompra[productoIndex].series[serieIndex] = valor.trim();
-    }
-
     function calcularTotales() {
         let totalBruto = 0;
         let totalDescuento = 0;
 
         productosEnCompra.forEach(p => {
-            totalBruto += p.cantidad * p.costo_unitario;
-            totalDescuento += p.descuento;
+            totalBruto += (parseFloat(p.cantidad) || 0) * (parseFloat(p.costo_unitario) || 0);
+            totalDescuento += (parseFloat(p.descuento) || 0);
         });
 
         const totalNeto = totalBruto - totalDescuento;
@@ -1418,24 +1262,53 @@ foreach ($productos as $p) {
         document.getElementById('totalNetoView').textContent = 'Q ' + totalNeto.toFixed(2);
     }
 
-    // Submit del formulario
+    // ✅ Submit robusto: NO deje enviar si proveedor_id vacío
     document.getElementById('formCompra').addEventListener('submit', function(e) {
-        // Filtrar solo productos válidos
-        const productosValidos = productosEnCompra.filter(p => p.cantidad > 0);
+        const proveedorHidden = document.querySelector('input[name="proveedor_id"]');
+        const proveedorText = document.querySelector('.fbselect[data-name="proveedor_id"] .fbselect-input');
 
+        // 1) Validar proveedor
+        if (!proveedorHidden || !proveedorHidden.value || parseInt(proveedorHidden.value, 10) <= 0) {
+            e.preventDefault();
+
+            // Auto-match si el texto coincide exacto con un item
+            const selector = document.querySelector('.fbselect[data-name="proveedor_id"]');
+            if (selector && proveedorText) {
+                const items = selector.querySelectorAll('.fbselect-item');
+                const typed = (proveedorText.value || '').trim().toLowerCase();
+
+                let matched = null;
+                items.forEach(it => {
+                    if (it.textContent.trim().toLowerCase() === typed) matched = it;
+                });
+
+                if (matched) {
+                    proveedorHidden.value = matched.dataset.value;
+                }
+            }
+
+            if (!proveedorHidden.value || parseInt(proveedorHidden.value, 10) <= 0) {
+                showToast('error', '⚠️ Seleccione un proveedor válido antes de guardar.');
+                proveedorText?.focus();
+                return;
+            }
+        }
+
+        // 2) Validar productos
+        const productosValidos = productosEnCompra.filter(p => (parseFloat(p.cantidad) || 0) > 0);
         if (productosValidos.length === 0) {
             e.preventDefault();
-            alert('Debe agregar al menos un producto con cantidad mayor a 0');
+            showToast('error', '⚠️ Agregue al menos un producto con cantidad > 0.');
             return;
         }
 
-        // Convertir a JSON para enviar (la serie es opcional)
+        // 3) Enviar JSON (serie opcional)
         document.getElementById('productosJson').value = JSON.stringify(productosValidos);
     });
 
-    // Inicializar con tabla vacía
+    // Inicializar
     renderizarTabla();
 
-    // Focus en el scanner al cargar
-    scanner.focus();
+    // Focus scanner
+    scanner?.focus();
 </script>
