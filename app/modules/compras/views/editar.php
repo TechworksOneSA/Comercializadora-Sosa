@@ -609,12 +609,31 @@ foreach ($detalles as $det) {
 
                 <div class="section-title">📋 Productos de la Compra</div>
 
-                <!-- Buscador/Scanner -->
-                <div class="scanner-input">
+                <!-- Búsqueda Manual -->
+                <div style="position: relative; margin-bottom: 1rem;">
+                    <label class="form-label" style="margin-bottom: 0.5rem; display: block; font-weight: 600; color: #1e293b;">
+                        🔍 Buscar Producto por Nombre
+                    </label>
+                    <input type="text" id="buscarProducto"
+                        placeholder="🔍 Buscar por nombre"
+                        autocomplete="off"
+                        style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #0a3d91; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
+                        onfocus="this.style.borderColor='#0a3d91'; mostrarResultadosProductos()"
+                        onblur="setTimeout(() => ocultarResultadosProductos(), 200)"
+                        oninput="buscarProductos()">
+                    <div class="autocomplete-dropdown" id="resultadosProductos" style="display: none;"></div>
+                </div>
+
+                <!-- Scanner -->
+                <div style="margin-bottom: 1.5rem; position: relative;">
+                    <label class="form-label" style="margin-bottom: 0.5rem; display: block; font-weight: 600; color: #1e293b;">
+                        📷 Escanear Serie / Código de Barra / SKU
+                    </label>
                     <input type="text" id="productoScanner"
-                        placeholder="Escanee código de barras o busque por nombre/SKU del producto..."
-                        autocomplete="off">
-                    <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+                        placeholder="Escanear serie / código de barra / SKU y presione Enter"
+                        autocomplete="off"
+                        style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #0a3d91; border-radius: 0.5rem; font-size: 0.95rem; margin: 0 0 1rem; background: white;">
+                    <div class="autocomplete-dropdown" id="autocompleteDropdown" style="display: none;"></div>
                 </div>
 
                 <!-- Tabla de productos -->
@@ -678,6 +697,72 @@ foreach ($detalles as $det) {
             p.codigo_barra.toLowerCase().includes(query)
         ).slice(0, 10);
     }
+
+    // ====== FUNCIONES PARA BÚSQUEDA MANUAL ======
+    function buscarProductos() {
+        const buscarProductoInput = document.getElementById('buscarProducto');
+        const resultadosProductosDiv = document.getElementById('resultadosProductos');
+        if (!buscarProductoInput || !resultadosProductosDiv) return;
+
+        const termino = (buscarProductoInput.value || '').toLowerCase().trim();
+
+        if (!termino) {
+            resultadosProductosDiv.innerHTML = '<div style="padding: 1rem; color: #6c757d; text-align: center;">Escribe para buscar...</div>';
+            resultadosProductosDiv.style.display = 'block';
+            return;
+        }
+
+        const resultados = buscarProducto(termino);
+
+        if (resultados.length === 0) {
+            resultadosProductosDiv.innerHTML = '<div style="padding: 1rem; color: #6c757d; text-align: center;">No se encontraron productos</div>';
+            resultadosProductosDiv.style.display = 'block';
+            return;
+        }
+
+        let html = '';
+        resultados.forEach(producto => {
+            html += `
+                <div class="autocomplete-item" onclick="seleccionarProductoManual(${producto.id})" style="cursor: pointer;">
+                    <div class="producto-nombre">${producto.nombre}</div>
+                    <div class="producto-sku">SKU: ${producto.sku} | Stock: ${producto.stock_actual}</div>
+                </div>
+            `;
+        });
+
+        resultadosProductosDiv.innerHTML = html;
+        resultadosProductosDiv.style.display = 'block';
+    }
+
+    function seleccionarProductoManual(productoId) {
+        const producto = PRODUCTOS.find(p => p.id === productoId);
+        if (producto) {
+            agregarProducto(producto);
+            const buscarProductoInput = document.getElementById('buscarProducto');
+            const resultadosProductosDiv = document.getElementById('resultadosProductos');
+            if (buscarProductoInput) buscarProductoInput.value = '';
+            if (resultadosProductosDiv) resultadosProductosDiv.style.display = 'none';
+        }
+    }
+
+    function mostrarResultadosProductos() {
+        const buscarProductoInput = document.getElementById('buscarProducto');
+        const resultadosProductosDiv = document.getElementById('resultadosProductos');
+        if (!buscarProductoInput || !resultadosProductosDiv) return;
+
+        if (buscarProductoInput.value) {
+            buscarProductos();
+        } else {
+            resultadosProductosDiv.innerHTML = '<div style="padding: 1rem; color: #6c757d; text-align: center;">Escribe para buscar...</div>';
+            resultadosProductosDiv.style.display = 'block';
+        }
+    }
+
+    function ocultarResultadosProductos() {
+        const resultadosProductosDiv = document.getElementById('resultadosProductos');
+        if (resultadosProductosDiv) resultadosProductosDiv.style.display = 'none';
+    }
+    // ====== FIN FUNCIONES BÚSQUEDA MANUAL ======
 
     // Autocompletado
     const scanner = document.getElementById('productoScanner');

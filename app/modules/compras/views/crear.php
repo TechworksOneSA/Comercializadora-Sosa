@@ -884,16 +884,31 @@ foreach ($productos as $p) {
 
             <div class="section-title">📋 Productos de la Compra</div>
 
-            <!-- Buscador/Scanner -->
-            <div class="scanner-input" style="margin-bottom: 1.5rem;">
+            <!-- Búsqueda Manual -->
+            <div style="position: relative; margin-bottom: 1rem;">
                 <label class="form-label" style="margin-bottom: 0.5rem; display: block; font-weight: 600; color: #1e293b;">
-                    🔍 Buscar Producto por Serie / Código de Barras / SKU / Nombre
+                    🔍 Buscar Producto por Nombre
+                </label>
+                <input type="text" id="buscarProducto"
+                    placeholder="🔍 Buscar por nombre"
+                    autocomplete="off"
+                    style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #0a3d91; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
+                    onfocus="this.style.borderColor='#0a3d91'; mostrarResultadosProductos()"
+                    onblur="setTimeout(() => ocultarResultadosProductos(), 200)"
+                    oninput="buscarProductos()">
+                <div class="autocomplete-dropdown" id="resultadosProductos" style="display: none;"></div>
+            </div>
+
+            <!-- Scanner -->
+            <div style="margin-bottom: 1.5rem; position: relative;">
+                <label class="form-label" style="margin-bottom: 0.5rem; display: block; font-weight: 600; color: #1e293b;">
+                    📷 Escanear Serie / Código de Barra / SKU
                 </label>
                 <input type="text" id="productoScanner"
-                    placeholder="Escanee código de barras, serie, SKU o escriba el nombre del producto..."
+                    placeholder="Escanear serie / código de barra / SKU y presione Enter"
                     autocomplete="off"
-                    style="width: 100%; padding: 0.875rem 1rem; border: 2px solid #0a3d91; border-radius: 0.75rem; font-size: 0.95rem; background: #fff; transition: all 0.3s;">
-                <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+                    style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #0a3d91; border-radius: 0.5rem; font-size: 0.95rem; margin: 0 0 1rem; background: white;">
+                <div class="autocomplete-dropdown" id="autocompleteDropdown" style="display: none;"></div>
             </div>
 
             <!-- Tabla de productos -->
@@ -1086,6 +1101,76 @@ foreach ($productos as $p) {
         ).slice(0, 10);
     }
 
+    // ====== FUNCIONES PARA BÚSQUEDA MANUAL ======
+    function buscarProductos() {
+        const buscarProductoInput = document.getElementById('buscarProducto');
+        const resultadosProductosDiv = document.getElementById('resultadosProductos');
+        if (!buscarProductoInput || !resultadosProductosDiv) return;
+
+        const termino = (buscarProductoInput.value || '').toLowerCase().trim();
+
+        if (!termino) {
+            resultadosProductosDiv.innerHTML = '<div style="padding: 1rem; color: #6c757d; text-align: center;">Escribe para buscar...</div>';
+            resultadosProductosDiv.style.display = 'block';
+            return;
+        }
+
+        const resultados = buscarProducto(termino);
+
+        if (resultados.length === 0) {
+            resultadosProductosDiv.innerHTML = '<div style="padding: 1rem; color: #6c757d; text-align: center;">No se encontraron productos</div>';
+            resultadosProductosDiv.style.display = 'block';
+            return;
+        }
+
+        let html = '';
+        resultados.forEach(producto => {
+            let infoExtra = `SKU: ${producto.sku} | Stock: ${producto.stock_actual}`;
+            if (producto.numero_serie) {
+                infoExtra += ` | Serie: ${producto.numero_serie}`;
+            }
+            html += `
+                <div class="autocomplete-item" onclick="seleccionarProductoManual(${producto.id})" style="cursor: pointer;">
+                    <div class="producto-nombre">${producto.nombre}</div>
+                    <div class="producto-sku">${infoExtra}</div>
+                </div>
+            `;
+        });
+
+        resultadosProductosDiv.innerHTML = html;
+        resultadosProductosDiv.style.display = 'block';
+    }
+
+    function seleccionarProductoManual(productoId) {
+        const producto = PRODUCTOS.find(p => p.id === productoId);
+        if (producto) {
+            agregarProducto(producto);
+            const buscarProductoInput = document.getElementById('buscarProducto');
+            const resultadosProductosDiv = document.getElementById('resultadosProductos');
+            if (buscarProductoInput) buscarProductoInput.value = '';
+            if (resultadosProductosDiv) resultadosProductosDiv.style.display = 'none';
+        }
+    }
+
+    function mostrarResultadosProductos() {
+        const buscarProductoInput = document.getElementById('buscarProducto');
+        const resultadosProductosDiv = document.getElementById('resultadosProductos');
+        if (!buscarProductoInput || !resultadosProductosDiv) return;
+
+        if (buscarProductoInput.value) {
+            buscarProductos();
+        } else {
+            resultadosProductosDiv.innerHTML = '<div style="padding: 1rem; color: #6c757d; text-align: center;">Escribe para buscar...</div>';
+            resultadosProductosDiv.style.display = 'block';
+        }
+    }
+
+    function ocultarResultadosProductos() {
+        const resultadosProductosDiv = document.getElementById('resultadosProductos');
+        if (resultadosProductosDiv) resultadosProductosDiv.style.display = 'none';
+    }
+    // ====== FIN FUNCIONES BÚSQUEDA MANUAL ======
+
     // Autocompletado y búsqueda por scanner
     const scanner = document.getElementById('productoScanner');
     const dropdown = document.getElementById('autocompleteDropdown');
@@ -1114,7 +1199,7 @@ foreach ($productos as $p) {
         }
     });
 
-    // Event listener para scanner (Enter o Tab) - Igual que ventas
+    // Event listener para scanner (Enter o Tab)
     scanner.addEventListener('keydown', function(e) {
         if ((e.key === 'Enter' || e.key === 'Tab') && !e.repeat) {
             e.preventDefault();
@@ -1125,17 +1210,15 @@ foreach ($productos as $p) {
 
             processingScan = true;
 
-            // 🔍 Búsqueda LOCAL (igual que ventas)
+            // Primero buscar localmente
             const productoLocal = PRODUCTOS.find(p =>
-                p.sku.toLowerCase() === code.toLowerCase() ||
-                p.codigo_barra.toLowerCase() === code.toLowerCase() ||
-                (p.numero_serie && p.numero_serie.toLowerCase() === code.toLowerCase()) ||
-                p.nombre.toLowerCase() === code.toLowerCase()
+                p.sku === code ||
+                p.codigo_barra === code ||
+                p.numero_serie === code
             );
 
             if (productoLocal) {
                 agregarProducto(productoLocal);
-                showToast('success', `✅ ${productoLocal.nombre}`);
                 scanner.value = '';
                 dropdown.style.display = 'none';
                 processingScan = false;
@@ -1143,7 +1226,7 @@ foreach ($productos as $p) {
                 return;
             }
 
-            // 🌐 Búsqueda en API (igual que ventas)
+            // Si no se encuentra localmente, buscar en la API
             fetch('<?= url("/admin/productos/api/buscar_por_scan") ?>', {
                 method: 'POST',
                 credentials: 'same-origin',
@@ -1153,27 +1236,25 @@ foreach ($productos as $p) {
             .then(r => r.json())
             .then(data => {
                 if (data && data.success && data.producto) {
+                    // Convertir el producto de la API al formato local
                     const producto = {
                         id: data.producto.id,
                         nombre: data.producto.nombre,
                         sku: data.producto.sku || '',
                         codigo_barra: data.producto.codigo_barra || '',
                         stock_actual: data.producto.stock || 0,
-                        tipo_producto: data.producto.tipo_producto || (data.producto.requiere_serie ? 'UNIDAD' : 'MISC'),
-                        costo: data.producto.costo_actual || data.producto.precio_venta || 0,
-                        numero_serie: data.producto.numero_serie || ''
+                        tipo_producto: data.producto.requiere_serie ? 'UNIDAD' : 'MISC',
+                        costo: data.producto.precio_venta || 0, // usar precio de venta como referencia
+                        numero_serie: code // guardar el código escaneado si es una serie
                     };
                     
                     agregarProducto(producto);
-                    showToast('success', `✅ ${producto.nombre}`);
+                    showToast('success', '✅ Producto agregado');
                 } else {
-                    showToast('error', '❌ Producto no encontrado');
+                    showToast('error', '❌ ' + ((data && data.message) ? data.message : 'No encontrado'));
                 }
             })
-            .catch(err => {
-                console.error('Error API:', err);
-                showToast('error', '❌ Error de conexión');
-            })
+            .catch(() => showToast('error', '❌ Error de red'))
             .finally(() => {
                 scanner.value = '';
                 dropdown.style.display = 'none';
