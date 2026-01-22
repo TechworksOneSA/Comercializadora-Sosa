@@ -60,7 +60,8 @@ class DashboardVendedorModel extends Model
         $sql = "SELECT
                     COALESCE(SUM(CASE
                         WHEN tipo = 'ingreso' AND metodo_pago = 'Efectivo' THEN monto
-                        WHEN tipo IN ('gasto', 'retiro') THEN -monto
+                        WHEN tipo = 'gasto' AND metodo_pago = 'Efectivo' THEN -monto
+                        WHEN tipo = 'retiro' AND metodo_pago = 'Efectivo' THEN -monto
                         ELSE 0
                     END), 0) as efectivo_caja
                 FROM movimientos_caja";

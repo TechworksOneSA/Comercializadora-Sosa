@@ -122,11 +122,12 @@ class CajaModel extends Model
     public function obtenerResumenCaja(): array
     {
         // Movimientos de caja registrados hoy (para KPIs diarios)
+        // Solo gastos y retiros en EFECTIVO afectan la caja
         $sqlMovimientosHoy = "SELECT
                     COALESCE(SUM(CASE WHEN tipo = 'ingreso' AND metodo_pago = 'Efectivo' THEN monto ELSE 0 END), 0) as ingresos_efectivo,
                     COALESCE(SUM(CASE WHEN tipo = 'ingreso' AND metodo_pago != 'Efectivo' THEN monto ELSE 0 END), 0) as ingresos_otros,
-                    COALESCE(SUM(CASE WHEN tipo = 'gasto' THEN monto ELSE 0 END), 0) as total_gastos,
-                    COALESCE(SUM(CASE WHEN tipo = 'retiro' THEN monto ELSE 0 END), 0) as total_retiros
+                    COALESCE(SUM(CASE WHEN tipo = 'gasto' AND metodo_pago = 'Efectivo' THEN monto ELSE 0 END), 0) as total_gastos,
+                    COALESCE(SUM(CASE WHEN tipo = 'retiro' AND metodo_pago = 'Efectivo' THEN monto ELSE 0 END), 0) as total_retiros
                 FROM movimientos_caja
                 WHERE DATE(fecha) = CURDATE()";
 
@@ -135,10 +136,11 @@ class CajaModel extends Model
         $movimientosHoy = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // Efectivo acumulado histórico (desde el inicio)
+        // Solo gastos y retiros en EFECTIVO se restan del efectivo en caja
         $sqlEfectivoTotal = "SELECT
                     COALESCE(SUM(CASE WHEN tipo = 'ingreso' AND metodo_pago = 'Efectivo' THEN monto ELSE 0 END), 0) as total_ingresos_efectivo,
-                    COALESCE(SUM(CASE WHEN tipo = 'gasto' THEN monto ELSE 0 END), 0) as total_gastos_historico,
-                    COALESCE(SUM(CASE WHEN tipo = 'retiro' THEN monto ELSE 0 END), 0) as total_retiros_historico
+                    COALESCE(SUM(CASE WHEN tipo = 'gasto' AND metodo_pago = 'Efectivo' THEN monto ELSE 0 END), 0) as total_gastos_historico,
+                    COALESCE(SUM(CASE WHEN tipo = 'retiro' AND metodo_pago = 'Efectivo' THEN monto ELSE 0 END), 0) as total_retiros_historico
                 FROM movimientos_caja";
 
         $stmt = $this->db->prepare($sqlEfectivoTotal);

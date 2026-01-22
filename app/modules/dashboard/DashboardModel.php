@@ -42,7 +42,8 @@ class DashboardModel extends Model
         $sql = "SELECT
                     COALESCE(SUM(CASE
                         WHEN tipo = 'ingreso' AND metodo_pago = 'Efectivo' THEN monto
-                        WHEN tipo IN ('gasto', 'retiro') THEN -monto
+                        WHEN tipo = 'gasto' AND metodo_pago = 'Efectivo' THEN -monto
+                        WHEN tipo = 'retiro' AND metodo_pago = 'Efectivo' THEN -monto
                         ELSE 0
                     END), 0) as efectivo_caja
                 FROM movimientos_caja";
@@ -112,11 +113,12 @@ class DashboardModel extends Model
         $stmt->execute();
         $ingresos = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Gastos del día (solo gastos operativos, NO retiros)
+        // Gastos del día (solo gastos operativos en EFECTIVO, NO retiros ni transferencias/cheques)
         $sqlGastos = "SELECT COALESCE(SUM(monto), 0) as gastos
                       FROM movimientos_caja
                       WHERE DATE(fecha) = CURDATE()
-                      AND tipo = 'gasto'";
+                      AND tipo = 'gasto'
+                      AND metodo_pago = 'Efectivo'";
 
         $stmt = $this->db->prepare($sqlGastos);
         $stmt->execute();
