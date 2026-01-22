@@ -5,7 +5,7 @@ $efectivoCaja = $efectivoCaja ?? 0;
 $gastosHoy = $gastosHoy ?? ['cantidad_gastos' => 0, 'total_gastos' => 0];
 $retirosHoy = $retirosHoy ?? ['cantidad_retiros' => 0, 'total_retiros' => 0];
 $margenGanancia = $margenGanancia ?? ['ganancia_real' => 0, 'porcentaje_margen' => 0];
-$gananciasMes = $gananciasMes ?? ['ventas_mes' => 0, 'gastos_mes' => 0, 'compras_mes' => 0, 'ganancias_mes' => 0];
+$gananciasMes = $gananciasMes ?? ['ventas_mes' => 0, 'gastos_mes' => 0, 'ganancias_mes' => 0];
 $alertas = $alertas ?? [
   'productos_bajo_stock' => 0,
   'productos_sin_stock' => 0,
@@ -142,8 +142,7 @@ $alertas = $alertas ?? [
         <div class="metric-value">Q <?= number_format($gananciasMes['ganancias_mes'], 2) ?></div>
         <div class="metric-detail">
           Ventas: Q <?= number_format($gananciasMes['ventas_mes'], 2) ?> |
-          Gastos: Q <?= number_format($gananciasMes['gastos_mes'], 2) ?> |
-          Compras: Q <?= number_format($gananciasMes['compras_mes'], 2) ?>
+          Gastos: Q <?= number_format($gananciasMes['gastos_mes'], 2) ?>
         </div>
       </div>
     </div>

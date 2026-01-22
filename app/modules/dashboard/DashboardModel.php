@@ -245,27 +245,15 @@ class DashboardModel extends Model
         $stmt->execute();
         $gastos = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Compras del mes
-        $sqlCompras = "SELECT COALESCE(SUM(total), 0) as compras_mes
-                       FROM compras
-                       WHERE YEAR(fecha) = YEAR(CURDATE())
-                       AND MONTH(fecha) = MONTH(CURDATE())";
-
-        $stmt = $this->db->prepare($sqlCompras);
-        $stmt->execute();
-        $compras = $stmt->fetch(PDO::FETCH_ASSOC);
-
         $ventasMes = (float)($ventas['ventas_mes'] ?? 0);
         $gastosMes = (float)($gastos['gastos_mes'] ?? 0);
-        $comprasMes = (float)($compras['compras_mes'] ?? 0);
 
-        // Ganancias del Mes = Ventas - Gastos - Compras
-        $gananciasMes = $ventasMes - $gastosMes - $comprasMes;
+        // Ganancias del Mes = Ventas - Gastos
+        $gananciasMes = $ventasMes - $gastosMes;
 
         return [
             'ventas_mes' => $ventasMes,
             'gastos_mes' => $gastosMes,
-            'compras_mes' => $comprasMes,
             'ganancias_mes' => $gananciasMes
         ];
     }
