@@ -1114,7 +1114,7 @@ foreach ($productos as $p) {
         }
     });
 
-    // Event listener para scanner (Enter o Tab) - Mejorado
+    // Event listener para scanner (Enter o Tab) - Igual que ventas
     scanner.addEventListener('keydown', function(e) {
         if ((e.key === 'Enter' || e.key === 'Tab') && !e.repeat) {
             e.preventDefault();
@@ -1125,7 +1125,7 @@ foreach ($productos as $p) {
 
             processingScan = true;
 
-            // 🔍 Búsqueda LOCAL mejorada (igual que ventas)
+            // 🔍 Búsqueda LOCAL (igual que ventas)
             const productoLocal = PRODUCTOS.find(p =>
                 p.sku.toLowerCase() === code.toLowerCase() ||
                 p.codigo_barra.toLowerCase() === code.toLowerCase() ||
@@ -1143,8 +1143,8 @@ foreach ($productos as $p) {
                 return;
             }
 
-            // 🌐 Búsqueda en API (fallback)
-            fetch('<?= url("/admin/productos/api/buscar_por_scan") ?>', {
+            // 🌐 Búsqueda en API (igual que ventas)
+            fetch('/admin/productos/api/buscar_por_scan', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -1170,7 +1170,10 @@ foreach ($productos as $p) {
                     showToast('error', '❌ Producto no encontrado');
                 }
             })
-            .catch(() => showToast('error', '❌ Error de conexión'))
+            .catch(err => {
+                console.error('Error API:', err);
+                showToast('error', '❌ Error de conexión');
+            })
             .finally(() => {
                 scanner.value = '';
                 dropdown.style.display = 'none';
