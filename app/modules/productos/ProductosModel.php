@@ -312,7 +312,8 @@ class ProductosModel extends Model
 
     public function listarActivos(): array
     {
-        $sql = "SELECT id, sku, nombre, tipo_producto, precio_venta, stock, imagen_path
+        $sql = "SELECT id, sku, nombre, tipo_producto, codigo_barra, numero_serie, 
+                       precio_venta, costo_actual, stock, imagen_path, requiere_serie
                 FROM productos
                 WHERE estado = 'ACTIVO'
                 ORDER BY nombre ASC";
