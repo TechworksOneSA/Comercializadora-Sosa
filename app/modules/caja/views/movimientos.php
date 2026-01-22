@@ -156,6 +156,119 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         color: #991b1b;
         border-left: 4px solid #ef4444;
     }
+
+    /* Modal de confirmación */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9998;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .modal-overlay.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-confirm {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 450px;
+        width: 90%;
+        overflow: hidden;
+        animation: scaleIn 0.3s ease;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        padding: 1.5rem;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .modal-header-icon {
+        font-size: 2rem;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .modal-body {
+        padding: 2rem 1.5rem;
+        color: #1e293b;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        background: #f8fafc;
+    }
+
+    .btn-modal-cancel {
+        background: #e2e8f0;
+        color: #475569;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-modal-cancel:hover {
+        background: #cbd5e1;
+        transform: translateY(-1px);
+    }
+
+    .btn-modal-confirm {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-modal-confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
 </style>
 
 <div class="movimientos-container">
@@ -238,9 +351,9 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                             </td>
                             <td>
                                 <form method="POST" action="<?= url('/admin/caja/eliminar-movimiento/' . $movimiento['id']) ?>"
-                                    style="display: inline;"
-                                    onsubmit="return confirm('¿Estás seguro de eliminar este movimiento?');">
-                                    <button type="submit" class="btn-danger">🗑️ Eliminar</button>
+                                    id="form-delete-<?= $movimiento['id'] ?>"
+                                    style="display: inline;">
+                                    <button type="button" class="btn-danger" onclick="confirmDelete(<?= $movimiento['id'] ?>)">🗑️ Eliminar</button>
                                 </form>
                             </td>
                         </tr>
@@ -250,3 +363,55 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         <?php endif; ?>
     </div>
 </div>
+
+<!-- Modal de confirmación -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+<div class="modal-overlay" id="modalConfirm">
+    <div class="modal-confirm" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-header-icon">⚠️</span>
+            <h3>Confirmar Eliminación</h3>
+        </div>
+        <div class="modal-body">
+            <p>¿Estás seguro de que deseas eliminar este movimiento de caja?</p>
+            <p style="margin-top: 1rem; color: #ef4444; font-weight: 600;">
+                ⚠️ Esta acción no se puede deshacer.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-modal-cancel" onclick="closeModal()">
+                Cancelar
+            </button>
+            <button type="button" class="btn-modal-confirm" onclick="executeDelete()">
+                Sí, Eliminar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentDeleteId = null;
+
+    function confirmDelete(id) {
+        currentDeleteId = id;
+        document.getElementById('modalConfirm').classList.add('show');
+    }
+
+    function closeModal() {
+        document.getElementById('modalConfirm').classList.remove('show');
+        currentDeleteId = null;
+    }
+
+    function executeDelete() {
+        if (currentDeleteId) {
+            document.getElementById('form-delete-' + currentDeleteId).submit();
+        }
+    }
+
+    // Cerrar modal con tecla Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+</script>
