@@ -56,7 +56,7 @@ class DashboardModel extends Model
     }
 
     /**
-     * Obtener gastos del día
+     * Obtener gastos del día (solo en efectivo)
      */
     public function obtenerGastosHoy(): array
     {
@@ -65,7 +65,8 @@ class DashboardModel extends Model
                     COALESCE(SUM(monto), 0) as total_gastos
                 FROM movimientos_caja
                 WHERE DATE(fecha) = CURDATE()
-                AND tipo = 'gasto'";
+                AND tipo = 'gasto'
+                AND metodo_pago = 'Efectivo'";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
