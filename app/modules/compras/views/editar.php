@@ -784,6 +784,37 @@ foreach ($detalles as $det) {
         }
     });
 
+    // Detectar Enter o Tab para búsqueda rápida por scanner
+    scanner.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            const code = (scanner.value || '').trim();
+            if (!code) return;
+
+            // Buscar producto por SKU o código de barra exacto
+            const producto = PRODUCTOS.find(p =>
+                p.sku === code ||
+                p.codigo_barra === code
+            );
+
+            if (producto) {
+                agregarProducto(producto);
+                scanner.value = '';
+                dropdown.style.display = 'none';
+                scanner.focus();
+            } else {
+                // Si no se encuentra, mostrar mensaje
+                dropdown.innerHTML = '<div style="padding: 1rem; color: #dc3545; text-align: center;">⚠️ Producto no encontrado</div>';
+                dropdown.style.display = 'block';
+                setTimeout(() => {
+                    dropdown.style.display = 'none';
+                    scanner.value = '';
+                    scanner.focus();
+                }, 1500);
+            }
+        }
+    });
+
     dropdown.addEventListener('click', function(e) {
         const item = e.target.closest('.autocomplete-item');
         if (item) {

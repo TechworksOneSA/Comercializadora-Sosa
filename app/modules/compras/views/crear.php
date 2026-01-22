@@ -1210,57 +1210,31 @@ foreach ($productos as $p) {
 
             processingScan = true;
 
-            // Primero buscar localmente
-            const productoLocal = PRODUCTOS.find(p =>
+            // Buscar producto por SKU, código de barra o serie
+            const producto = PRODUCTOS.find(p =>
                 p.sku === code ||
                 p.codigo_barra === code ||
                 p.numero_serie === code
             );
 
-            if (productoLocal) {
-                agregarProducto(productoLocal);
+            if (producto) {
+                agregarProducto(producto);
                 scanner.value = '';
                 dropdown.style.display = 'none';
-                processingScan = false;
-                scanner.focus();
-                return;
+                showToast('success', '✅ Producto agregado');
+            } else {
+                // Mostrar mensaje de no encontrado
+                dropdown.innerHTML = '<div style="padding: 1rem; color: #dc3545; text-align: center;">⚠️ Producto no encontrado</div>';
+                dropdown.style.display = 'block';
+                showToast('error', '❌ Producto no encontrado');
+                setTimeout(() => {
+                    dropdown.style.display = 'none';
+                    scanner.value = '';
+                }, 1500);
             }
 
-            // Si no se encuentra localmente, buscar en la API
-            fetch('<?= url("/admin/productos/api/buscar_por_scan") ?>', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ q: code })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data && data.success && data.producto) {
-                    // Convertir el producto de la API al formato local
-                    const producto = {
-                        id: data.producto.id,
-                        nombre: data.producto.nombre,
-                        sku: data.producto.sku || '',
-                        codigo_barra: data.producto.codigo_barra || '',
-                        stock_actual: data.producto.stock || 0,
-                        tipo_producto: data.producto.requiere_serie ? 'UNIDAD' : 'MISC',
-                        costo: data.producto.precio_venta || 0, // usar precio de venta como referencia
-                        numero_serie: code // guardar el código escaneado si es una serie
-                    };
-                    
-                    agregarProducto(producto);
-                    showToast('success', '✅ Producto agregado');
-                } else {
-                    showToast('error', '❌ ' + ((data && data.message) ? data.message : 'No encontrado'));
-                }
-            })
-            .catch(() => showToast('error', '❌ Error de red'))
-            .finally(() => {
-                scanner.value = '';
-                dropdown.style.display = 'none';
-                scanner.focus();
-                setTimeout(() => { processingScan = false; }, 120);
-            });
+            processingScan = false;
+            scanner.focus();
         }
     });
 
