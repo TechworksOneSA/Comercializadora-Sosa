@@ -65,6 +65,10 @@ class ComprasController extends Controller
     {
         RoleMiddleware::requireAdmin();
 
+        // DEBUG: Log de entrada
+        error_log("=== INICIO GUARDAR COMPRA ===");
+        error_log("POST data: " . print_r($_POST, true));
+
         $input = $_POST;
 
         // Encabezado
@@ -75,7 +79,10 @@ class ComprasController extends Controller
 
         // Decodificar productos desde JSON
         $productosJson = $input['productos_json'] ?? '[]';
+        error_log("Productos JSON recibido: " . $productosJson);
+        
         $productosData = json_decode($productosJson, true);
+        error_log("Productos decodificados: " . print_r($productosData, true));
 
         $detalles = [];
         $seriesPorProducto = []; // Almacenar series para cada producto
