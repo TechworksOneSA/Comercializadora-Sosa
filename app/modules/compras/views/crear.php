@@ -1296,28 +1296,6 @@ foreach ($productos as $p) {
         const producto = productosEnCompra[index];
         const nuevaCantidad = parseFloat(valor) || 0;
         producto.cantidad = nuevaCantidad;
-
-        // Si el producto aplica serie, ajustar el array de series
-        if (producto.tipo_producto === 'UNIDAD' && producto.series) {
-            const cantidadActual = producto.series.length;
-            const diferencia = Math.floor(nuevaCantidad) - cantidadActual;
-
-            if (diferencia > 0) {
-                // Agregar más espacios para series
-                for (let i = 0; i < diferencia; i++) {
-                    producto.series.push('');
-                }
-            } else if (diferencia < 0) {
-                // Quitar espacios sobrantes
-                producto.series = producto.series.slice(0, Math.floor(nuevaCantidad));
-            }
-
-            // Si la cantidad es mayor a 0, abrir modal para ingresar series
-            if (Math.floor(nuevaCantidad) > 0) {
-                openModalSeries(index);
-            }
-        }
-
         renderizarTabla();
         calcularTotales();
     }
@@ -1451,27 +1429,7 @@ foreach ($productos as $p) {
             return;
         }
 
-        // Validar que productos con serie tengan todos los números de serie ingresados
-        for (let producto of productosValidos) {
-            if (producto.tipo_producto === 'UNIDAD' && producto.series) {
-                const seriesVacias = producto.series.filter(s => !s || s.trim() === '');
-                if (seriesVacias.length > 0) {
-                    e.preventDefault();
-                    alert(`⚠️ El producto "${producto.nombre}" requiere ${producto.series.length} números de serie.\nPor favor complete todos los campos de serie.`);
-                    return;
-                }
-
-                // Validar que no haya series duplicadas
-                const seriesSet = new Set(producto.series);
-                if (seriesSet.size !== producto.series.length) {
-                    e.preventDefault();
-                    alert(`⚠️ El producto "${producto.nombre}" tiene números de serie duplicados.\nCada número de serie debe ser único.`);
-                    return;
-                }
-            }
-        }
-
-        // Convertir a JSON para enviar
+        // Convertir a JSON para enviar (la serie es opcional)
         document.getElementById('productosJson').value = JSON.stringify(productosValidos);
     });
 
