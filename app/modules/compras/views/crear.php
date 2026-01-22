@@ -1114,7 +1114,7 @@ foreach ($productos as $p) {
         }
     });
 
-    // Event listener para scanner (Enter o Tab)
+    // Event listener para scanner (Enter o Tab) - Mejorado
     scanner.addEventListener('keydown', function(e) {
         if ((e.key === 'Enter' || e.key === 'Tab') && !e.repeat) {
             e.preventDefault();
@@ -1125,15 +1125,17 @@ foreach ($productos as $p) {
 
             processingScan = true;
 
-            // Primero buscar localmente
+            // 🔍 Búsqueda LOCAL mejorada (igual que ventas)
             const productoLocal = PRODUCTOS.find(p =>
-                p.sku === code ||
-                p.codigo_barra === code ||
-                p.numero_serie === code
+                p.sku.toLowerCase() === code.toLowerCase() ||
+                p.codigo_barra.toLowerCase() === code.toLowerCase() ||
+                (p.numero_serie && p.numero_serie.toLowerCase() === code.toLowerCase()) ||
+                p.nombre.toLowerCase() === code.toLowerCase()
             );
 
             if (productoLocal) {
                 agregarProducto(productoLocal);
+                showToast('success', `✅ ${productoLocal.nombre}`);
                 scanner.value = '';
                 dropdown.style.display = 'none';
                 processingScan = false;
@@ -1141,7 +1143,7 @@ foreach ($productos as $p) {
                 return;
             }
 
-            // Si no se encuentra localmente, buscar en la API
+            // 🌐 Búsqueda en API (fallback)
             fetch('<?= url("/admin/productos/api/buscar_por_scan") ?>', {
                 method: 'POST',
                 credentials: 'same-origin',
@@ -1151,25 +1153,24 @@ foreach ($productos as $p) {
             .then(r => r.json())
             .then(data => {
                 if (data && data.success && data.producto) {
-                    // Convertir el producto de la API al formato local
                     const producto = {
                         id: data.producto.id,
                         nombre: data.producto.nombre,
                         sku: data.producto.sku || '',
                         codigo_barra: data.producto.codigo_barra || '',
                         stock_actual: data.producto.stock || 0,
-                        tipo_producto: data.producto.requiere_serie ? 'UNIDAD' : 'MISC',
-                        costo: data.producto.precio_venta || 0, // usar precio de venta como referencia
-                        numero_serie: code // guardar el código escaneado si es una serie
+                        tipo_producto: data.producto.tipo_producto || (data.producto.requiere_serie ? 'UNIDAD' : 'MISC'),
+                        costo: data.producto.costo_actual || data.producto.precio_venta || 0,
+                        numero_serie: data.producto.numero_serie || ''
                     };
                     
                     agregarProducto(producto);
-                    showToast('success', '✅ Producto agregado');
+                    showToast('success', `✅ ${producto.nombre}`);
                 } else {
-                    showToast('error', '❌ ' + ((data && data.message) ? data.message : 'No encontrado'));
+                    showToast('error', '❌ Producto no encontrado');
                 }
             })
-            .catch(() => showToast('error', '❌ Error de red'))
+            .catch(() => showToast('error', '❌ Error de conexión'))
             .finally(() => {
                 scanner.value = '';
                 dropdown.style.display = 'none';
