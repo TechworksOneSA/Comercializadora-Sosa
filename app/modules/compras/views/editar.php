@@ -14,6 +14,7 @@ foreach ($productos as $p) {
         'nombre' => $p['nombre'],
         'sku'   => $p['sku'] ?? '',
         'codigo_barra' => $p['codigo_barra'] ?? '',
+        'numero_serie' => $p['numero_serie'] ?? '',
         'costo' => isset($p['costo_actual']) ? (float)$p['costo_actual'] : 0,
         'stock_actual' => (int)($p['stock'] ?? 0),
     ];
@@ -694,7 +695,8 @@ foreach ($detalles as $det) {
         return PRODUCTOS.filter(p =>
             p.nombre.toLowerCase().includes(query) ||
             p.sku.toLowerCase().includes(query) ||
-            p.codigo_barra.toLowerCase().includes(query)
+            (p.codigo_barra && p.codigo_barra.toLowerCase().includes(query)) ||
+            (p.numero_serie && p.numero_serie.toLowerCase().includes(query))
         ).slice(0, 10);
     }
 
@@ -791,10 +793,11 @@ foreach ($detalles as $det) {
             const code = (scanner.value || '').trim();
             if (!code) return;
 
-            // Buscar producto por SKU o código de barra exacto
+            // Buscar producto por SKU, código de barra o número de serie exacto
             const producto = PRODUCTOS.find(p =>
                 p.sku === code ||
-                p.codigo_barra === code
+                p.codigo_barra === code ||
+                p.numero_serie === code
             );
 
             if (producto) {
