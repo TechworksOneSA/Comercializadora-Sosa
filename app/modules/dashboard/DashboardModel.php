@@ -216,4 +216,57 @@ class DashboardModel extends Model
             'ventas_por_cobrar_monto' => $pendientesCobro['total_por_cobrar']
         ];
     }
+
+    /**
+     * Obtener ganancias del mes
+     * Fórmula: Ventas Totales - Gastos - Compras (todo del mes actual)
+     */
+    public function obtenerGananciasMes(): array
+    {
+        // Ventas totales del mes (todos los métodos de pago)
+        $sqlVentas = "SELECT COALESCE(SUM(total), 0) as ventas_mes
+                      FROM venta
+                      WHERE YEAR(fecha_venta) = YEAR(CURDATE())
+                      AND MONTH(fecha_venta) = MONTH(CURDATE())
+                      AND estado = 'CONFIRMADA'";
+
+        $stmt = $this->db->prepare($sqlVentas);
+        $stmt->execute();
+        $ventas = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Gastos del mes (todos los métodos de pago)
+        $sqlGastos = "SELECT COALESCE(SUM(monto), 0) as gastos_mes
+                      FROM movimientos_caja
+                      WHERE YEAR(fecha) = YEAR(CURDATE())
+                      AND MONTH(fecha) = MONTH(CURDATE())
+                      AND tipo = 'gasto'";
+
+        $stmt = $this->db->prepare($sqlGastos);
+        $stmt->execute();
+        $gastos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Compras del mes
+        $sqlCompras = "SELECT COALESCE(SUM(total), 0) as compras_mes
+                       FROM compras
+                       WHERE YEAR(fecha) = YEAR(CURDATE())
+                       AND MONTH(fecha) = MONTH(CURDATE())";
+
+        $stmt = $this->db->prepare($sqlCompras);
+        $stmt->execute();
+        $compras = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $ventasMes = (float)($ventas['ventas_mes'] ?? 0);
+        $gastosMes = (float)($gastos['gastos_mes'] ?? 0);
+        $comprasMes = (float)($compras['compras_mes'] ?? 0);
+
+        // Ganancias del Mes = Ventas - Gastos - Compras
+        $gananciasMes = $ventasMes - $gastosMes - $comprasMes;
+
+        return [
+            'ventas_mes' => $ventasMes,
+            'gastos_mes' => $gastosMes,
+            'compras_mes' => $comprasMes,
+            'ganancias_mes' => $gananciasMes
+        ];
+    }
 }

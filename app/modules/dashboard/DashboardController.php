@@ -21,6 +21,7 @@ class DashboardController extends Controller
     $gastosHoy = $this->model->obtenerGastosHoy();
     $retirosHoy = $this->model->obtenerRetirosHoy();
     $margenGanancia = $this->model->obtenerMargenGanancia();
+    $gananciasMes = $this->model->obtenerGananciasMes();
     $alertas = $this->model->obtenerAlertasRiesgos();
 
     $this->viewWithLayout("dashboard/views/dashboard", [
@@ -31,6 +32,7 @@ class DashboardController extends Controller
       "gastosHoy" => $gastosHoy,
       "retirosHoy" => $retirosHoy,
       "margenGanancia" => $margenGanancia,
+      "gananciasMes" => $gananciasMes,
       "alertas" => $alertas
     ]);
   }
