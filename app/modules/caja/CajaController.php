@@ -62,6 +62,7 @@ class CajaController extends Controller
         $monto = (float)($_POST['monto'] ?? 0);
         $metodoPago = $_POST['metodo_pago'] ?? '';
         $observaciones = trim($_POST['observaciones'] ?? '');
+        $fecha = trim($_POST['fecha'] ?? date('Y-m-d'));
 
         $errors = [];
 
@@ -95,7 +96,8 @@ class CajaController extends Controller
                 'monto' => $monto,
                 'metodo_pago' => $metodoPago,
                 'observaciones' => $observaciones,
-                'usuario_id' => $_SESSION['user']['id']
+                'usuario_id' => $_SESSION['user']['id'],
+                'fecha' => $fecha
             ]);
 
             $tipoTexto = $tipo === 'retiro' ? 'RETIRO PERSONAL' : 'GASTO OPERATIVO';

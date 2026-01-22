@@ -36,19 +36,29 @@ class CajaModel extends Model
      */
     public function registrarMovimiento(array $data): bool
     {
+        // Si se proporciona fecha, usarla; si no, usar NOW()
+        $fecha = isset($data['fecha']) ? $data['fecha'] . ' ' . date('H:i:s') : null;
+        
         $sql = "INSERT INTO movimientos_caja
                 (tipo, concepto, monto, metodo_pago, observaciones, usuario_id, fecha)
-                VALUES (:tipo, :concepto, :monto, :metodo_pago, :observaciones, :usuario_id, NOW())";
+                VALUES (:tipo, :concepto, :monto, :metodo_pago, :observaciones, :usuario_id, " . 
+                ($fecha ? ":fecha" : "NOW()") . ")";
 
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
+        $params = [
             ':tipo' => $data['tipo'],
             ':concepto' => $data['concepto'],
             ':monto' => $data['monto'],
             ':metodo_pago' => $data['metodo_pago'],
             ':observaciones' => $data['observaciones'] ?? '',
             ':usuario_id' => $data['usuario_id']
-        ]);
+        ];
+        
+        if ($fecha) {
+            $params[':fecha'] = $fecha;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute($params);
     }
 
     /**
