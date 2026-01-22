@@ -1144,7 +1144,7 @@ foreach ($productos as $p) {
             }
 
             // 🌐 Búsqueda en API (igual que ventas)
-            fetch('/admin/productos/api/buscar_por_scan', {
+            fetch('<?= url("/admin/productos/api/buscar_por_scan") ?>', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
