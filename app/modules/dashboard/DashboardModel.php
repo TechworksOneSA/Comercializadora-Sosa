@@ -112,15 +112,6 @@ class DashboardModel extends Model
         $stmt->execute();
         $ingresos = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Compras del día (costo)
-        $sqlCompras = "SELECT COALESCE(SUM(total), 0) as compras
-                       FROM compras
-                       WHERE DATE(fecha) = CURDATE()";
-
-        $stmt = $this->db->prepare($sqlCompras);
-        $stmt->execute();
-        $compras = $stmt->fetch(PDO::FETCH_ASSOC);
-
         // Gastos del día (solo gastos operativos, NO retiros)
         $sqlGastos = "SELECT COALESCE(SUM(monto), 0) as gastos
                       FROM movimientos_caja
@@ -132,16 +123,16 @@ class DashboardModel extends Model
         $gastos = $stmt->fetch(PDO::FETCH_ASSOC);
 
         $totalIngresos = (float)($ingresos['ingresos'] ?? 0);
-        $totalCompras = (float)($compras['compras'] ?? 0);
         $totalGastos = (float)($gastos['gastos'] ?? 0);
 
-        // Ganancia Real = Ingresos - Compras - Gastos Operativos (SIN retiros)
-        $gananciaReal = $totalIngresos - $totalCompras - $totalGastos;
+        // Ganancia Real = Ingresos - Gastos Operativos
+        // Las compras NO se restan porque son inversión en inventario, no gastos
+        $gananciaReal = $totalIngresos - $totalGastos;
         $porcentajeMargen = $totalIngresos > 0 ? ($gananciaReal / $totalIngresos) * 100 : 0;
 
         return [
             'ingresos' => $totalIngresos,
-            'costos' => $totalCompras + $totalGastos,
+            'costos' => $totalGastos,
             'ganancia_real' => $gananciaReal,
             'porcentaje_margen' => $porcentajeMargen
         ];
