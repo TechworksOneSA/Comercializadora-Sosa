@@ -100,42 +100,34 @@ class DashboardModel extends Model
 
     /**
      * Calcular margen de ganancia del día
+     * Ganancia real = SUM((precio_venta - costo) * cantidad) de productos vendidos hoy
      * Los retiros personales NO afectan la ganancia real
      */
     public function obtenerMargenGanancia(): array
     {
-        // Ingresos del día
-        $sqlIngresos = "SELECT COALESCE(SUM(total), 0) as ingresos
-                        FROM venta
-                        WHERE DATE(fecha_venta) = CURDATE()
-                        AND estado = 'CONFIRMADA'";
+        // Ganancia real del día por producto vendido
+        $sql = "SELECT 
+                    COALESCE(SUM((dv.precio_unitario - p.costo) * dv.cantidad), 0) AS ganancia_real,
+                    COALESCE(SUM(dv.precio_unitario * dv.cantidad), 0) AS ingresos,
+                    COALESCE(SUM(p.costo * dv.cantidad), 0) AS costos
+                FROM detalle_venta dv
+                INNER JOIN venta v ON v.id = dv.venta_id
+                INNER JOIN productos p ON p.id = dv.producto_id
+                WHERE DATE(v.fecha_venta) = CURDATE()
+                  AND v.estado = 'CONFIRMADA'";
 
-        $stmt = $this->db->prepare($sqlIngresos);
+        $stmt = $this->db->prepare($sql);
         $stmt->execute();
-        $ingresos = $stmt->fetch(PDO::FETCH_ASSOC);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Gastos del día (solo gastos operativos en EFECTIVO, NO retiros ni transferencias/cheques)
-        $sqlGastos = "SELECT COALESCE(SUM(monto), 0) as gastos
-                      FROM movimientos_caja
-                      WHERE DATE(fecha) = CURDATE()
-                      AND tipo = 'gasto'
-                      AND metodo_pago = 'Efectivo'";
-
-        $stmt = $this->db->prepare($sqlGastos);
-        $stmt->execute();
-        $gastos = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        $totalIngresos = (float)($ingresos['ingresos'] ?? 0);
-        $totalGastos = (float)($gastos['gastos'] ?? 0);
-
-        // Ganancia Real = Ingresos - Gastos Operativos
-        // Las compras NO se restan porque son inversión en inventario, no gastos
-        $gananciaReal = $totalIngresos - $totalGastos;
-        $porcentajeMargen = $totalIngresos > 0 ? ($gananciaReal / $totalIngresos) * 100 : 0;
+        $ingresos = (float)($row['ingresos'] ?? 0);
+        $costos = (float)($row['costos'] ?? 0);
+        $gananciaReal = (float)($row['ganancia_real'] ?? 0);
+        $porcentajeMargen = $ingresos > 0 ? ($gananciaReal / $ingresos) * 100 : 0;
 
         return [
-            'ingresos' => $totalIngresos,
-            'costos' => $totalGastos,
+            'ingresos' => $ingresos,
+            'costos' => $costos,
             'ganancia_real' => $gananciaReal,
             'porcentaje_margen' => $porcentajeMargen
         ];
@@ -220,41 +212,33 @@ class DashboardModel extends Model
 
     /**
      * Obtener ganancias del mes
-     * Fórmula: Ventas Totales - Gastos - Compras (todo del mes actual)
+     * Ganancia del mes = SUM((precio_venta - costo) * cantidad) de productos vendidos en el mes
      */
     public function obtenerGananciasMes(): array
     {
-        // Ventas totales del mes (todos los métodos de pago)
-        $sqlVentas = "SELECT COALESCE(SUM(total), 0) as ventas_mes
-                      FROM venta
-                      WHERE YEAR(fecha_venta) = YEAR(CURDATE())
-                      AND MONTH(fecha_venta) = MONTH(CURDATE())
-                      AND estado = 'CONFIRMADA'";
+        // Ganancia real del mes por producto vendido
+        $sql = "SELECT 
+                    COALESCE(SUM((dv.precio_unitario - p.costo) * dv.cantidad), 0) AS ganancias_mes,
+                    COALESCE(SUM(dv.precio_unitario * dv.cantidad), 0) AS ventas_mes,
+                    COALESCE(SUM(p.costo * dv.cantidad), 0) AS costos_mes
+                FROM detalle_venta dv
+                INNER JOIN venta v ON v.id = dv.venta_id
+                INNER JOIN productos p ON p.id = dv.producto_id
+                WHERE YEAR(v.fecha_venta) = YEAR(CURDATE())
+                  AND MONTH(v.fecha_venta) = MONTH(CURDATE())
+                  AND v.estado = 'CONFIRMADA'";
 
-        $stmt = $this->db->prepare($sqlVentas);
+        $stmt = $this->db->prepare($sql);
         $stmt->execute();
-        $ventas = $stmt->fetch(PDO::FETCH_ASSOC);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Gastos del mes (todos los métodos de pago)
-        $sqlGastos = "SELECT COALESCE(SUM(monto), 0) as gastos_mes
-                      FROM movimientos_caja
-                      WHERE YEAR(fecha) = YEAR(CURDATE())
-                      AND MONTH(fecha) = MONTH(CURDATE())
-                      AND tipo = 'gasto'";
-
-        $stmt = $this->db->prepare($sqlGastos);
-        $stmt->execute();
-        $gastos = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        $ventasMes = (float)($ventas['ventas_mes'] ?? 0);
-        $gastosMes = (float)($gastos['gastos_mes'] ?? 0);
-
-        // Ganancias del Mes = Ventas - Gastos
-        $gananciasMes = $ventasMes - $gastosMes;
+        $ventasMes = (float)($row['ventas_mes'] ?? 0);
+        $costosMes = (float)($row['costos_mes'] ?? 0);
+        $gananciasMes = (float)($row['ganancias_mes'] ?? 0);
 
         return [
             'ventas_mes' => $ventasMes,
-            'gastos_mes' => $gastosMes,
+            'gastos_mes' => $costosMes, // aquí gastos_mes representa el costo de los productos vendidos
             'ganancias_mes' => $gananciasMes
         ];
     }
