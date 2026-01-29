@@ -179,7 +179,6 @@ $reversasMesMostrar = (float)($gananciasMes['reversas_mes']
           Ventas: Q <?= number_format((float)($margenGanancia['ventas_dia'] ?? 0), 2) ?> |
           Costo: Q <?= number_format((float)($margenGanancia['cogs_dia'] ?? 0), 2) ?> |
           Gastos: Q <?= number_format((float)($margenGanancia['gastos_dia'] ?? 0), 2) ?> |
-          Reversas: Q <?= number_format($reversasDiaMostrar, 2) ?>
           <br>
           Ganancia Bruta: Q <?= number_format((float)($margenGanancia['ganancia_bruta'] ?? 0), 2) ?>
         </div>
@@ -196,7 +195,6 @@ $reversasMesMostrar = (float)($gananciasMes['reversas_mes']
           Ventas: Q <?= number_format((float)($gananciasMes['ventas_mes'] ?? 0), 2) ?> |
           Costo: Q <?= number_format((float)($gananciasMes['costo_ventas_mes'] ?? 0), 2) ?> |
           Gastos: Q <?= number_format((float)($gananciasMes['gastos_mes'] ?? 0), 2) ?> |
-          Reversas: Q <?= number_format($reversasMesMostrar, 2) ?>
           <br>
           Ganancia Bruta: Q <?= number_format((float)($gananciasMes['ganancia_bruta_mes'] ?? 0), 2) ?>
         </div>
