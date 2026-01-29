@@ -298,7 +298,8 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
     <!-- Últimos Movimientos -->
     <?php if (!empty($ultimosMovimientos)): ?>
         <div class="section-title">
-            <span>🕐 Últimos Movimientos</span>
+            <span>🕐 Últimos 10 Movimientos</span>
+            Si desea ver todos los Movimientos ve a Movimientos de Caja
         </div>
 
         <div class="table-container">
