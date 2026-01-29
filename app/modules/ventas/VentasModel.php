@@ -691,7 +691,7 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
     try {
         $this->db->beginTransaction();
 
-        // 1) Obtener venta (con lock)
+        // 1) Obtener venta (lock)
         $sqlVenta = "SELECT * FROM {$this->tableVentas} WHERE id = :id LIMIT 1 FOR UPDATE";
         $stmtVenta = $this->db->prepare($sqlVenta);
         $this->execChecked($stmtVenta, [':id' => $ventaId], "ANULAR_VENTA_GET");
@@ -713,13 +713,12 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
             throw new Exception("La venta no tiene detalle");
         }
 
-        // 3) Revertir stock + movimientos inventario (ENTRADA)
+        // 3) Revertir stock + registrar movimientos de inventario (ENTRADA)
         $sqlStock = "UPDATE productos
                      SET stock = stock + :cantidad
                      WHERE id = :producto_id";
         $stmtStock = $this->db->prepare($sqlStock);
 
-        // ✅ Movimientos de inventario - columnas correctas (created_at tiene DEFAULT)
         $sqlMovInv = "INSERT INTO movimientos_inventario
                       (producto_id, tipo, cantidad, costo_unitario, origen, origen_id, motivo, usuario_id)
                       VALUES (:producto_id, 'ENTRADA', :cantidad, :costo_unitario, 'DEVOLUCION', :origen_id, :motivo, :usuario_id)";
@@ -732,94 +731,93 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
             $pid = (int)$d['producto_id'];
             $qty = (float)$d['cantidad'];
 
-            // stock +
             $this->execChecked($stmtStock, [
-                ':cantidad'   => $qty,
-                ':producto_id'=> $pid,
+                ':cantidad'    => $qty,
+                ':producto_id' => $pid,
             ], "ANULAR_STOCK_RESTORE_PID_{$pid}");
 
-            // costo_unitario para auditoría
             $this->execChecked($stmtCosto, [':producto_id' => $pid], "ANULAR_GET_COSTO_PID_{$pid}");
             $costo = $stmtCosto->fetchColumn();
             $costoUnit = $costo !== false ? (float)$costo : (float)$d['precio_unitario'];
 
-            // movimiento inventario entrada
             $this->execChecked($stmtMovInv, [
-                ':producto_id'   => $pid,
-                ':cantidad'      => $qty,
-                ':costo_unitario'=> $costoUnit,
-                ':origen_id'     => $ventaId,
-                ':motivo'        => "Reverso por anulación de venta #{$ventaId}",
-                ':usuario_id'    => $usuarioId,
+                ':producto_id'    => $pid,
+                ':cantidad'       => $qty,
+                ':costo_unitario' => $costoUnit,
+                ':origen_id'      => $ventaId,
+                ':motivo'         => "Reverso por anulación de venta #{$ventaId}",
+                ':usuario_id'     => $usuarioId,
             ], "ANULAR_MOV_INV_PID_{$pid}");
         }
 
-        // 4) Marcar venta como ANULADA
-        // ✅ Solo actualizar estado (las columnas anulada_at y anulada_por no existen en la tabla)
-              $sqlUpd = "UPDATE {$this->tableVentas}
-              SET estado = 'ANULADA',
-               anulada_at = NOW(),
-               updated_at = NOW()
-               WHERE id = :id";
+        // 4) Marcar venta como ANULADA + fecha/hora + usuario
+        $sqlUpd = "UPDATE {$this->tableVentas}
+                   SET estado = 'ANULADA',
+                       anulada_at = NOW(),
+                       anulada_por = :usuario_id,
+                       updated_at = NOW()
+                   WHERE id = :id";
         $stmtUpd = $this->db->prepare($sqlUpd);
         $this->execChecked($stmtUpd, [
-            ':id' => $ventaId
+            ':id' => $ventaId,
+            ':usuario_id' => $usuarioId,
         ], "ANULAR_VENTA_UPDATE");
 
-        // 5) Reverso de caja (si hubo cobro)
+        // 5) Reverso de caja: SOLO si hubo cobro EN EFECTIVO
         $totalPagado = (float)($venta['total_pagado'] ?? 0);
+        $metodoPago  = (string)($venta['metodo_pago'] ?? 'Efectivo');
 
-        if ($totalPagado > 0) {
-            error_log("🔍 [VentasModel] Venta #{$ventaId} tiene total_pagado: Q {$totalPagado}. Verificando reverso...");
+        // Normalización: "efectivo" / "Efectivo" / "EFECTIVO"
+        $esEfectivo = (strcasecmp(trim($metodoPago), 'Efectivo') === 0);
 
-            // Verificar si ya existe reverso (idempotencia)
+        if ($totalPagado > 0 && $esEfectivo) {
+            // Idempotencia: si ya existe reverso, no duplicar
             $sqlExisteRev = "SELECT id
                              FROM movimientos_caja
                              WHERE venta_id = :venta_id
                                AND tipo = 'gasto'
-                               AND concepto LIKE :concepto
+                               AND concepto = :concepto
                              LIMIT 1";
             $stmtExisteRev = $this->db->prepare($sqlExisteRev);
             $stmtExisteRev->execute([
                 ':venta_id'  => $ventaId,
-                ':concepto'  => "Reverso por anulación de venta #{$ventaId}%"
+                ':concepto'  => "Reverso por anulación de venta #{$ventaId}",
             ]);
             $yaExiste = $stmtExisteRev->fetchColumn();
 
             if (!$yaExiste) {
-                error_log("✅ [VentasModel] Creando movimiento de caja reverso para venta #{$ventaId}");
+                // ✅ Use CajaModel (separación de responsabilidades)
+                $caja = new CajaModel();
+                $ok = $caja->registrarMovimiento([
+                    'tipo'          => 'gasto', // salida de caja
+                    'concepto'      => "Reverso por anulación de venta #{$ventaId}",
+                    'monto'         => $totalPagado,
+                    'metodo_pago'   => 'Efectivo',
+                    'observaciones' => "Salida de caja por anulación de venta #{$ventaId}.",
+                    'usuario_id'    => $usuarioId,
+                    // 'fecha' => date('Y-m-d') // opcional
+                ]);
 
-                // ✅ movimientos_caja usa 'fecha' no 'created_at', y SÍ tiene venta_id
-                $sqlCaja = "INSERT INTO movimientos_caja
-                            (tipo, concepto, monto, metodo_pago, observaciones, venta_id, usuario_id, fecha)
-                            VALUES
-                            ('gasto', :concepto, :monto, :metodo_pago, :obs, :venta_id, :usuario_id, NOW())";
-                $stmtCaja = $this->db->prepare($sqlCaja);
-
-                $paramsCaja = [
-                    ':concepto'    => "Reverso por anulación de venta #{$ventaId}",
-                    ':monto'       => $totalPagado,
-                    ':metodo_pago' => (string)($venta['metodo_pago'] ?? 'Efectivo'),
-                    ':obs'         => "Reverso automático del cobro al anular la venta.",
-                    ':venta_id'    => $ventaId,
-                    ':usuario_id'  => $usuarioId
-                ];
-
-                $resultado = $stmtCaja->execute($paramsCaja);
-
-                if ($resultado) {
-                    $lastId = $this->db->lastInsertId();
-                    error_log("✅ [VentasModel] Movimiento de caja reverso creado con ID: {$lastId}");
-                } else {
-                    $errorInfo = $stmtCaja->errorInfo();
-                    error_log("❌ [VentasModel] Error al crear movimiento de caja reverso: " . json_encode($errorInfo));
-                    throw new Exception("Error al crear movimiento de caja reverso: " . implode(", ", $errorInfo));
+                if (!$ok) {
+                    throw new Exception("No se pudo registrar el reverso en caja para la venta #{$ventaId}");
                 }
-            } else {
-                error_log("ℹ️ [VentasModel] Ya existe un reverso para la venta #{$ventaId}, saltando creación");
+
+                // IMPORTANTÍSIMO: linkear el reverso con la venta (su CajaModel no lo hace en registrarMovimiento)
+                // Así quedan rastreables y auditables.
+                $sqlLink = "UPDATE movimientos_caja
+                            SET venta_id = :venta_id
+                            WHERE tipo = 'gasto'
+                              AND concepto = :concepto
+                              AND usuario_id = :usuario_id
+                            ORDER BY id DESC
+                            LIMIT 1";
+                $stmtLink = $this->db->prepare($sqlLink);
+                $stmtLink->execute([
+                    ':venta_id' => $ventaId,
+                    ':concepto' => "Reverso por anulación de venta #{$ventaId}",
+                    ':usuario_id' => $usuarioId,
+                ]);
             }
-        } else {
-            error_log("ℹ️ [VentasModel] Venta #{$ventaId} no tiene pagos (total_pagado: 0), no se crea reverso");
         }
 
         $this->db->commit();
@@ -831,5 +829,6 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
         throw $e;
     }
 }
+
 
 }
