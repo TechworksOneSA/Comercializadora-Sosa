@@ -4,8 +4,25 @@ $ventasHoy = $ventasHoy ?? ['cantidad_ventas' => 0, 'total_ventas' => 0];
 $efectivoCaja = $efectivoCaja ?? 0;
 $gastosHoy = $gastosHoy ?? ['cantidad_gastos' => 0, 'total_gastos' => 0];
 $retirosHoy = $retirosHoy ?? ['cantidad_retiros' => 0, 'total_retiros' => 0];
-$margenGanancia = $margenGanancia ?? ['ganancia_real' => 0, 'porcentaje_margen' => 0];
-$gananciasMes = $gananciasMes ?? ['ventas_mes' => 0, 'gastos_mes' => 0, 'ganancias_mes' => 0];
+
+$margenGanancia = $margenGanancia ?? [
+  'ganancia_real' => 0,
+  'porcentaje_margen' => 0,
+  // opcionales si ya viene el modelo nuevo
+  'ganancia_bruta' => 0,
+  'ventas_dia' => 0,
+  'cogs_dia' => 0,
+  'gastos_dia' => 0
+];
+
+$gananciasMes = $gananciasMes ?? [
+  'ventas_mes' => 0,
+  'costo_ventas_mes' => 0,     // COGS
+  'gastos_mes' => 0,           // gastos operativos
+  'ganancia_bruta_mes' => 0,   // ventas - cogs
+  'ganancias_mes' => 0         // ganancia neta (bruta - gastos)
+];
+
 $alertas = $alertas ?? [
   'productos_bajo_stock' => 0,
   'productos_sin_stock' => 0,
@@ -86,9 +103,9 @@ $alertas = $alertas ?? [
       <div class="metric-card ventas">
         <div class="metric-icon">💰</div>
         <div class="metric-label">Ventas del Día</div>
-        <div class="metric-value">Q <?= number_format($ventasHoy['total_ventas'], 2) ?></div>
+        <div class="metric-value">Q <?= number_format((float)$ventasHoy['total_ventas'], 2) ?></div>
         <div class="metric-detail">
-          <?= $ventasHoy['cantidad_ventas'] ?> ventas realizadas
+          <?= (int)$ventasHoy['cantidad_ventas'] ?> ventas realizadas
         </div>
       </div>
 
@@ -96,7 +113,7 @@ $alertas = $alertas ?? [
       <div class="metric-card efectivo">
         <div class="metric-icon">💵</div>
         <div class="metric-label">Efectivo en Caja</div>
-        <div class="metric-value">Q <?= number_format($efectivoCaja, 2) ?></div>
+        <div class="metric-value">Q <?= number_format((float)$efectivoCaja, 2) ?></div>
         <div class="metric-detail">
           Solo billetes y monedas disponibles
         </div>
@@ -106,9 +123,9 @@ $alertas = $alertas ?? [
       <div class="metric-card gastos">
         <div class="metric-icon">📤</div>
         <div class="metric-label">Gastos del Día</div>
-        <div class="metric-value">Q <?= number_format($gastosHoy['total_gastos'], 2) ?></div>
+        <div class="metric-value">Q <?= number_format((float)$gastosHoy['total_gastos'], 2) ?></div>
         <div class="metric-detail">
-          <?= $gastosHoy['cantidad_gastos'] ?> gastos operativos
+          <?= (int)$gastosHoy['cantidad_gastos'] ?> gastos operativos
         </div>
       </div>
 
@@ -116,33 +133,40 @@ $alertas = $alertas ?? [
       <div class="metric-card retiros">
         <div class="metric-icon">🏦</div>
         <div class="metric-label">Retiros del Día</div>
-        <div class="metric-value">Q <?= number_format($retirosHoy['total_retiros'], 2) ?></div>
+        <div class="metric-value">Q <?= number_format((float)$retirosHoy['total_retiros'], 2) ?></div>
         <div class="metric-detail">
-          <?= $retirosHoy['cantidad_retiros'] ?> retiros personales
+          <?= (int)$retirosHoy['cantidad_retiros'] ?> retiros personales
         </div>
       </div>
 
       <!-- Ganancia Real -->
       <div class="metric-card ganancia">
-        <div class="metric-icon"><?= $margenGanancia['ganancia_real'] >= 0 ? '📈' : '📉' ?></div>
+        <div class="metric-icon"><?= ((float)$margenGanancia['ganancia_real']) >= 0 ? '📈' : '📉' ?></div>
         <div class="metric-label">Ganancia Real del Día</div>
-        <div class="metric-value">Q <?= number_format($margenGanancia['ganancia_real'], 2) ?></div>
+        <div class="metric-value">Q <?= number_format((float)$margenGanancia['ganancia_real'], 2) ?></div>
         <div class="metric-detail">
-          Margen: <?= number_format($margenGanancia['porcentaje_margen'], 1) ?>%
-          <span class="<?= $margenGanancia['ganancia_real'] >= 0 ? 'text-success' : 'text-danger' ?>">
-            <?= $margenGanancia['ganancia_real'] >= 0 ? '(Rentable ✅)' : '(Pérdida ⚠️)' ?>
+          Margen: <?= number_format((float)$margenGanancia['porcentaje_margen'], 1) ?>%
+          <span class="<?= ((float)$margenGanancia['ganancia_real']) >= 0 ? 'text-success' : 'text-danger' ?>">
+            <?= ((float)$margenGanancia['ganancia_real']) >= 0 ? '(Rentable ✅)' : '(Pérdida ⚠️)' ?>
           </span>
         </div>
       </div>
 
-      <!-- Ganancias del Mes -->
+      <!-- Ganancias del Mes (Neta + desglose Pro) -->
       <div class="metric-card ganancia-mes">
-        <div class="metric-icon"><?= $gananciasMes['ganancias_mes'] >= 0 ? '📊' : '📉' ?></div>
-        <div class="metric-label">Ganancias del Mes</div>
-        <div class="metric-value">Q <?= number_format($gananciasMes['ganancias_mes'], 2) ?></div>
+        <div class="metric-icon"><?= ((float)$gananciasMes['ganancias_mes']) >= 0 ? '📊' : '📉' ?></div>
+        <div class="metric-label">Ganancia Neta del Mes</div>
+
+        <!-- Principal: neta -->
+        <div class="metric-value">Q <?= number_format((float)$gananciasMes['ganancias_mes'], 2) ?></div>
+
+        <!-- Desglose: ventas, costo (COGS), gastos, ganancia bruta -->
         <div class="metric-detail">
-          Ventas: Q <?= number_format($gananciasMes['ventas_mes'], 2) ?> |
-          Gastos: Q <?= number_format($gananciasMes['gastos_mes'], 2) ?>
+          Ventas: Q <?= number_format((float)$gananciasMes['ventas_mes'], 2) ?> |
+          Costo: Q <?= number_format((float)$gananciasMes['costo_ventas_mes'], 2) ?> |
+          Gastos: Q <?= number_format((float)$gananciasMes['gastos_mes'], 2) ?>
+          <br>
+          Bruta: Q <?= number_format((float)$gananciasMes['ganancia_bruta_mes'], 2) ?>
         </div>
       </div>
     </div>
@@ -216,11 +240,11 @@ $alertas = $alertas ?? [
     <h2 class="section-title">⚠️ Alertas del Sistema</h2>
 
     <div class="cards-grid">
-      <?php if ($alertas['productos_sin_stock'] > 0): ?>
+      <?php if ((int)$alertas['productos_sin_stock'] > 0): ?>
         <div class="alert-card danger">
           <div class="alert-title">
             ❌ Productos Sin Stock
-            <span class="badge-critical"><?= $alertas['productos_sin_stock'] ?></span>
+            <span class="badge-critical"><?= (int)$alertas['productos_sin_stock'] ?></span>
           </div>
           <div class="alert-content">
             Hay productos agotados que no pueden venderse.
@@ -229,11 +253,11 @@ $alertas = $alertas ?? [
         </div>
       <?php endif; ?>
 
-      <?php if ($alertas['productos_bajo_stock'] > 0): ?>
+      <?php if ((int)$alertas['productos_bajo_stock'] > 0): ?>
         <div class="alert-card warning">
           <div class="alert-title">
             ⚠️ Stock Bajo
-            <span class="badge-critical"><?= $alertas['productos_bajo_stock'] ?></span>
+            <span class="badge-critical"><?= (int)$alertas['productos_bajo_stock'] ?></span>
           </div>
           <div class="alert-content">
             Productos por debajo del stock mínimo.
@@ -242,23 +266,23 @@ $alertas = $alertas ?? [
         </div>
       <?php endif; ?>
 
-      <?php if ($alertas['ventas_por_cobrar_cantidad'] > 0): ?>
+      <?php if ((int)$alertas['ventas_por_cobrar_cantidad'] > 0): ?>
         <div class="alert-card info">
           <div class="alert-title">
             💳 Ventas Pendientes de Cobro
-            <span class="badge-critical"><?= $alertas['ventas_por_cobrar_cantidad'] ?></span>
+            <span class="badge-critical"><?= (int)$alertas['ventas_por_cobrar_cantidad'] ?></span>
           </div>
           <div class="alert-content">
-            Monto pendiente: Q <?= number_format($alertas['ventas_por_cobrar_monto'], 2) ?>
+            Monto pendiente: Q <?= number_format((float)$alertas['ventas_por_cobrar_monto'], 2) ?>
             <a href="<?= url('/admin/pos') ?>">Ver detalles →</a>
           </div>
         </div>
       <?php endif; ?>
 
       <?php
-      $hasAlerts = $alertas['productos_sin_stock'] > 0 ||
-        $alertas['productos_bajo_stock'] > 0 ||
-        $alertas['ventas_por_cobrar_cantidad'] > 0;
+      $hasAlerts = ((int)$alertas['productos_sin_stock'] > 0) ||
+        ((int)$alertas['productos_bajo_stock'] > 0) ||
+        ((int)$alertas['ventas_por_cobrar_cantidad'] > 0);
 
       if (!$hasAlerts): ?>
         <div class="alert-card success">
