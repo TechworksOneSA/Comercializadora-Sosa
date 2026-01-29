@@ -1,52 +1,39 @@
 <?php
+// ===============================
+// Dashboard View - Comercializadora Sosa
+// ===============================
+
 // Inicializar variables con valores por defecto
-$ventasHoy = $ventasHoy ?? [
-  'cantidad_ventas' => 0,
-  'total_ventas' => 0,
-  'ventas_efectivo' => 0,
-  'ventas_otros' => 0,
-];
-
+$ventasHoy = $ventasHoy ?? ['cantidad_ventas' => 0, 'total_ventas' => 0];
 $efectivoCaja = $efectivoCaja ?? 0;
-
-$gastosHoy = $gastosHoy ?? [
-  'cantidad_gastos' => 0,
-  'total_gastos' => 0
-];
-
-$retirosHoy = $retirosHoy ?? [
-  'cantidad_retiros' => 0,
-  'total_retiros' => 0
-];
+$gastosHoy = $gastosHoy ?? ['cantidad_gastos' => 0, 'total_gastos' => 0];
+$retirosHoy = $retirosHoy ?? ['cantidad_retiros' => 0, 'total_retiros' => 0];
 
 $margenGanancia = $margenGanancia ?? [
   'ganancia_real' => 0,
   'porcentaje_margen' => 0,
-
-  // desgloses reales del modelo
   'ganancia_bruta' => 0,
   'ventas_dia' => 0,
   'cogs_dia' => 0,
   'gastos_dia' => 0,
-
-  // ✅ claves reales del modelo (día)
+  // alias esperado por la view
+  'reversas_dia' => 0,
+  // por si viene con llaves nuevas informativas
   'reversas_ventas_dia' => 0,
   'reversas_cogs_dia' => 0,
-  'reversas_impacto_dia' => 0,
 ];
 
 $gananciasMes = $gananciasMes ?? [
   'ventas_mes' => 0,
   'costo_ventas_mes' => 0,     // COGS
   'gastos_mes' => 0,           // gastos operativos
-
-  // ✅ claves reales del modelo (mes)
+  // alias esperado por la view
+  'reversas_mes' => 0,
+  // llaves informativas del modelo
   'reversas_ventas_mes' => 0,
   'reversas_cogs_mes' => 0,
-  'reversas_impacto_mes' => 0,
-
   'ganancia_bruta_mes' => 0,   // ventas - cogs
-  'ganancias_mes' => 0         // ganancia neta
+  'ganancias_mes' => 0         // ganancia neta (ventas - cogs - gastos)
 ];
 
 $alertas = $alertas ?? [
@@ -56,6 +43,15 @@ $alertas = $alertas ?? [
   'ventas_por_cobrar_monto' => 0
 ];
 
+// ✅ Fallbacks de reversas para evitar “0” por mismatch de keys
+$reversasDiaMostrar = (float)($margenGanancia['reversas_dia']
+  ?? $margenGanancia['reversas_ventas_dia']
+  ?? 0);
+
+$reversasMesMostrar = (float)($gananciasMes['reversas_mes']
+  ?? $gananciasMes['reversas_ventas_mes']
+  ?? 0);
+
 // Cargar CSS específico del dashboard
 ?>
 <link rel="stylesheet" href="<?= url('/assets/css/dashboard.css') ?>">
@@ -63,7 +59,7 @@ $alertas = $alertas ?? [
 <div class="dashboard-container">
   <!-- Header del Dashboard -->
   <header class="dashboard-header">
-    <h1>👋 Bienvenido, <?= htmlspecialchars($user["nombre"]) ?></h1>
+    <h1>👋 Bienvenido, <?= htmlspecialchars($user["nombre"] ?? 'Usuario') ?></h1>
     <p>Panel Ejecutivo - Comercializadora Sosa</p>
     <div class="datetime-info">
       <span class="date-badge">
@@ -93,7 +89,7 @@ $alertas = $alertas ?? [
             ];
             $diaEn = date('l');
             $mesEn = date('F');
-            echo $dias[$diaEn] . ', ' . date('d') . ' de ' . $meses[$mesEn] . ' de ' . date('Y');
+            echo ($dias[$diaEn] ?? $diaEn) . ', ' . date('d') . ' de ' . ($meses[$mesEn] ?? $mesEn) . ' de ' . date('Y');
             ?>
       </span>
       <span class="time-badge" id="current-time">
@@ -112,8 +108,10 @@ $alertas = $alertas ?? [
       const ampm = hours >= 12 ? 'PM' : 'AM';
       const displayHours = hours % 12 || 12;
 
-      document.getElementById('current-time').innerHTML =
-        `🕐 ${String(displayHours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+      const el = document.getElementById('current-time');
+      if (el) {
+        el.innerHTML = `🕐 ${String(displayHours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+      }
     }
 
     setInterval(updateTime, 1000);
@@ -129,9 +127,9 @@ $alertas = $alertas ?? [
       <div class="metric-card ventas">
         <div class="metric-icon">💰</div>
         <div class="metric-label">Ventas del Día</div>
-        <div class="metric-value">Q <?= number_format((float)$ventasHoy['total_ventas'], 2) ?></div>
+        <div class="metric-value">Q <?= number_format((float)($ventasHoy['total_ventas'] ?? 0), 2) ?></div>
         <div class="metric-detail">
-          <?= (int)$ventasHoy['cantidad_ventas'] ?> ventas realizadas
+          <?= (int)($ventasHoy['cantidad_ventas'] ?? 0) ?> ventas realizadas
         </div>
       </div>
 
@@ -149,9 +147,9 @@ $alertas = $alertas ?? [
       <div class="metric-card gastos">
         <div class="metric-icon">📤</div>
         <div class="metric-label">Gastos del Día</div>
-        <div class="metric-value">Q <?= number_format((float)$gastosHoy['total_gastos'], 2) ?></div>
+        <div class="metric-value">Q <?= number_format((float)($gastosHoy['total_gastos'] ?? 0), 2) ?></div>
         <div class="metric-detail">
-          <?= (int)$gastosHoy['cantidad_gastos'] ?> gastos operativos
+          <?= (int)($gastosHoy['cantidad_gastos'] ?? 0) ?> gastos operativos
         </div>
       </div>
 
@@ -159,66 +157,48 @@ $alertas = $alertas ?? [
       <div class="metric-card retiros">
         <div class="metric-icon">🏦</div>
         <div class="metric-label">Retiros del Día</div>
-        <div class="metric-value">Q <?= number_format((float)$retirosHoy['total_retiros'], 2) ?></div>
+        <div class="metric-value">Q <?= number_format((float)($retirosHoy['total_retiros'] ?? 0), 2) ?></div>
         <div class="metric-detail">
-          <?= (int)$retirosHoy['cantidad_retiros'] ?> retiros personales
+          <?= (int)($retirosHoy['cantidad_retiros'] ?? 0) ?> retiros personales
         </div>
       </div>
 
-      <!-- Ganancia Real del Día (Neta + desglose Pro) -->
+      <!-- Ganancia Real del Día -->
       <div class="metric-card ganancia">
-        <div class="metric-icon"><?= ((float)$margenGanancia['ganancia_real']) >= 0 ? '📈' : '📉' ?></div>
+        <div class="metric-icon"><?= ((float)($margenGanancia['ganancia_real'] ?? 0)) >= 0 ? '📈' : '📉' ?></div>
         <div class="metric-label">Ganancia Real del Día</div>
 
-        <!-- Principal: neta -->
-        <div class="metric-value">Q <?= number_format((float)$margenGanancia['ganancia_real'], 2) ?></div>
+        <div class="metric-value">Q <?= number_format((float)($margenGanancia['ganancia_real'] ?? 0), 2) ?></div>
 
-        <!-- Desglose: ventas, costo (COGS), gastos, reversas, ganancia bruta -->
         <div class="metric-detail">
-          Margen: <?= number_format((float)$margenGanancia['porcentaje_margen'], 1) ?>%
-          <span class="<?= ((float)$margenGanancia['ganancia_real']) >= 0 ? 'text-success' : 'text-danger' ?>">
-            <?= ((float)$margenGanancia['ganancia_real']) >= 0 ? '(Rentable ✅)' : '(Pérdida ⚠️)' ?>
+          Margen: <?= number_format((float)($margenGanancia['porcentaje_margen'] ?? 0), 1) ?>%
+          <span class="<?= ((float)($margenGanancia['ganancia_real'] ?? 0)) >= 0 ? 'text-success' : 'text-danger' ?>">
+            <?= ((float)($margenGanancia['ganancia_real'] ?? 0)) >= 0 ? '(Rentable ✅)' : '(Pérdida ⚠️)' ?>
           </span>
           <br>
           Ventas: Q <?= number_format((float)($margenGanancia['ventas_dia'] ?? 0), 2) ?> |
           Costo: Q <?= number_format((float)($margenGanancia['cogs_dia'] ?? 0), 2) ?> |
           Gastos: Q <?= number_format((float)($margenGanancia['gastos_dia'] ?? 0), 2) ?> |
-
-          <!-- ✅ AQUÍ ESTABA LO MALO: ya no 'reversas_dia' -->
-          Reversas: Q <?= number_format((float)($margenGanancia['reversas_ventas_dia'] ?? 0), 2) ?>
+          Reversas: Q <?= number_format($reversasDiaMostrar, 2) ?>
           <br>
-
-          <!-- Opcional: impacto real neto de reversas -->
-          Impacto Reversas: Q <?= number_format((float)($margenGanancia['reversas_impacto_dia'] ?? 0), 2) ?>
-          <br>
-
           Ganancia Bruta: Q <?= number_format((float)($margenGanancia['ganancia_bruta'] ?? 0), 2) ?>
         </div>
       </div>
 
-      <!-- Ganancias del Mes (Neta + desglose Pro) -->
+      <!-- Ganancias del Mes -->
       <div class="metric-card ganancia-mes">
-        <div class="metric-icon"><?= ((float)$gananciasMes['ganancias_mes']) >= 0 ? '📊' : '📉' ?></div>
+        <div class="metric-icon"><?= ((float)($gananciasMes['ganancias_mes'] ?? 0)) >= 0 ? '📊' : '📉' ?></div>
         <div class="metric-label">Ganancia Neta del Mes</div>
 
-        <!-- Principal: neta -->
-        <div class="metric-value">Q <?= number_format((float)$gananciasMes['ganancias_mes'], 2) ?></div>
+        <div class="metric-value">Q <?= number_format((float)($gananciasMes['ganancias_mes'] ?? 0), 2) ?></div>
 
-        <!-- Desglose: ventas, costo (COGS), gastos, reversas, ganancia bruta -->
         <div class="metric-detail">
-          Ventas: Q <?= number_format((float)$gananciasMes['ventas_mes'], 2) ?> |
-          Costo: Q <?= number_format((float)$gananciasMes['costo_ventas_mes'], 2) ?> |
-          Gastos: Q <?= number_format((float)$gananciasMes['gastos_mes'], 2) ?> |
-
-          <!-- ✅ AQUÍ ESTABA LO MALO: ya no 'reversas_mes' -->
-          Reversas: Q <?= number_format((float)($gananciasMes['reversas_ventas_mes'] ?? 0), 2) ?>
+          Ventas: Q <?= number_format((float)($gananciasMes['ventas_mes'] ?? 0), 2) ?> |
+          Costo: Q <?= number_format((float)($gananciasMes['costo_ventas_mes'] ?? 0), 2) ?> |
+          Gastos: Q <?= number_format((float)($gananciasMes['gastos_mes'] ?? 0), 2) ?> |
+          Reversas: Q <?= number_format($reversasMesMostrar, 2) ?>
           <br>
-
-          <!-- Opcional: impacto real neto de reversas -->
-          Impacto Reversas: Q <?= number_format((float)($gananciasMes['reversas_impacto_mes'] ?? 0), 2) ?>
-          <br>
-
-          Ganancia Bruta: Q <?= number_format((float)$gananciasMes['ganancia_bruta_mes'], 2) ?>
+          Ganancia Bruta: Q <?= number_format((float)($gananciasMes['ganancia_bruta_mes'] ?? 0), 2) ?>
         </div>
       </div>
     </div>
@@ -292,11 +272,11 @@ $alertas = $alertas ?? [
     <h2 class="section-title">⚠️ Alertas del Sistema</h2>
 
     <div class="cards-grid">
-      <?php if ((int)$alertas['productos_sin_stock'] > 0): ?>
+      <?php if ((int)($alertas['productos_sin_stock'] ?? 0) > 0): ?>
         <div class="alert-card danger">
           <div class="alert-title">
             ❌ Productos Sin Stock
-            <span class="badge-critical"><?= (int)$alertas['productos_sin_stock'] ?></span>
+            <span class="badge-critical"><?= (int)($alertas['productos_sin_stock'] ?? 0) ?></span>
           </div>
           <div class="alert-content">
             Hay productos agotados que no pueden venderse.
@@ -305,11 +285,11 @@ $alertas = $alertas ?? [
         </div>
       <?php endif; ?>
 
-      <?php if ((int)$alertas['productos_bajo_stock'] > 0): ?>
+      <?php if ((int)($alertas['productos_bajo_stock'] ?? 0) > 0): ?>
         <div class="alert-card warning">
           <div class="alert-title">
             ⚠️ Stock Bajo
-            <span class="badge-critical"><?= (int)$alertas['productos_bajo_stock'] ?></span>
+            <span class="badge-critical"><?= (int)($alertas['productos_bajo_stock'] ?? 0) ?></span>
           </div>
           <div class="alert-content">
             Productos por debajo del stock mínimo.
@@ -318,23 +298,23 @@ $alertas = $alertas ?? [
         </div>
       <?php endif; ?>
 
-      <?php if ((int)$alertas['ventas_por_cobrar_cantidad'] > 0): ?>
+      <?php if ((int)($alertas['ventas_por_cobrar_cantidad'] ?? 0) > 0): ?>
         <div class="alert-card info">
           <div class="alert-title">
             💳 Ventas Pendientes de Cobro
-            <span class="badge-critical"><?= (int)$alertas['ventas_por_cobrar_cantidad'] ?></span>
+            <span class="badge-critical"><?= (int)($alertas['ventas_por_cobrar_cantidad'] ?? 0) ?></span>
           </div>
           <div class="alert-content">
-            Monto pendiente: Q <?= number_format((float)$alertas['ventas_por_cobrar_monto'], 2) ?>
+            Monto pendiente: Q <?= number_format((float)($alertas['ventas_por_cobrar_monto'] ?? 0), 2) ?>
             <a href="<?= url('/admin/pos') ?>">Ver detalles →</a>
           </div>
         </div>
       <?php endif; ?>
 
       <?php
-      $hasAlerts = ((int)$alertas['productos_sin_stock'] > 0) ||
-        ((int)$alertas['productos_bajo_stock'] > 0) ||
-        ((int)$alertas['ventas_por_cobrar_cantidad'] > 0);
+      $hasAlerts = ((int)($alertas['productos_sin_stock'] ?? 0) > 0) ||
+        ((int)($alertas['productos_bajo_stock'] ?? 0) > 0) ||
+        ((int)($alertas['ventas_por_cobrar_cantidad'] ?? 0) > 0);
 
       if (!$hasAlerts): ?>
         <div class="alert-card success">

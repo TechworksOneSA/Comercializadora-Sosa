@@ -100,10 +100,8 @@ class DashboardModel extends Model
     }
 
     /**
-     * Ganancia real del día (ventas - costo - gastos + reversas)
-     *
-     * Reversas: SOLO por venta.anulada_at (no updated_at)
-     * impacto neto reversa = (ventas_anuladas - costo_de_ventas_anuladas)
+     * Ganancia real del día (ventas - costo - gastos)
+     * Reversas se devuelven SOLO como dato informativo (ventas anuladas del día).
      */
     public function obtenerMargenGanancia(): array
     {
@@ -136,7 +134,7 @@ class DashboardModel extends Model
 
         $gastosDia = (float)($g['gastos_dia'] ?? 0);
 
-        // 3) Reversas del día (ANULADAS HOY por anulada_at)
+        // 3) Reversas del día (ANULADAS hoy) -> usar anulada_at si existe, si no, fallback a updated_at
         $sqlReversas = "SELECT
                 COALESCE(SUM(vd.subtotal), 0) AS rev_ventas_dia,
                 COALESCE(SUM(vd.cantidad * COALESCE(p.costo_actual, p.costo, 0)), 0) AS rev_cogs_dia
@@ -144,8 +142,7 @@ class DashboardModel extends Model
             JOIN venta_detalle vd ON vd.venta_id = v.id
             JOIN productos p ON p.id = vd.producto_id
             WHERE v.estado = 'ANULADA'
-              AND v.anulada_at IS NOT NULL
-              AND DATE(v.anulada_at) = CURDATE()";
+              AND DATE(COALESCE(v.anulada_at, v.updated_at)) = CURDATE()";
 
         $stmt = $this->db->prepare($sqlReversas);
         $stmt->execute();
@@ -154,11 +151,8 @@ class DashboardModel extends Model
         $revVentas = (float)($rev['rev_ventas_dia'] ?? 0);
         $revCogs   = (float)($rev['rev_cogs_dia'] ?? 0);
 
-        $reversasImpacto = ($revVentas - $revCogs);
-
-        // 4) Fórmula final
-        $gananciaReal = ($ventasDia - $cogsDia - $gastosDia) + $reversasImpacto;
-
+        // 4) Fórmula final (SIN impacto reversas)
+        $gananciaReal = ($ventasDia - $cogsDia - $gastosDia);
         $porcentajeMargen = $ventasDia > 0 ? ($gananciaReal / $ventasDia) * 100 : 0;
 
         return [
@@ -166,9 +160,12 @@ class DashboardModel extends Model
             'cogs_dia' => $cogsDia,
             'gastos_dia' => $gastosDia,
 
+            // Reversas informativas
             'reversas_ventas_dia' => $revVentas,
             'reversas_cogs_dia' => $revCogs,
-            'reversas_impacto_dia' => $reversasImpacto,
+
+            // ✅ Alias para su frontend actual (usa reversas_dia)
+            'reversas_dia' => $revVentas,
 
             'ganancia_bruta' => ($ventasDia - $cogsDia),
             'ganancia_real' => $gananciaReal,
@@ -242,8 +239,8 @@ class DashboardModel extends Model
     }
 
     /**
-     * Ganancia neta del mes (ventas - costo - gastos + reversas)
-     * Reversas: SOLO por venta.anulada_at
+     * Ganancia neta del mes (ventas - costo - gastos)
+     * Reversas se devuelven SOLO como dato informativo.
      */
     public function obtenerGananciasMes(): array
     {
@@ -278,7 +275,7 @@ class DashboardModel extends Model
 
         $gastosMes = (float)($g['gastos_mes'] ?? 0);
 
-        // Reversas del mes (ANULADAS en el mes actual por anulada_at)
+        // Reversas del mes (ANULADAS en mes actual) -> anulada_at si existe, si no, updated_at
         $sqlReversasMes = "SELECT
                 COALESCE(SUM(vd.subtotal), 0) AS rev_ventas_mes,
                 COALESCE(SUM(vd.cantidad * COALESCE(p.costo_actual, p.costo, 0)), 0) AS rev_cogs_mes
@@ -286,9 +283,8 @@ class DashboardModel extends Model
             JOIN venta_detalle vd ON vd.venta_id = v.id
             JOIN productos p ON p.id = vd.producto_id
             WHERE v.estado = 'ANULADA'
-              AND v.anulada_at IS NOT NULL
-              AND YEAR(v.anulada_at) = YEAR(CURDATE())
-              AND MONTH(v.anulada_at) = MONTH(CURDATE())";
+              AND YEAR(COALESCE(v.anulada_at, v.updated_at)) = YEAR(CURDATE())
+              AND MONTH(COALESCE(v.anulada_at, v.updated_at)) = MONTH(CURDATE())";
 
         $stmt = $this->db->prepare($sqlReversasMes);
         $stmt->execute();
@@ -297,18 +293,20 @@ class DashboardModel extends Model
         $revVentas = (float)($rev['rev_ventas_mes'] ?? 0);
         $revCogs   = (float)($rev['rev_cogs_mes'] ?? 0);
 
-        $reversasImpacto = ($revVentas - $revCogs);
-
-        $gananciaNetaMes = ($ventasMes - $cogsMes - $gastosMes) + $reversasImpacto;
+        // Ganancia neta del mes (SIN impacto reversas)
+        $gananciaNetaMes = ($ventasMes - $cogsMes - $gastosMes);
 
         return [
             'ventas_mes' => $ventasMes,
             'costo_ventas_mes' => $cogsMes,
             'gastos_mes' => $gastosMes,
 
+            // Reversas informativas
             'reversas_ventas_mes' => $revVentas,
             'reversas_cogs_mes' => $revCogs,
-            'reversas_impacto_mes' => $reversasImpacto,
+
+            // ✅ Alias para su frontend actual (usa reversas_mes)
+            'reversas_mes' => $revVentas,
 
             'ganancia_bruta_mes' => ($ventasMes - $cogsMes),
             'ganancias_mes' => $gananciaNetaMes
