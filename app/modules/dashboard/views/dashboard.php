@@ -166,7 +166,7 @@ $alertas = $alertas ?? [
           Costo: Q <?= number_format((float)$gananciasMes['costo_ventas_mes'], 2) ?> |
           Gastos: Q <?= number_format((float)$gananciasMes['gastos_mes'], 2) ?>
           <br>
-          Bruta: Q <?= number_format((float)$gananciasMes['ganancia_bruta_mes'], 2) ?>
+          Ganancia Bruta: Q <?= number_format((float)$gananciasMes['ganancia_bruta_mes'], 2) ?>
         </div>
       </div>
     </div>
