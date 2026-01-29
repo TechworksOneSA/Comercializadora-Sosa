@@ -25,6 +25,7 @@ class DashboardController extends Controller
       'ventas_otros' => 0
     ];
 
+    // ✅ MISMO CÁLCULO QUE CAJA (y excluye ventas anuladas)
     $efectivoCaja = (float)($this->model->obtenerEfectivoEnCaja() ?? 0);
 
     $gastosHoy = $this->model->obtenerGastosHoy() ?: [
@@ -50,7 +51,6 @@ class DashboardController extends Controller
       'porcentaje_margen' => 0
     ];
 
-    // Normalizar keys por si su modelo viejo devolvía otra estructura
     $margenGanancia = array_merge([
       'ventas_dia' => 0,
       'cogs_dia' => 0,

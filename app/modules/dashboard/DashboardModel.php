@@ -1,12 +1,16 @@
 <?php
 
+require_once __DIR__ . '/../caja/CajaModel.php';
+
 class DashboardModel extends Model
 {
     private PDO $db;
+    private CajaModel $cajaModel;
 
     public function __construct()
     {
         $this->db = Database::connect();
+        $this->cajaModel = new CajaModel();
     }
 
     /**
@@ -36,38 +40,30 @@ class DashboardModel extends Model
     }
 
     /**
-     * Obtener efectivo real en caja (acumulativo histórico)
+     * ✅ Efectivo real en caja (SINGLE SOURCE OF TRUTH)
+     * Usa el mismo cálculo que CajaModel y excluye ventas anuladas.
      */
     public function obtenerEfectivoEnCaja(): float
     {
-        $sql = "SELECT
-                    COALESCE(SUM(CASE
-                        WHEN tipo = 'ingreso' AND metodo_pago = 'Efectivo' THEN monto
-                        WHEN tipo = 'gasto'   AND metodo_pago = 'Efectivo' THEN -monto
-                        WHEN tipo = 'retiro'  AND metodo_pago = 'Efectivo' THEN -monto
-                        ELSE 0
-                    END), 0) as efectivo_caja
-                FROM movimientos_caja";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return (float)($result['efectivo_caja'] ?? 0);
+        $resumen = $this->cajaModel->obtenerResumenCaja();
+        return (float)($resumen['efectivo_en_caja'] ?? 0);
     }
 
     /**
-     * Obtener gastos del día (solo en efectivo)
+     * Obtener gastos del día (solo efectivo)
+     * ✅ Ignora gastos vinculados a ventas anuladas (si venta_id existe)
      */
     public function obtenerGastosHoy(): array
     {
         $sql = "SELECT
                     COUNT(*) as cantidad_gastos,
-                    COALESCE(SUM(monto), 0) as total_gastos
-                FROM movimientos_caja
-                WHERE DATE(fecha) = CURDATE()
-                  AND tipo = 'gasto'
-                  AND metodo_pago = 'Efectivo'";
+                    COALESCE(SUM(mc.monto), 0) as total_gastos
+                FROM movimientos_caja mc
+                LEFT JOIN venta v ON v.id = mc.venta_id
+                WHERE DATE(mc.fecha) = CURDATE()
+                  AND mc.tipo = 'gasto'
+                  AND mc.metodo_pago = 'Efectivo'
+                  AND (mc.venta_id IS NULL OR v.estado = 'CONFIRMADA')";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
@@ -80,15 +76,18 @@ class DashboardModel extends Model
 
     /**
      * Obtener retiros del día
+     * ✅ Ignora retiros vinculados a ventas anuladas (si venta_id existe)
      */
     public function obtenerRetirosHoy(): array
     {
         $sql = "SELECT
                     COUNT(*) as cantidad_retiros,
-                    COALESCE(SUM(monto), 0) as total_retiros
-                FROM movimientos_caja
-                WHERE DATE(fecha) = CURDATE()
-                  AND tipo = 'retiro'";
+                    COALESCE(SUM(mc.monto), 0) as total_retiros
+                FROM movimientos_caja mc
+                LEFT JOIN venta v ON v.id = mc.venta_id
+                WHERE DATE(mc.fecha) = CURDATE()
+                  AND mc.tipo = 'retiro'
+                  AND (mc.venta_id IS NULL OR v.estado = 'CONFIRMADA')";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
@@ -123,10 +122,13 @@ class DashboardModel extends Model
         $cogsDia   = (float)($row['cogs_dia'] ?? 0);
 
         // 2) Gastos del día (NO retiros)
-        $sqlGastos = "SELECT COALESCE(SUM(monto), 0) AS gastos_dia
-                      FROM movimientos_caja
-                      WHERE DATE(fecha) = CURDATE()
-                        AND tipo = 'gasto'";
+        // ✅ excluir movimientos ligados a venta anulada
+        $sqlGastos = "SELECT COALESCE(SUM(mc.monto), 0) AS gastos_dia
+                      FROM movimientos_caja mc
+                      LEFT JOIN venta v ON v.id = mc.venta_id
+                      WHERE DATE(mc.fecha) = CURDATE()
+                        AND mc.tipo = 'gasto'
+                        AND (mc.venta_id IS NULL OR v.estado = 'CONFIRMADA')";
 
         $stmt = $this->db->prepare($sqlGastos);
         $stmt->execute();
@@ -134,7 +136,7 @@ class DashboardModel extends Model
 
         $gastosDia = (float)($g['gastos_dia'] ?? 0);
 
-        // 3) Reversas del día (ANULADAS hoy) -> usar anulada_at si existe, si no, fallback a updated_at
+        // 3) Reversas del día (ANULADAS hoy) -> info
         $sqlReversas = "SELECT
                 COALESCE(SUM(vd.subtotal), 0) AS rev_ventas_dia,
                 COALESCE(SUM(vd.cantidad * COALESCE(p.costo_actual, p.costo, 0)), 0) AS rev_cogs_dia
@@ -160,11 +162,8 @@ class DashboardModel extends Model
             'cogs_dia' => $cogsDia,
             'gastos_dia' => $gastosDia,
 
-            // Reversas informativas
             'reversas_ventas_dia' => $revVentas,
             'reversas_cogs_dia' => $revCogs,
-
-            // ✅ Alias para su frontend actual (usa reversas_dia)
             'reversas_dia' => $revVentas,
 
             'ganancia_bruta' => ($ventasDia - $cogsDia),
@@ -263,11 +262,14 @@ class DashboardModel extends Model
         $cogsMes   = (float)($row['cogs_mes'] ?? 0);
 
         // Gastos del mes
-        $sqlGastos = "SELECT COALESCE(SUM(monto), 0) AS gastos_mes
-                      FROM movimientos_caja
-                      WHERE YEAR(fecha) = YEAR(CURDATE())
-                        AND MONTH(fecha) = MONTH(CURDATE())
-                        AND tipo = 'gasto'";
+        // ✅ excluir movimientos ligados a venta anulada
+        $sqlGastos = "SELECT COALESCE(SUM(mc.monto), 0) AS gastos_mes
+                      FROM movimientos_caja mc
+                      LEFT JOIN venta v ON v.id = mc.venta_id
+                      WHERE YEAR(mc.fecha) = YEAR(CURDATE())
+                        AND MONTH(mc.fecha) = MONTH(CURDATE())
+                        AND mc.tipo = 'gasto'
+                        AND (mc.venta_id IS NULL OR v.estado = 'CONFIRMADA')";
 
         $stmt = $this->db->prepare($sqlGastos);
         $stmt->execute();
@@ -275,7 +277,7 @@ class DashboardModel extends Model
 
         $gastosMes = (float)($g['gastos_mes'] ?? 0);
 
-        // Reversas del mes (ANULADAS en mes actual) -> anulada_at si existe, si no, updated_at
+        // Reversas del mes (info)
         $sqlReversasMes = "SELECT
                 COALESCE(SUM(vd.subtotal), 0) AS rev_ventas_mes,
                 COALESCE(SUM(vd.cantidad * COALESCE(p.costo_actual, p.costo, 0)), 0) AS rev_cogs_mes
@@ -293,7 +295,6 @@ class DashboardModel extends Model
         $revVentas = (float)($rev['rev_ventas_mes'] ?? 0);
         $revCogs   = (float)($rev['rev_cogs_mes'] ?? 0);
 
-        // Ganancia neta del mes (SIN impacto reversas)
         $gananciaNetaMes = ($ventasMes - $cogsMes - $gastosMes);
 
         return [
@@ -301,11 +302,8 @@ class DashboardModel extends Model
             'costo_ventas_mes' => $cogsMes,
             'gastos_mes' => $gastosMes,
 
-            // Reversas informativas
             'reversas_ventas_mes' => $revVentas,
             'reversas_cogs_mes' => $revCogs,
-
-            // ✅ Alias para su frontend actual (usa reversas_mes)
             'reversas_mes' => $revVentas,
 
             'ganancia_bruta_mes' => ($ventasMes - $cogsMes),
