@@ -301,7 +301,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             <span>🕐 Últimos 10 Movimientos</span>
         </div>
         <div>
-            Si desea ver todos los Movimientos ve a Movimientos de Caja
+            (Si desea ver todos los Movimientos ve a Movimientos de Caja)
         </div>
         <div class="table-container">
             <table class="caja-table">
