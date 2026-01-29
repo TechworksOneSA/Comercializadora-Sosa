@@ -1,28 +1,52 @@
 <?php
 // Inicializar variables con valores por defecto
-$ventasHoy = $ventasHoy ?? ['cantidad_ventas' => 0, 'total_ventas' => 0];
+$ventasHoy = $ventasHoy ?? [
+  'cantidad_ventas' => 0,
+  'total_ventas' => 0,
+  'ventas_efectivo' => 0,
+  'ventas_otros' => 0,
+];
+
 $efectivoCaja = $efectivoCaja ?? 0;
-$gastosHoy = $gastosHoy ?? ['cantidad_gastos' => 0, 'total_gastos' => 0];
-$retirosHoy = $retirosHoy ?? ['cantidad_retiros' => 0, 'total_retiros' => 0];
+
+$gastosHoy = $gastosHoy ?? [
+  'cantidad_gastos' => 0,
+  'total_gastos' => 0
+];
+
+$retirosHoy = $retirosHoy ?? [
+  'cantidad_retiros' => 0,
+  'total_retiros' => 0
+];
 
 $margenGanancia = $margenGanancia ?? [
   'ganancia_real' => 0,
   'porcentaje_margen' => 0,
-  // opcionales si ya viene el modelo nuevo
+
+  // desgloses reales del modelo
   'ganancia_bruta' => 0,
   'ventas_dia' => 0,
   'cogs_dia' => 0,
   'gastos_dia' => 0,
-  'reversas_dia' => 0,
+
+  // ✅ claves reales del modelo (día)
+  'reversas_ventas_dia' => 0,
+  'reversas_cogs_dia' => 0,
+  'reversas_impacto_dia' => 0,
 ];
 
 $gananciasMes = $gananciasMes ?? [
   'ventas_mes' => 0,
   'costo_ventas_mes' => 0,     // COGS
   'gastos_mes' => 0,           // gastos operativos
-  'reversas_mes' => 0,         // reversas/anulaciones
+
+  // ✅ claves reales del modelo (mes)
+  'reversas_ventas_mes' => 0,
+  'reversas_cogs_mes' => 0,
+  'reversas_impacto_mes' => 0,
+
   'ganancia_bruta_mes' => 0,   // ventas - cogs
-  'ganancias_mes' => 0         // ganancia neta (bruta - gastos - reversas)
+  'ganancias_mes' => 0         // ganancia neta
 ];
 
 $alertas = $alertas ?? [
@@ -159,8 +183,15 @@ $alertas = $alertas ?? [
           Ventas: Q <?= number_format((float)($margenGanancia['ventas_dia'] ?? 0), 2) ?> |
           Costo: Q <?= number_format((float)($margenGanancia['cogs_dia'] ?? 0), 2) ?> |
           Gastos: Q <?= number_format((float)($margenGanancia['gastos_dia'] ?? 0), 2) ?> |
-          Reversas: Q <?= number_format((float)($margenGanancia['reversas_dia'] ?? 0), 2) ?>
+
+          <!-- ✅ AQUÍ ESTABA LO MALO: ya no 'reversas_dia' -->
+          Reversas: Q <?= number_format((float)($margenGanancia['reversas_ventas_dia'] ?? 0), 2) ?>
           <br>
+
+          <!-- Opcional: impacto real neto de reversas -->
+          Impacto Reversas: Q <?= number_format((float)($margenGanancia['reversas_impacto_dia'] ?? 0), 2) ?>
+          <br>
+
           Ganancia Bruta: Q <?= number_format((float)($margenGanancia['ganancia_bruta'] ?? 0), 2) ?>
         </div>
       </div>
@@ -178,8 +209,15 @@ $alertas = $alertas ?? [
           Ventas: Q <?= number_format((float)$gananciasMes['ventas_mes'], 2) ?> |
           Costo: Q <?= number_format((float)$gananciasMes['costo_ventas_mes'], 2) ?> |
           Gastos: Q <?= number_format((float)$gananciasMes['gastos_mes'], 2) ?> |
-          Reversas: Q <?= number_format((float)($gananciasMes['reversas_mes'] ?? 0), 2) ?>
+
+          <!-- ✅ AQUÍ ESTABA LO MALO: ya no 'reversas_mes' -->
+          Reversas: Q <?= number_format((float)($gananciasMes['reversas_ventas_mes'] ?? 0), 2) ?>
           <br>
+
+          <!-- Opcional: impacto real neto de reversas -->
+          Impacto Reversas: Q <?= number_format((float)($gananciasMes['reversas_impacto_mes'] ?? 0), 2) ?>
+          <br>
+
           Ganancia Bruta: Q <?= number_format((float)$gananciasMes['ganancia_bruta_mes'], 2) ?>
         </div>
       </div>
