@@ -12,15 +12,17 @@ $margenGanancia = $margenGanancia ?? [
   'ganancia_bruta' => 0,
   'ventas_dia' => 0,
   'cogs_dia' => 0,
-  'gastos_dia' => 0
+  'gastos_dia' => 0,
+  'reversas_dia' => 0,
 ];
 
 $gananciasMes = $gananciasMes ?? [
   'ventas_mes' => 0,
   'costo_ventas_mes' => 0,     // COGS
   'gastos_mes' => 0,           // gastos operativos
+  'reversas_mes' => 0,         // reversas/anulaciones
   'ganancia_bruta_mes' => 0,   // ventas - cogs
-  'ganancias_mes' => 0         // ganancia neta (bruta - gastos)
+  'ganancias_mes' => 0         // ganancia neta (bruta - gastos - reversas)
 ];
 
 $alertas = $alertas ?? [
@@ -147,7 +149,7 @@ $alertas = $alertas ?? [
         <!-- Principal: neta -->
         <div class="metric-value">Q <?= number_format((float)$margenGanancia['ganancia_real'], 2) ?></div>
 
-        <!-- Desglose: ventas, costo (COGS), gastos, ganancia bruta -->
+        <!-- Desglose: ventas, costo (COGS), gastos, reversas, ganancia bruta -->
         <div class="metric-detail">
           Margen: <?= number_format((float)$margenGanancia['porcentaje_margen'], 1) ?>%
           <span class="<?= ((float)$margenGanancia['ganancia_real']) >= 0 ? 'text-success' : 'text-danger' ?>">
@@ -156,7 +158,8 @@ $alertas = $alertas ?? [
           <br>
           Ventas: Q <?= number_format((float)($margenGanancia['ventas_dia'] ?? 0), 2) ?> |
           Costo: Q <?= number_format((float)($margenGanancia['cogs_dia'] ?? 0), 2) ?> |
-          Gastos: Q <?= number_format((float)($margenGanancia['gastos_dia'] ?? 0), 2) ?>
+          Gastos: Q <?= number_format((float)($margenGanancia['gastos_dia'] ?? 0), 2) ?> |
+          Reversas: Q <?= number_format((float)($margenGanancia['reversas_dia'] ?? 0), 2) ?>
           <br>
           Ganancia Bruta: Q <?= number_format((float)($margenGanancia['ganancia_bruta'] ?? 0), 2) ?>
         </div>
@@ -170,11 +173,12 @@ $alertas = $alertas ?? [
         <!-- Principal: neta -->
         <div class="metric-value">Q <?= number_format((float)$gananciasMes['ganancias_mes'], 2) ?></div>
 
-        <!-- Desglose: ventas, costo (COGS), gastos, ganancia bruta -->
+        <!-- Desglose: ventas, costo (COGS), gastos, reversas, ganancia bruta -->
         <div class="metric-detail">
           Ventas: Q <?= number_format((float)$gananciasMes['ventas_mes'], 2) ?> |
           Costo: Q <?= number_format((float)$gananciasMes['costo_ventas_mes'], 2) ?> |
-          Gastos: Q <?= number_format((float)$gananciasMes['gastos_mes'], 2) ?>
+          Gastos: Q <?= number_format((float)$gananciasMes['gastos_mes'], 2) ?> |
+          Reversas: Q <?= number_format((float)($gananciasMes['reversas_mes'] ?? 0), 2) ?>
           <br>
           Ganancia Bruta: Q <?= number_format((float)$gananciasMes['ganancia_bruta_mes'], 2) ?>
         </div>
