@@ -33,7 +33,7 @@ class PosModel extends Model
                 FROM venta v
                 INNER JOIN clientes c ON v.cliente_id = c.id
                 WHERE v.estado = 'CONFIRMADA'
-                AND v.total > v.total_pagado
+                  AND v.total > v.total_pagado
                 ORDER BY v.fecha_venta ASC, v.id ASC";
 
         $stmt = $this->db->prepare($sql);
@@ -66,74 +66,115 @@ class PosModel extends Model
         return $result ?: null;
     }
 
+    // ==================== COBROS ====================
+
     /**
      * Registrar cobro de venta
+     * Reglas:
+     * - No se cobra si la venta está ANULADA.
+     * - No se cobra si la venta está CERRADA (total_pagado >= total).
+     * - No permitir cobrar más del saldo pendiente (cap).
+     * - Siempre se registra movimiento de caja "ingreso" (si es válido).
      */
     public function registrarCobro(int $ventaId, float $monto, string $metodoPago, string $observaciones = ''): bool
     {
         try {
+            if ($ventaId <= 0) throw new Exception("ventaId inválido");
+            if ($monto <= 0) throw new Exception("El monto debe ser mayor a 0");
+
+            $usuarioId = (int)($_SESSION['user']['id'] ?? 0);
+            if ($usuarioId <= 0) throw new Exception("Usuario no autenticado");
+
             $this->db->beginTransaction();
+
+            // 1) Lock de venta para evitar carreras
+            $sqlLock = "SELECT id, estado, total, total_pagado
+                        FROM venta
+                        WHERE id = :id
+                        LIMIT 1
+                        FOR UPDATE";
+            $stmtLock = $this->db->prepare($sqlLock);
+            $stmtLock->execute([':id' => $ventaId]);
+            $venta = $stmtLock->fetch(PDO::FETCH_ASSOC);
+
+            if (!$venta) {
+                throw new Exception("Venta no encontrada");
+            }
+
+            if (($venta['estado'] ?? '') === 'ANULADA') {
+                throw new Exception("No se puede cobrar: la venta #{$ventaId} está ANULADA");
+            }
+
+            $total = (float)($venta['total'] ?? 0);
+            $pagado = (float)($venta['total_pagado'] ?? 0);
+            $saldo = $total - $pagado;
+
+            if ($saldo <= 0) {
+                throw new Exception("La venta #{$ventaId} ya está totalmente pagada");
+            }
+
+            // 2) Cap de monto al saldo pendiente (evita sobrepago)
+            if ($monto > $saldo) {
+                $monto = $saldo;
+            }
 
             // Preparar campos adicionales
             $numeroCheque = $_POST['numero_cheque'] ?? null;
             $numeroBoleta = $_POST['numero_boleta'] ?? null;
 
-            // Actualizar total_pagado y método de pago y números en venta
-            $sql = "UPDATE venta
-                    SET total_pagado = total_pagado + :monto,
-                        metodo_pago = :metodo_pago,
-                        numero_cheque = :numero_cheque,
-                        numero_boleta = :numero_boleta
-                    WHERE id = :venta_id";
-
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([
-                ':monto' => $monto,
-                ':metodo_pago' => $metodoPago,
-                ':numero_cheque' => $numeroCheque,
-                ':numero_boleta' => $numeroBoleta,
-                ':venta_id' => $ventaId
+            // 3) Registrar ingreso de caja PRIMERO (si esto falla, no tocamos venta)
+            // CajaModel ya excluye ventas anuladas y maneja duplicados básicos
+            $okCaja = $this->cajaModel->registrarIngreso([
+                'concepto'      => "Cobro de venta #{$ventaId}",
+                'monto'         => $monto,
+                'metodo_pago'   => $metodoPago,
+                'observaciones' => $observaciones,
+                'venta_id'      => $ventaId,
+                'usuario_id'    => $usuarioId,
             ]);
 
-            // Registrar movimiento de caja (ingreso) usando CajaModel
-            $this->cajaModel->registrarIngreso([
-                'concepto' => 'Cobro de venta',
-                'monto' => $monto,
-                'metodo_pago' => $metodoPago,
-                'observaciones' => $observaciones,
-                'venta_id' => $ventaId,
-                'usuario_id' => $_SESSION['user']['id']
+            if (!$okCaja) {
+                // CajaModel retorna false si la venta es inválida para caja (p.ej. anulada)
+                throw new Exception("No se pudo registrar el ingreso en caja para la venta #{$ventaId}");
+            }
+
+            // 4) Actualizar total_pagado y método de pago en venta
+            $sqlUpd = "UPDATE venta
+                       SET total_pagado = total_pagado + :monto,
+                           metodo_pago = :metodo_pago,
+                           numero_cheque = :numero_cheque,
+                           numero_boleta = :numero_boleta
+                       WHERE id = :venta_id";
+            $stmtUpd = $this->db->prepare($sqlUpd);
+            $stmtUpd->execute([
+                ':monto'         => $monto,
+                ':metodo_pago'   => $metodoPago,
+                ':numero_cheque' => $numeroCheque,
+                ':numero_boleta' => $numeroBoleta,
+                ':venta_id'      => $ventaId,
             ]);
 
             $this->db->commit();
             return true;
+
         } catch (Exception $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) $this->db->rollBack();
             throw $e;
         }
     }
 
     // ==================== DELEGACION A CAJAMODEL ====================
 
-    /**
-     * Obtener resumen de caja usando CajaModel
-     */
     public function obtenerResumenCaja(): array
     {
         return $this->cajaModel->obtenerResumenCaja();
     }
 
-    /**
-     * Obtener últimos movimientos usando CajaModel
-     */
     public function obtenerUltimosMovimientos(int $limite = 10): array
     {
         return $this->cajaModel->obtenerUltimosMovimientos($limite);
     }
 
-    /**
-     * Registrar movimiento de caja usando CajaModel
-     */
     public function registrarMovimiento(array $data): bool
     {
         return $this->cajaModel->registrarMovimiento($data);
