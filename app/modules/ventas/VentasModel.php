@@ -763,62 +763,8 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
             ':usuario_id' => $usuarioId,
         ], "ANULAR_VENTA_UPDATE");
 
-        // 5) Reverso de caja: SOLO si hubo cobro EN EFECTIVO
-        $totalPagado = (float)($venta['total_pagado'] ?? 0);
-        $metodoPago  = (string)($venta['metodo_pago'] ?? 'Efectivo');
-
-        // Normalización: "efectivo" / "Efectivo" / "EFECTIVO"
-        $esEfectivo = (strcasecmp(trim($metodoPago), 'Efectivo') === 0);
-
-        if ($totalPagado > 0 && $esEfectivo) {
-            // Idempotencia: si ya existe reverso, no duplicar
-            $sqlExisteRev = "SELECT id
-                             FROM movimientos_caja
-                             WHERE venta_id = :venta_id
-                               AND tipo = 'gasto'
-                               AND concepto = :concepto
-                             LIMIT 1";
-            $stmtExisteRev = $this->db->prepare($sqlExisteRev);
-            $stmtExisteRev->execute([
-                ':venta_id'  => $ventaId,
-                ':concepto'  => "Reverso por anulación de venta #{$ventaId}",
-            ]);
-            $yaExiste = $stmtExisteRev->fetchColumn();
-
-            if (!$yaExiste) {
-                // ✅ Use CajaModel (separación de responsabilidades)
-                $caja = new CajaModel();
-                $ok = $caja->registrarMovimiento([
-                    'tipo'          => 'gasto', // salida de caja
-                    'concepto'      => "Reverso por anulación de venta #{$ventaId}",
-                    'monto'         => $totalPagado,
-                    'metodo_pago'   => 'Efectivo',
-                    'observaciones' => "Salida de caja por anulación de venta #{$ventaId}.",
-                    'usuario_id'    => $usuarioId,
-                    // 'fecha' => date('Y-m-d') // opcional
-                ]);
-
-                if (!$ok) {
-                    throw new Exception("No se pudo registrar el reverso en caja para la venta #{$ventaId}");
-                }
-
-                // IMPORTANTÍSIMO: linkear el reverso con la venta (su CajaModel no lo hace en registrarMovimiento)
-                // Así quedan rastreables y auditables.
-                $sqlLink = "UPDATE movimientos_caja
-                            SET venta_id = :venta_id
-                            WHERE tipo = 'gasto'
-                              AND concepto = :concepto
-                              AND usuario_id = :usuario_id
-                            ORDER BY id DESC
-                            LIMIT 1";
-                $stmtLink = $this->db->prepare($sqlLink);
-                $stmtLink->execute([
-                    ':venta_id' => $ventaId,
-                    ':concepto' => "Reverso por anulación de venta #{$ventaId}",
-                    ':usuario_id' => $usuarioId,
-                ]);
-            }
-        }
+        // 5) Caja: NO SE TOCA NUNCA (política de negocio)
+        //    No insertar movimientos_caja, no reversos, no ajustes automáticos.
 
         $this->db->commit();
         return true;
