@@ -139,16 +139,26 @@ $alertas = $alertas ?? [
         </div>
       </div>
 
-      <!-- Ganancia Real -->
+      <!-- Ganancia Real del Día (Neta + desglose Pro) -->
       <div class="metric-card ganancia">
         <div class="metric-icon"><?= ((float)$margenGanancia['ganancia_real']) >= 0 ? '📈' : '📉' ?></div>
         <div class="metric-label">Ganancia Real del Día</div>
+
+        <!-- Principal: neta -->
         <div class="metric-value">Q <?= number_format((float)$margenGanancia['ganancia_real'], 2) ?></div>
+
+        <!-- Desglose: ventas, costo (COGS), gastos, ganancia bruta -->
         <div class="metric-detail">
           Margen: <?= number_format((float)$margenGanancia['porcentaje_margen'], 1) ?>%
           <span class="<?= ((float)$margenGanancia['ganancia_real']) >= 0 ? 'text-success' : 'text-danger' ?>">
             <?= ((float)$margenGanancia['ganancia_real']) >= 0 ? '(Rentable ✅)' : '(Pérdida ⚠️)' ?>
           </span>
+          <br>
+          Ventas: Q <?= number_format((float)($margenGanancia['ventas_dia'] ?? 0), 2) ?> |
+          Costo: Q <?= number_format((float)($margenGanancia['cogs_dia'] ?? 0), 2) ?> |
+          Gastos: Q <?= number_format((float)($margenGanancia['gastos_dia'] ?? 0), 2) ?>
+          <br>
+          Ganancia Bruta: Q <?= number_format((float)($margenGanancia['ganancia_bruta'] ?? 0), 2) ?>
         </div>
       </div>
 
