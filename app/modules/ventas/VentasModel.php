@@ -756,10 +756,11 @@ public function anularVenta(int $ventaId, int $usuarioId): bool
 
         // 4) Marcar venta como ANULADA
         // ✅ Solo actualizar estado (las columnas anulada_at y anulada_por no existen en la tabla)
-        $sqlUpd = "UPDATE {$this->tableVentas}
-                   SET estado = 'ANULADA',
-                       updated_at = NOW()
-                   WHERE id = :id";
+              $sqlUpd = "UPDATE {$this->tableVentas}
+              SET estado = 'ANULADA',
+               anulada_at = NOW(),
+               updated_at = NOW()
+               WHERE id = :id";
         $stmtUpd = $this->db->prepare($sqlUpd);
         $this->execChecked($stmtUpd, [
             ':id' => $ventaId
