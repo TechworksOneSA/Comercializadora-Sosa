@@ -11,6 +11,7 @@ class DashboardModel extends Model
 
     /**
      * Obtener ventas del día
+     * (Métrica rápida basada en venta.total)
      */
     public function obtenerVentasHoy(): array
     {
@@ -100,15 +101,17 @@ class DashboardModel extends Model
     }
 
     /**
-     * Calcular margen de ganancia del día (nivel PRO)
+     * Calcular ganancia del día (misma lógica que la mensual)
      *
-     * ✅ Ganancia BRUTA (día) = Ventas - Costo de lo vendido (COGS)
-     * ✅ Ganancia NETA  (día) = Ganancia bruta - Gastos operativos
-     * 🚫 Retiros NO afectan ganancia (son movimientos de capital/caja)
+     * ✅ Ventas del día: suma de subtotales de detalle
+     * ✅ COGS del día: suma(cantidad * costo_unitario_en_producto)
+     * ✅ Ganancia BRUTA: ventas - cogs
+     * ✅ Ganancia REAL (NETA): bruta - gastos operativos del día
+     * 🚫 Retiros NO afectan ganancia
      */
     public function obtenerMargenGanancia(): array
     {
-        // 1) Ventas y COGS del día desde detalle (evita depender solo de venta.total)
+        // 1) Ventas y COGS del día desde detalle
         $sqlVentasCostos = "SELECT
                 COALESCE(SUM(vd.subtotal), 0) AS ventas_dia,
                 COALESCE(SUM(vd.cantidad * COALESCE(p.costo_actual, p.costo, 0)), 0) AS cogs_dia
@@ -126,32 +129,32 @@ class DashboardModel extends Model
         $ventasDia = (float)($row['ventas_dia'] ?? 0);
         $cogsDia   = (float)($row['cogs_dia'] ?? 0);
 
-        // 2) Gastos operativos del día (si quiere, puede filtrar solo efectivo; acá dejo todos)
-        $sqlGastos = "SELECT COALESCE(SUM(monto), 0) as gastos
+        // 2) Gastos operativos del día (NO retiros)
+        // Si usted quiere SOLO efectivo, agregue: AND metodo_pago = 'Efectivo'
+        $sqlGastos = "SELECT COALESCE(SUM(monto), 0) AS gastos_dia
                       FROM movimientos_caja
                       WHERE DATE(fecha) = CURDATE()
                         AND tipo = 'gasto'";
 
         $stmt = $this->db->prepare($sqlGastos);
         $stmt->execute();
-        $gastos = $stmt->fetch(PDO::FETCH_ASSOC);
+        $g = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['gastos_dia' => 0];
 
-        $gastosDia = (float)($gastos['gastos'] ?? 0);
+        $gastosDia = (float)($g['gastos_dia'] ?? 0);
 
         // 3) KPIs
         $gananciaBruta = $ventasDia - $cogsDia;
         $gananciaNeta  = $gananciaBruta - $gastosDia;
 
-        // Margen sobre ventas (neta)
         $porcentajeMargen = $ventasDia > 0 ? ($gananciaNeta / $ventasDia) * 100 : 0;
 
+        // Mantengo keys existentes para no romper vista
         return [
             'ventas_dia' => $ventasDia,
             'cogs_dia' => $cogsDia,
             'gastos_dia' => $gastosDia,
-
             'ganancia_bruta' => $gananciaBruta,
-            'ganancia_real' => $gananciaNeta, // conserva su key para no romper la vista
+            'ganancia_real' => $gananciaNeta,
             'porcentaje_margen' => $porcentajeMargen
         ];
     }
@@ -269,7 +272,7 @@ class DashboardModel extends Model
         $cogsMes   = (float)($row['cogs_mes'] ?? 0);
 
         // 2) Gastos operativos del mes (todos los métodos de pago)
-        $sqlGastos = "SELECT COALESCE(SUM(monto), 0) as gastos_mes
+        $sqlGastos = "SELECT COALESCE(SUM(monto), 0) AS gastos_mes
                       FROM movimientos_caja
                       WHERE YEAR(fecha) = YEAR(CURDATE())
                         AND MONTH(fecha) = MONTH(CURDATE())
@@ -277,7 +280,7 @@ class DashboardModel extends Model
 
         $stmt = $this->db->prepare($sqlGastos);
         $stmt->execute();
-        $gastos = $stmt->fetch(PDO::FETCH_ASSOC);
+        $gastos = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['gastos_mes' => 0];
 
         $gastosMes = (float)($gastos['gastos_mes'] ?? 0);
 
@@ -289,11 +292,8 @@ class DashboardModel extends Model
             'ventas_mes' => $ventasMes,
             'costo_ventas_mes' => $cogsMes,
             'gastos_mes' => $gastosMes,
-
             'ganancia_bruta_mes' => $gananciaBrutaMes,
-
             // Mantengo su key para no romper la vista: "ganancias_mes"
-            // Ahora representa GANANCIA NETA (bruta - gastos)
             'ganancias_mes' => $gananciaNetaMes
         ];
     }
