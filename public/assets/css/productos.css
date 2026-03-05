@@ -441,6 +441,16 @@ html, body {
   margin-top: 16px !important;
 }
 
+.modal-eliminar-info {
+  color: #055160;
+  background: #cff4fc;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-top: 16px !important;
+  border-left: 3px solid #0dcaf0;
+}
+
 .modal-eliminar-footer {
   display: flex;
   gap: 12px;

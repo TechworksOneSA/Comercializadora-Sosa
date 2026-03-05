@@ -320,4 +320,19 @@ class ProductosModel extends Model
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function tieneVentasAsociadas(int $productoId): bool
+    {
+        $sql = "SELECT COUNT(*) as total 
+                FROM venta_detalle 
+                WHERE producto_id = :producto_id 
+                LIMIT 1";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':producto_id', $productoId, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return ($result['total'] ?? 0) > 0;
+    }
 }

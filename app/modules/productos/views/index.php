@@ -199,17 +199,17 @@ $kpis = $kpis ?? [];
   <div class="modal-eliminar-backdrop" onclick="cerrarModalEliminar()"></div>
   <div class="modal-eliminar-content">
     <div class="modal-eliminar-header">
-      <h3>⚠️ Confirmar Eliminación</h3>
+      <h3>⚠️ Eliminar Producto</h3>
       <button type="button" class="modal-eliminar-close" onclick="cerrarModalEliminar()">✕</button>
     </div>
     <div class="modal-eliminar-body">
-      <p>¿Está seguro de que desea eliminar permanentemente el producto?</p>
+      <p>¿Está seguro de que desea eliminar el producto?</p>
       <p class="modal-eliminar-producto"><strong id="nombreProductoEliminar"></strong></p>
-      <p class="modal-eliminar-warning">⚠️ Esta acción no se puede deshacer</p>
+      <p class="modal-eliminar-info">ℹ️ Si el producto tiene ventas registradas, será desactivado en lugar de eliminarse permanentemente.</p>
     </div>
     <div class="modal-eliminar-footer">
       <button type="button" class="btn-cancelar" onclick="cerrarModalEliminar()">Cancelar</button>
-      <button type="button" class="btn-confirmar-eliminar" onclick="eliminarProducto()">Eliminar Permanentemente</button>
+      <button type="button" class="btn-confirmar-eliminar" onclick="eliminarProducto()">Confirmar</button>
     </div>
   </div>
 </div>
@@ -233,7 +233,7 @@ function eliminarProducto() {
   
   const btn = document.querySelector('.btn-confirmar-eliminar');
   btn.disabled = true;
-  btn.textContent = 'Eliminando...';
+  btn.textContent = 'Procesando...';
   
   fetch('<?= url("/admin/productos/eliminar/") ?>' + productoEliminarId, {
     method: 'POST',
@@ -245,18 +245,18 @@ function eliminarProducto() {
   .then(data => {
     if (data.success) {
       cerrarModalEliminar();
-      window.location.href = '<?= url("/admin/productos?ok=") ?>' + encodeURIComponent(data.message || 'Producto eliminado');
+      window.location.href = '<?= url("/admin/productos?ok=") ?>' + encodeURIComponent(data.message || 'Producto procesado correctamente');
     } else {
-      alert('Error: ' + (data.message || 'No se pudo eliminar el producto'));
+      alert('Error: ' + (data.message || 'No se pudo procesar la solicitud'));
       btn.disabled = false;
-      btn.textContent = 'Eliminar Permanentemente';
+      btn.textContent = 'Confirmar';
     }
   })
   .catch(error => {
     console.error('Error:', error);
-    alert('Error al eliminar el producto');
+    alert('Error al procesar la solicitud');
     btn.disabled = false;
-    btn.textContent = 'Eliminar Permanentemente';
+    btn.textContent = 'Confirmar';
   });
 }
 </script>

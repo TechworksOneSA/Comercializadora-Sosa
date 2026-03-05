@@ -451,31 +451,49 @@ class ProductosController extends Controller
         }
 
         try {
-            // Eliminar imagen si existe
-            $imagenPath = $producto['imagen_path'] ?? null;
-            if (!empty($imagenPath)) {
-                $decoded = json_decode($imagenPath, true);
-                $imagenes = is_array($decoded) ? $decoded : [$imagenPath];
+            // Verificar si el producto tiene ventas asociadas
+            $tieneVentas = $this->model->tieneVentasAsociadas((int)$id);
+            
+            if ($tieneVentas) {
+                // Si tiene ventas, solo desactivar (eliminación lógica)
+                $result = $this->model->desactivar((int)$id);
+                
+                if ($result) {
+                    echo json_encode([
+                        'success' => true, 
+                        'message' => 'El producto tiene ventas registradas y ha sido desactivado. Ya no aparecerá en el inventario activo.'
+                    ]);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Error al desactivar el producto']);
+                }
+            } else {
+                // Si no tiene ventas, eliminar físicamente
+                // Eliminar imagen si existe
+                $imagenPath = $producto['imagen_path'] ?? null;
+                if (!empty($imagenPath)) {
+                    $decoded = json_decode($imagenPath, true);
+                    $imagenes = is_array($decoded) ? $decoded : [$imagenPath];
 
-                foreach ($imagenes as $img) {
-                    $filePath = rtrim($this->UPLOAD_BASE_DIR, '/') . '/productos/' . basename($img);
-                    if (file_exists($filePath)) {
-                        @unlink($filePath);
+                    foreach ($imagenes as $img) {
+                        $filePath = rtrim($this->UPLOAD_BASE_DIR, '/') . '/productos/' . basename($img);
+                        if (file_exists($filePath)) {
+                            @unlink($filePath);
+                        }
                     }
                 }
-            }
 
-            // Eliminar producto
-            $result = $this->model->eliminar((int)$id);
+                // Eliminar producto
+                $result = $this->model->eliminar((int)$id);
 
-            if ($result) {
-                echo json_encode(['success' => true, 'message' => 'Producto eliminado correctamente']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Error al eliminar el producto']);
+                if ($result) {
+                    echo json_encode(['success' => true, 'message' => 'Producto eliminado permanentemente']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Error al eliminar el producto']);
+                }
             }
         } catch (Exception $e) {
             error_log("Error eliminando producto: " . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => 'Error al eliminar: ' . $e->getMessage()]);
+            echo json_encode(['success' => false, 'message' => 'Error al procesar la eliminación: ' . $e->getMessage()]);
         }
         exit;
     }
