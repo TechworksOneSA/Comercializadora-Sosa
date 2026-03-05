@@ -430,6 +430,48 @@ class ProductosController extends Controller
         return $sku;
     }
 
+    // =========================
+    // ELIMINAR
+    // =========================
+    public function eliminar($id)
+    {
+        RoleMiddleware::requireAdminOrVendedor();
+
+        $producto = $this->model->obtenerPorId((int)$id);
+        if (!$producto) {
+            redirect("/admin/productos?err=" . urlencode("Producto no encontrado"));
+            return;
+        }
+
+        try {
+            // Eliminar imagen si existe
+            $imagenPath = $producto['imagen_path'] ?? null;
+            if (!empty($imagenPath)) {
+                $decoded = json_decode($imagenPath, true);
+                $imagenes = is_array($decoded) ? $decoded : [$imagenPath];
+
+                foreach ($imagenes as $img) {
+                    $filePath = rtrim($this->UPLOAD_BASE_DIR, '/') . '/productos/' . basename($img);
+                    if (file_exists($filePath)) {
+                        @unlink($filePath);
+                    }
+                }
+            }
+
+            // Eliminar producto
+            $result = $this->model->eliminar((int)$id);
+
+            if ($result) {
+                redirect("/admin/productos?ok=" . urlencode("Producto eliminado correctamente"));
+            } else {
+                redirect("/admin/productos?err=" . urlencode("Error al eliminar el producto"));
+            }
+        } catch (Exception $e) {
+            error_log("Error eliminando producto: " . $e->getMessage());
+            redirect("/admin/productos?err=" . urlencode("Error al eliminar: " . $e->getMessage()));
+        }
+    }
+
     public function buscarPorScan(): void
     {
         require __DIR__ . "/api/buscar_por_scan.php";

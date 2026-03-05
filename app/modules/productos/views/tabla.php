@@ -146,6 +146,12 @@
                                         class="btn-accion btn-editar">
                                         Editar
                                     </a>
+                                    <a
+                                        href="<?= url('/admin/productos/eliminar/' . (int)($p['id'] ?? 0)) ?>"
+                                        class="btn-accion btn-eliminar"
+                                        onclick="return confirm('¿Está seguro de eliminar el producto <?= htmlspecialchars($p['nombre'] ?? '') ?>? Esta acción no se puede deshacer.')">
+                                        Eliminar
+                                    </a>
                                 </div>
                             </td>
                         </tr>
