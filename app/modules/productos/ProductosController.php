@@ -432,7 +432,7 @@ class ProductosController extends Controller
 
     // =========================
     // ELIMINAR
-    // =========================
+    // ========================
     public function eliminar($id)
     {
         RoleMiddleware::requireAdminOrVendedor();
@@ -454,7 +454,7 @@ class ProductosController extends Controller
             if (!empty($imagenPath)) {
                 $decoded = json_decode($imagenPath, true);
                 $imagenes = is_array($decoded) ? $decoded : [$imagenPath];
-                
+
                 foreach ($imagenes as $img) {
                     $filePath = rtrim($this->UPLOAD_BASE_DIR, '/') . '/productos/' . basename($img);
                     if (file_exists($filePath)) {
@@ -465,7 +465,7 @@ class ProductosController extends Controller
 
             // Eliminar producto
             $result = $this->model->eliminar((int)$id);
-            
+
             if ($result) {
                 echo json_encode(['success' => true, 'message' => 'Producto eliminado correctamente']);
             } else {
