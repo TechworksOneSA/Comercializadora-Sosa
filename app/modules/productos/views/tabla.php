@@ -143,15 +143,17 @@
                                 <div class="acciones-flex">
                                     <a
                                         href="<?= url('/admin/productos/editar/' . (int)($p['id'] ?? 0)) ?>"
-                                        class="btn-accion btn-editar">
+                                        class="btn-accion btn-editar"
+                                        title="Editar producto">
                                         Editar
                                     </a>
-                                    <a
-                                        href="<?= url('/admin/productos/eliminar/' . (int)($p['id'] ?? 0)) ?>"
+                                    <button
+                                        type="button"
                                         class="btn-accion btn-eliminar"
-                                        onclick="return confirm('¿Está seguro de eliminar el producto <?= htmlspecialchars($p['nombre'] ?? '') ?>? Esta acción no se puede deshacer.')">
-                                        Eliminar
-                                    </a>
+                                        onclick="confirmarEliminar(<?= (int)($p['id'] ?? 0) ?>, '<?= htmlspecialchars(addslashes($p['nombre'] ?? ''), ENT_QUOTES) ?>')"
+                                        title="Eliminar producto">
+                                        🗑️
+                                    </button>
                                 </div>
                             </td>
                         </tr>

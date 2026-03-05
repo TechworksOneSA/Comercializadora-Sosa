@@ -437,9 +437,14 @@ class ProductosController extends Controller
     {
         RoleMiddleware::requireAdminOrVendedor();
 
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect("/admin/productos?err=" . urlencode("Método no permitido"));
+            return;
+        }
+
         $producto = $this->model->obtenerPorId((int)$id);
         if (!$producto) {
-            redirect("/admin/productos?err=" . urlencode("Producto no encontrado"));
+            echo json_encode(['success' => false, 'message' => 'Producto no encontrado']);
             return;
         }
 
@@ -449,7 +454,7 @@ class ProductosController extends Controller
             if (!empty($imagenPath)) {
                 $decoded = json_decode($imagenPath, true);
                 $imagenes = is_array($decoded) ? $decoded : [$imagenPath];
-
+                
                 foreach ($imagenes as $img) {
                     $filePath = rtrim($this->UPLOAD_BASE_DIR, '/') . '/productos/' . basename($img);
                     if (file_exists($filePath)) {
@@ -460,15 +465,15 @@ class ProductosController extends Controller
 
             // Eliminar producto
             $result = $this->model->eliminar((int)$id);
-
+            
             if ($result) {
-                redirect("/admin/productos?ok=" . urlencode("Producto eliminado correctamente"));
+                echo json_encode(['success' => true, 'message' => 'Producto eliminado correctamente']);
             } else {
-                redirect("/admin/productos?err=" . urlencode("Error al eliminar el producto"));
+                echo json_encode(['success' => false, 'message' => 'Error al eliminar el producto']);
             }
         } catch (Exception $e) {
             error_log("Error eliminando producto: " . $e->getMessage());
-            redirect("/admin/productos?err=" . urlencode("Error al eliminar: " . $e->getMessage()));
+            echo json_encode(['success' => false, 'message' => 'Error al eliminar: ' . $e->getMessage()]);
         }
     }
 

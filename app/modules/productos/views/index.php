@@ -193,3 +193,70 @@ $kpis = $kpis ?? [];
     </div>
   </div>
 </div>
+
+<!-- MODAL CONFIRMAR ELIMINACIÓN -->
+<div id="modalEliminar" class="modal-eliminar" style="display: none;">
+  <div class="modal-eliminar-backdrop" onclick="cerrarModalEliminar()"></div>
+  <div class="modal-eliminar-content">
+    <div class="modal-eliminar-header">
+      <h3>⚠️ Confirmar Eliminación</h3>
+      <button type="button" class="modal-eliminar-close" onclick="cerrarModalEliminar()">✕</button>
+    </div>
+    <div class="modal-eliminar-body">
+      <p>¿Está seguro de que desea eliminar permanentemente el producto?</p>
+      <p class="modal-eliminar-producto"><strong id="nombreProductoEliminar"></strong></p>
+      <p class="modal-eliminar-warning">⚠️ Esta acción no se puede deshacer</p>
+    </div>
+    <div class="modal-eliminar-footer">
+      <button type="button" class="btn-cancelar" onclick="cerrarModalEliminar()">Cancelar</button>
+      <button type="button" class="btn-confirmar-eliminar" onclick="eliminarProducto()">Eliminar Permanentemente</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let productoEliminarId = null;
+
+function confirmarEliminar(id, nombre) {
+  productoEliminarId = id;
+  document.getElementById('nombreProductoEliminar').textContent = nombre;
+  document.getElementById('modalEliminar').style.display = 'flex';
+}
+
+function cerrarModalEliminar() {
+  productoEliminarId = null;
+  document.getElementById('modalEliminar').style.display = 'none';
+}
+
+function eliminarProducto() {
+  if (!productoEliminarId) return;
+  
+  const btn = document.querySelector('.btn-confirmar-eliminar');
+  btn.disabled = true;
+  btn.textContent = 'Eliminando...';
+  
+  fetch('<?= url("/admin/productos/eliminar/") ?>' + productoEliminarId, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      cerrarModalEliminar();
+      window.location.href = '<?= url("/admin/productos?ok=") ?>' + encodeURIComponent(data.message || 'Producto eliminado');
+    } else {
+      alert('Error: ' + (data.message || 'No se pudo eliminar el producto'));
+      btn.disabled = false;
+      btn.textContent = 'Eliminar Permanentemente';
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error al eliminar el producto');
+    btn.disabled = false;
+    btn.textContent = 'Eliminar Permanentemente';
+  });
+}
+</script>
