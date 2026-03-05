@@ -437,15 +437,17 @@ class ProductosController extends Controller
     {
         RoleMiddleware::requireAdminOrVendedor();
 
+        header('Content-Type: application/json');
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            redirect("/admin/productos?err=" . urlencode("Método no permitido"));
-            return;
+            echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+            exit;
         }
 
         $producto = $this->model->obtenerPorId((int)$id);
         if (!$producto) {
             echo json_encode(['success' => false, 'message' => 'Producto no encontrado']);
-            return;
+            exit;
         }
 
         try {
@@ -475,6 +477,7 @@ class ProductosController extends Controller
             error_log("Error eliminando producto: " . $e->getMessage());
             echo json_encode(['success' => false, 'message' => 'Error al eliminar: ' . $e->getMessage()]);
         }
+        exit;
     }
 
     public function buscarPorScan(): void

@@ -65,6 +65,7 @@ $router->post("/admin/productos/actualizar/{id}", "ProductosController@actualiza
 $router->get("/admin/productos/{id}/series",    "ProductosController@series");
 $router->post("/admin/productos/desactivar/{id}", "ProductosController@desactivar");
 $router->post("/admin/productos/activar/{id}",    "ProductosController@activar");
+$router->post("/admin/productos/eliminar/{id}", "ProductosController@eliminar");
 $router->post("/admin/productos/eliminarPermanente/{id}", "ProductosController@eliminarPermanente");
 
 // COMPRAS
