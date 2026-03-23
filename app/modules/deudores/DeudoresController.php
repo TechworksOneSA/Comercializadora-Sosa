@@ -222,6 +222,204 @@ class DeudoresController extends Controller
         ]);
     }
 
+    public function editar()
+    {
+        RoleMiddleware::requireAdminOrVendedor();
+
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            $_SESSION['flash_error'] = "ID inválido";
+            redirect('/admin/deudores');
+            return;
+        }
+
+        $deuda = $this->model->getDeudaById($id);
+        if (!$deuda) {
+            $_SESSION['flash_error'] = "Deuda no encontrada";
+            redirect('/admin/deudores');
+            return;
+        }
+
+        // Verificar que la deuda no esté pagada o convertida
+        if (in_array($deuda['estado'] ?? 'ACTIVA', ['PAGADA', 'CONVERTIDA'])) {
+            $_SESSION['flash_error'] = "No se puede editar una deuda con estado " . $deuda['estado'];
+            redirect('/admin/deudores/ver?id=' . $id);
+            return;
+        }
+
+        $clientesModel = new ClientesModel();
+        $productosModel = new ProductosModel();
+
+        $clientes = $clientesModel->listar();
+        $productos = $productosModel->listarActivos();
+
+        $detalle = $this->model->getDetalleProductos($id);
+
+        $errors = $_SESSION['deudores_errors'] ?? [];
+        $old = $_SESSION['deudores_old'] ?? [];
+        unset($_SESSION['deudores_errors'], $_SESSION['deudores_old']);
+
+        // Extraer solo la fecha (sin hora) para el input type="date"
+        $fechaSoloFecha = substr($deuda['fecha'] ?? '', 0, 10);
+
+        $this->viewWithLayout("deudores/views/crear", [
+            "title" => "Editar Deuda #{$id}",
+            "user" => $_SESSION['user'],
+            "clientes" => $clientes,
+            "productos" => $productos,
+            "errors" => $errors,
+            "old" => $old,
+            "deuda" => $deuda,
+            "deuda_fecha" => $fechaSoloFecha,
+            "detalle" => $detalle,
+            "modoEdicion" => true,
+        ]);
+    }
+
+    public function actualizar()
+    {
+        RoleMiddleware::requireAdminOrVendedor();
+
+        $data = $_POST;
+        $deudaId = (int)($data['deuda_id'] ?? 0);
+        $errors = [];
+
+        if ($deudaId <= 0) {
+            $_SESSION['flash_error'] = "ID de deuda inválido";
+            redirect('/admin/deudores');
+            return;
+        }
+
+        // Verificar que la deuda existe y se puede editar
+        $deudaActual = $this->model->getDeudaById($deudaId);
+        if (!$deudaActual) {
+            $_SESSION['flash_error'] = "Deuda no encontrada";
+            redirect('/admin/deudores');
+            return;
+        }
+
+        if (in_array($deudaActual['estado'] ?? 'ACTIVA', ['PAGADA', 'CONVERTIDA'])) {
+            $_SESSION['flash_error'] = "No se puede editar una deuda con estado " . $deudaActual['estado'];
+            redirect('/admin/deudores/ver?id=' . $deudaId);
+            return;
+        }
+
+        if (empty($data['cliente_id'])) {
+            $errors[] = "Debe seleccionar un cliente";
+        }
+
+        // Validar y normalizar fecha
+        $fechaInput = trim($data['fecha'] ?? '');
+        if ($fechaInput === '') {
+            $errors[] = "Debe seleccionar la fecha";
+        }
+
+        $fechaDb = null;
+        if ($fechaInput !== '') {
+            $dt = DateTime::createFromFormat('Y-m-d', $fechaInput);
+            if (!$dt) {
+                $errors[] = "Fecha inválida.";
+            } else {
+                $fechaDb = $dt->format('Y-m-d') . ' 00:00:00';
+            }
+        }
+
+        $productosIds = $data['producto_id'] ?? [];
+        $cantidades = $data['cantidad'] ?? [];
+
+        if (empty($productosIds) || empty($cantidades)) {
+            $errors[] = "Debe agregar al menos un producto";
+        }
+
+        if (!empty($errors)) {
+            $_SESSION['deudores_errors'] = $errors;
+            $_SESSION['deudores_old'] = $data;
+            redirect('/admin/deudores/editar?id=' . $deudaId);
+            return;
+        }
+
+        // Preparar datos de productos
+        $productosModel = new ProductosModel();
+        $detalles = [];
+        $subtotal = 0;
+
+        foreach ($productosIds as $index => $productoId) {
+            $cantidad = (int)($cantidades[$index] ?? 0);
+
+            if ($cantidad <= 0) {
+                continue;
+            }
+
+            $producto = $productosModel->obtenerPorId((int)$productoId);
+
+            if (!$producto || $producto['estado'] !== 'ACTIVO') {
+                $errors[] = "Producto ID {$productoId} no válido";
+                continue;
+            }
+
+            // Para edición, verificamos el stock disponible + lo que ya estaba en la deuda
+            $cantidadOriginal = 0;
+            $detalleOriginal = $this->model->getDetalleProductos($deudaId);
+            foreach ($detalleOriginal as $det) {
+                if ((int)$det['producto_id'] === (int)$productoId) {
+                    $cantidadOriginal += (int)$det['cantidad'];
+                }
+            }
+
+            $stockDisponible = $producto['stock'] + $cantidadOriginal;
+
+            if ($stockDisponible < $cantidad) {
+                $errors[] = "Stock insuficiente para {$producto['nombre']}. Disponible: {$stockDisponible}";
+                continue;
+            }
+
+            $precioUnitario = (float)$producto['precio_venta'];
+            $subtotalLinea = $cantidad * $precioUnitario;
+            $subtotal += $subtotalLinea;
+
+            $detalles[] = [
+                'producto_id' => $productoId,
+                'cantidad' => $cantidad,
+                'precio_unitario' => $precioUnitario,
+                'subtotal' => $subtotalLinea,
+            ];
+        }
+
+        if (!empty($errors)) {
+            $_SESSION['deudores_errors'] = $errors;
+            $_SESSION['deudores_old'] = $data;
+            redirect('/admin/deudores/editar?id=' . $deudaId);
+            return;
+        }
+
+        if (empty($detalles)) {
+            $_SESSION['flash_error'] = "No hay productos válidos en la deuda";
+            redirect('/admin/deudores/editar?id=' . $deudaId);
+            return;
+        }
+
+        // Actualizar deuda
+        try {
+            $deudaData = [
+                'deuda_id' => $deudaId,
+                'cliente_id' => (int)$data['cliente_id'],
+                'fecha' => $fechaDb,
+                'total' => $subtotal,
+                'descripcion' => $data['descripcion'] ?? '',
+                'detalles' => $detalles,
+            ];
+
+            $this->model->actualizarDeuda($deudaData);
+
+            $_SESSION['flash_success'] = "Deuda #{$deudaId} actualizada exitosamente";
+            redirect('/admin/deudores/ver?id=' . $deudaId);
+        } catch (Exception $e) {
+            $_SESSION['flash_error'] = "Error al actualizar la deuda: " . $e->getMessage();
+            error_log("Error actualizando deuda: " . $e->getMessage());
+            redirect('/admin/deudores/editar?id=' . $deudaId);
+        }
+    }
+
     public function registrarPago()
     {
         RoleMiddleware::requireAdminOrVendedor();

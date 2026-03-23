@@ -1,14 +1,26 @@
 <?php
-// recibe: $clientes, $productos, $errors, $old
+// recibe: $clientes, $productos, $errors, $old, $deuda (opcional), $detalle (opcional), $modoEdicion (opcional)
+$modoEdicion = $modoEdicion ?? false;
+$deuda = $deuda ?? null;
+$detalle = $detalle ?? [];
+$deuda_fecha = $deuda_fecha ?? null;
 ?>
 <div class="card" style="max-width: 1200px; margin: 0 auto;">
   <!-- HEADER -->
   <div class="card-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); padding: 2rem;">
     <h1 class="card-title" style="color: white; font-size: 1.75rem; font-weight: 700; margin: 0;">
-      🧾 Nueva Deuda
+      <?php if ($modoEdicion): ?>
+        ✏️ Editar Deuda #<?= $deuda['id'] ?>
+      <?php else: ?>
+        🧾 Nueva Deuda
+      <?php endif; ?>
     </h1>
     <p style="color: rgba(255,255,255,0.9); margin: 0.5rem 0 0 0; font-size: 0.95rem;">
-      Registra una deuda seleccionando cliente y productos
+      <?php if ($modoEdicion): ?>
+        Modifica los datos de la deuda existente
+      <?php else: ?>
+        Registra una deuda seleccionando cliente y productos
+      <?php endif; ?>
     </p>
   </div>
 
@@ -25,7 +37,11 @@
   <?php endif; ?>
 
   <!-- FORMULARIO -->
-  <form method="POST" action="<?= url('/admin/deudores/guardar') ?>" id="formDeuda" style="padding: 2rem;">
+  <form method="POST" action="<?= $modoEdicion ? url('/admin/deudores/actualizar') : url('/admin/deudores/guardar') ?>" id="formDeuda" style="padding: 2rem;">
+    
+    <?php if ($modoEdicion): ?>
+      <input type="hidden" name="deuda_id" value="<?= $deuda['id'] ?>">
+    <?php endif; ?>
 
     <!-- SECCIÓN: DATOS GENERALES -->
     <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
@@ -61,7 +77,7 @@
           type="date"
           name="fecha"
           required
-          value="<?= htmlspecialchars($old['fecha'] ?? date('Y-m-d')) ?>"
+          value="<?= htmlspecialchars($old['fecha'] ?? $deuda_fecha ?? date('Y-m-d')) ?>"
           style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; background: white;"
           onfocus="this.style.borderColor='#dc3545';"
           onblur="this.style.borderColor='#e9ecef';"
@@ -74,7 +90,7 @@
           <textarea
             name="descripcion"
             style="width: 100%; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 0.95rem; min-height: 80px;"
-            placeholder="Notas o detalles adicionales..."><?= htmlspecialchars($old['descripcion'] ?? '') ?></textarea>
+            placeholder="Notas o detalles adicionales..."><?= htmlspecialchars($old['descripcion'] ?? ($deuda['descripcion'] ?? '')) ?></textarea>
         </div>
       </div>
     </div>
@@ -170,7 +186,11 @@
         type="submit"
         id="btnGuardar"
         style="padding: 0.75rem 2rem; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(220, 53, 69, 0.3);">
-        💾 Guardar Deuda
+        <?php if ($modoEdicion): ?>
+          ✔️ Actualizar Deuda
+        <?php else: ?>
+          💾 Guardar Deuda
+        <?php endif; ?>
       </button>
     </div>
 
@@ -181,6 +201,9 @@
   // Datos PHP a JavaScript
   const clientesData = <?= json_encode($clientes) ?>;
   const productosData = <?= json_encode($productos) ?>;
+  const modoEdicion = <?= json_encode($modoEdicion) ?>;
+  const deudaData = <?= json_encode($deuda) ?>;
+  const detalleData = <?= json_encode($detalle) ?>;
 
   // Estado
   let productosSeleccionados = [];
@@ -745,6 +768,37 @@
         return false;
       }
     });
+
+    /* ===== PRECARGAR DATOS EN MODO EDICIÓN ===== */
+    if (modoEdicion && deudaData && detalleData) {
+      // Precargar cliente
+      if (deudaData.cliente_id && deudaData.cliente_nombre) {
+        clienteIdInput.value = deudaData.cliente_id;
+        const buscarClienteInput = document.getElementById('buscarCliente');
+        if (buscarClienteInput) {
+          buscarClienteInput.value = deudaData.cliente_nombre;
+        }
+      }
+
+      // Precargar productos
+      if (Array.isArray(detalleData) && detalleData.length > 0) {
+        detalleData.forEach(item => {
+          // Buscar el producto en productosData
+          const producto = productosData.find(p => String(p.id) === String(item.producto_id));
+          if (producto) {
+            productosSeleccionados.push({
+              id: String(producto.id),
+              nombre: producto.nombre || item.producto_nombre,
+              precio: parseFloat(item.precio_unitario),
+              cantidad: parseInt(item.cantidad),
+              stock: parseInt(producto.stock) + parseInt(item.cantidad), // Stock actual + lo que estaba asignado
+              numero_serie: '',
+              requiere_serie: 0
+            });
+          }
+        });
+      }
+    }
 
     renderizarTabla(tablaProductos, inputsProductos, totalDisplay);
   });

@@ -421,6 +421,118 @@ class DeudoresModel extends Model
         }
     }
 
+    public function actualizarDeuda(array $data): bool
+    {
+        if (empty($data['deuda_id'])) {
+            throw new Exception("deuda_id requerido.");
+        }
+        if (empty($data['cliente_id'])) {
+            throw new Exception("cliente_id requerido.");
+        }
+        if (!isset($data['total'])) {
+            throw new Exception("total requerido.");
+        }
+
+        $this->ensureTables();
+
+        try {
+            $this->db->beginTransaction();
+
+            $deudaId = (int)$data['deuda_id'];
+
+            // 1) Restaurar stock de los productos originales
+            $detallesOriginales = $this->getDetalleProductos($deudaId);
+            if (!empty($detallesOriginales)) {
+                $sqlStock = "UPDATE productos SET stock = stock + :cantidad WHERE id = :producto_id";
+                $stmtStock = $this->db->prepare($sqlStock);
+
+                foreach ($detallesOriginales as $detalle) {
+                    $stmtStock->execute([
+                        ':cantidad' => $detalle['cantidad'],
+                        ':producto_id' => $detalle['producto_id']
+                    ]);
+                }
+            }
+
+            // 2) Eliminar detalles antiguos
+            $sqlDeleteDetalle = "DELETE FROM {$this->tableDetalle} WHERE deuda_id = :id";
+            $stmtDeleteDetalle = $this->db->prepare($sqlDeleteDetalle);
+            $stmtDeleteDetalle->execute([':id' => $deudaId]);
+
+            // 3) Actualizar datos principales de la deuda
+            $fecha = $data['fecha'] ?? null;
+            if (!$fecha) {
+                $fecha = date('Y-m-d H:i:s');
+            }
+
+            $sqlUpdate = "UPDATE {$this->table}
+                         SET cliente_id = :cliente_id,
+                             fecha = :fecha,
+                             total = :total,
+                             descripcion = :descripcion,
+                             updated_at = CURRENT_TIMESTAMP
+                         WHERE id = :id";
+
+            $stmtUpdate = $this->db->prepare($sqlUpdate);
+            $stmtUpdate->execute([
+                ':cliente_id' => (int)$data['cliente_id'],
+                ':fecha' => $fecha,
+                ':total' => (float)$data['total'],
+                ':descripcion' => (string)($data['descripcion'] ?? ''),
+                ':id' => $deudaId,
+            ]);
+
+            // 4) Insertar nuevos detalles y descontar stock
+            if (!empty($data['detalles']) && is_array($data['detalles'])) {
+                $sqlDetalle = "INSERT INTO {$this->tableDetalle}
+                              (deuda_id, producto_id, cantidad, precio_unitario, subtotal)
+                              VALUES (:deuda_id, :producto_id, :cantidad, :precio_unitario, :subtotal)";
+                $stmtDetalle = $this->db->prepare($sqlDetalle);
+
+                $sqlStock = "UPDATE productos SET stock = stock - :cantidad WHERE id = :producto_id";
+                $stmtStock = $this->db->prepare($sqlStock);
+
+                foreach ($data['detalles'] as $detalle) {
+                    $productoId = (int)$detalle['producto_id'];
+                    $cantidad = (int)$detalle['cantidad'];
+                    $precioUnitario = (float)$detalle['precio_unitario'];
+                    $subtotal = (float)$detalle['subtotal'];
+
+                    $stmtDetalle->execute([
+                        ':deuda_id' => $deudaId,
+                        ':producto_id' => $productoId,
+                        ':cantidad' => $cantidad,
+                        ':precio_unitario' => $precioUnitario,
+                        ':subtotal' => $subtotal,
+                    ]);
+
+                    $stmtStock->execute([
+                        ':cantidad' => $cantidad,
+                        ':producto_id' => $productoId,
+                    ]);
+                }
+            }
+
+            // 5) Actualizar total_pagado en base a los pagos existentes (no los borramos)
+            $sqlTotalPagado = "UPDATE {$this->table}
+                              SET total_pagado = (
+                                  SELECT COALESCE(SUM(monto), 0)
+                                  FROM {$this->tablePagos}
+                                  WHERE deuda_id = :deuda_id
+                              )
+                              WHERE id = :id";
+            $stmtTotalPagado = $this->db->prepare($sqlTotalPagado);
+            $stmtTotalPagado->execute([':deuda_id' => $deudaId, ':id' => $deudaId]);
+
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            error_log("Error actualizarDeuda: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
     // =========================================================
     // VENTA AUTO
     // =========================================================
