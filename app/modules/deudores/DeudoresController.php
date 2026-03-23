@@ -245,13 +245,14 @@ class DeudoresController extends Controller
 
             if ($deudaActualizada && $deudaActualizada['estado'] === 'PAGADA') {
                 $ventaId = $deudaActualizada['venta_generada_id'];
-                $_SESSION['flash_success'] = "🎉 ¡Pago registrado exitosamente! La deuda está completamente PAGADA y se generó la VENTA #{$ventaId}.";
+                $_SESSION['flash_success'] = "🎉 ¡Pago registrado exitosamente! La deuda ha sido SALDADA por completo y se generó automáticamente la VENTA #{$ventaId}. Los productos ya están registrados en el sistema de ventas.";
 
                 // Redirigir a ver la venta generada
                 redirect('/admin/ventas/ver?id=' . $ventaId);
                 return;
             } else {
-                $_SESSION['flash_success'] = "✅ Pago de Q" . number_format($monto, 2) . " registrado exitosamente con " . htmlspecialchars($metodoPago);
+                $saldoPendiente = $deudaActualizada['saldo'] ?? 0;
+                $_SESSION['flash_success'] = "✅ Pago de Q" . number_format($monto, 2) . " registrado exitosamente con " . htmlspecialchars($metodoPago) . ". Saldo pendiente: Q" . number_format($saldoPendiente, 2);
             }
         } catch (Exception $e) {
             $_SESSION['flash_error'] = "❌ Error registrando pago: " . $e->getMessage();
@@ -289,7 +290,7 @@ class DeudoresController extends Controller
         RoleMiddleware::requireAdminOrVendedor();
 
         $id = (int)($_POST['id'] ?? 0);
-        
+
         if ($id <= 0) {
             $_SESSION['flash_error'] = "ID inválido";
             redirect('/admin/deudores');

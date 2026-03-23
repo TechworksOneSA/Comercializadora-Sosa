@@ -424,12 +424,35 @@ class DeudoresModel extends Model
     // =========================================================
     // VENTA AUTO
     // =========================================================
+    
+    /**
+     * Obtiene el método de pago predominante de los pagos de una deuda
+     */
+    private function getMetodoPagoPredominante(int $deudaId): string
+    {
+        $sql = "SELECT metodo_pago, SUM(monto) as total_metodo
+                FROM {$this->tablePagos}
+                WHERE deuda_id = :deuda_id
+                GROUP BY metodo_pago
+                ORDER BY total_metodo DESC
+                LIMIT 1";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':deuda_id' => $deudaId]);
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $resultado ? $resultado['metodo_pago'] : 'Efectivo';
+    }
+    
     private function convertirDeudaAVenta(int $deudaId, int $usuarioId): int
     {
         $deuda = $this->getDeudaById($deudaId);
         if (!$deuda) throw new Exception("Deuda no encontrada");
 
         $detalleDeuda = $this->getDetalleProductos($deudaId);
+        
+        // Obtener el método de pago predominante de los pagos realizados
+        $metodoPago = $this->getMetodoPagoPredominante($deudaId);
 
         $ventasModel = new VentasModel();
 
@@ -437,8 +460,8 @@ class DeudoresModel extends Model
             'cliente_id'     => $deuda['cliente_id'],
             'usuario_id'     => $usuarioId,
             'total'          => $deuda['total'],
-            'metodo_pago'    => 'Efectivo',
-            'observaciones'  => 'Venta generada automáticamente de Deuda #' . $deudaId,
+            'metodo_pago'    => $metodoPago,
+            'observaciones'  => 'Venta generada automáticamente de Deuda #' . $deudaId . ' (saldada completamente)',
             'deuda_origen_id' => $deudaId,
             'detalles'       => array_map(function ($item) {
                 return [
