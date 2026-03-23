@@ -302,6 +302,55 @@
   </div>
 </div>
 
+<!-- MODAL CONFIRMAR ELIMINACIÓN -->
+<div id="modalEliminarDeuda" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+  <div style="background: white; border-radius: 1rem; width: 90%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); animation: modalSlideIn 0.3s ease-out;">
+    <!-- Header -->
+    <div style="padding: 2rem; border-bottom: 2px solid #e9ecef; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border-radius: 1rem 1rem 0 0;">
+      <h3 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 0.75rem;">
+        <span style="font-size: 2rem;">⚠️</span>
+        Confirmar Eliminación
+      </h3>
+    </div>
+
+    <!-- Body -->
+    <div style="padding: 2rem;">
+      <p style="margin: 0 0 1.5rem 0; font-size: 1.1rem; color: #495057; line-height: 1.6;">
+        ¿Está seguro que desea <strong style="color: #dc3545;">eliminar esta deuda</strong>?
+      </p>
+      
+      <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
+        <p style="margin: 0 0 0.75rem 0; font-weight: 600; color: #856404;">Esta acción:</p>
+        <ul style="margin: 0; padding-left: 1.5rem; color: #856404;">
+          <li style="margin-bottom: 0.5rem;">Eliminará la deuda y todos sus pagos</li>
+          <li style="margin-bottom: 0.5rem;">Restaurará el stock de los productos</li>
+          <li style="margin-bottom: 0;">NO se puede deshacer</li>
+        </ul>
+      </div>
+
+      <p style="margin: 0; font-size: 0.95rem; color: #6c757d;">
+        ID de la deuda: <strong style="color: #495057;">#<span id="modalDeudaIdEliminar"></span></strong>
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="padding: 1.5rem 2rem; border-top: 2px solid #e9ecef; display: flex; gap: 1rem; justify-content: flex-end; background: #f8f9fa; border-radius: 0 0 1rem 1rem;">
+      <button
+        type="button"
+        onclick="cerrarModalEliminar()"
+        style="padding: 0.75rem 1.5rem; background: #6c757d; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        id="btnConfirmarEliminarDeuda"
+        style="padding: 0.75rem 2rem; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 0.5rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4); transition: all 0.2s;">
+        🗑️ Eliminar Deuda
+      </button>
+    </div>
+  </div>
+</div>
+
 <style>
   .card {
     animation: fadeIn 0.3s ease-in;
@@ -332,6 +381,23 @@
     to {
       opacity: 1;
     }
+  }
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-30px) scale(0.95);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  #modalEliminarDeuda button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   }
 </style>
 
