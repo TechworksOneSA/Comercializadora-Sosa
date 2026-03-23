@@ -7,7 +7,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
@@ -52,7 +53,7 @@ html, body {
   width: 56px;
   height: 56px;
   border-radius: 14px;
-  background: rgba(255,255,255,.18);
+  background: rgba(255, 255, 255, .18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,7 +90,7 @@ html, body {
   background: #fff;
   border-radius: 14px;
   padding: 20px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
 }
 
 .kpi-icon {
@@ -115,7 +116,7 @@ html, body {
   background: #fff;
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
   margin-bottom: 20px;
 }
 
@@ -180,7 +181,8 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 0; /* CLAVE */
+  min-width: 0;
+  /* CLAVE */
 }
 
 .filter-label {
@@ -218,7 +220,7 @@ html, body {
   right: 0;
   background: #fff;
   border-radius: 10px;
-  box-shadow: 0 10px 26px rgba(0,0,0,.15);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .15);
   max-height: 260px;
   overflow-y: auto;
   z-index: 100;
@@ -233,17 +235,15 @@ html, body {
    TABLA
 ===================================================== */
 .table-layer {
-<<<<<<< HEAD
-  margin-top: 20px;
+  <<<<<<< HEAD margin-top: 20px;
   overflow-x: auto;
-=======
-  background: rgba(255, 255, 255, 0.92);
+  =======background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow-x: auto;
   overflow-y: auto;
->>>>>>> 85ddb97 (deslizabel tabla)
+  >>>>>>>85ddb97 (deslizabel tabla)
 }
 
 .table-layer table {
@@ -502,8 +502,13 @@ html, body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -511,6 +516,7 @@ html, body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -534,15 +540,15 @@ html, body {
     width: 100%;
     justify-content: center;
   }
-  
+
   .modal-eliminar-content {
     width: 95%;
   }
-  
+
   .modal-eliminar-footer {
     flex-direction: column-reverse;
   }
-  
+
   .modal-eliminar-footer button {
     width: 100%;
   }

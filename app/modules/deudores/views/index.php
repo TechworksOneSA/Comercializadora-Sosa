@@ -141,11 +141,21 @@
                   <?php endif; ?>
                 </td>
                 <td style="padding: 0.75rem; text-align: center;">
-                  <a
-                    href="<?= url('/admin/deudores/ver?id=' . $d['id']) ?>"
-                    style="display: inline-block; padding: 0.5rem 1rem; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; text-decoration: none; border-radius: 0.375rem; font-weight: 600; font-size: 0.85rem; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);">
-                    Ver Detalle
-                  </a>
+                  <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+                    <a
+                      href="<?= url('/admin/deudores/ver?id=' . $d['id']) ?>"
+                      style="display: inline-block; padding: 0.5rem 1rem; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; text-decoration: none; border-radius: 0.375rem; font-weight: 600; font-size: 0.85rem; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);">
+                      👁️ Ver
+                    </a>
+                    <?php if (!in_array($estadoActual, ['PAGADA', 'CONVERTIDA'])): ?>
+                      <button
+                        onclick="confirmarEliminarDeuda(<?= $d['id'] ?>)"
+                        style="padding: 0.5rem 1rem; background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%); color: white; border: none; border-radius: 0.375rem; font-weight: 600; font-size: 0.85rem; cursor: pointer; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);"
+                        title="Eliminar deuda">
+                        🗑️
+                      </button>
+                    <?php endif; ?>
+                  </div>
                 </td>
               </tr>
             <?php endforeach; ?>
@@ -320,4 +330,22 @@
       }
     }
   });
+
+  // Confirmar eliminación de deuda
+  function confirmarEliminarDeuda(deudaId) {
+    if (confirm('⚠️ ¿Está seguro que desea eliminar esta deuda?\n\nEsta acción:\n• Eliminará la deuda y sus pagos\n• Restaurará el stock de los productos\n• NO se puede deshacer\n\n¿Desea continuar?')) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '<?= url('/admin/deudores/eliminar') ?>';
+
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'id';
+      input.value = deudaId;
+
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
 </script>

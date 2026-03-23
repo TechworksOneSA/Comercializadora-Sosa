@@ -163,7 +163,7 @@ class ProductosModel extends Model
             if (empty($numeroSerie)) {
                 $numeroSerie = null;
             }
-            
+
             // Debug
             require_once __DIR__ . '/../../core/Logger.php';
             Logger::log("numero_serie a guardar: " . ($numeroSerie ?? 'NULL'));
@@ -312,7 +312,7 @@ class ProductosModel extends Model
 
     public function listarActivos(): array
     {
-        $sql = "SELECT id, sku, nombre, tipo_producto, codigo_barra, numero_serie, 
+        $sql = "SELECT id, sku, nombre, tipo_producto, codigo_barra, numero_serie,
                        precio_venta, costo_actual, stock, imagen_path, requiere_serie
                 FROM productos
                 WHERE estado = 'ACTIVO'
@@ -323,15 +323,15 @@ class ProductosModel extends Model
 
     public function tieneVentasAsociadas(int $productoId): bool
     {
-        $sql = "SELECT COUNT(*) as total 
-                FROM venta_detalle 
-                WHERE producto_id = :producto_id 
+        $sql = "SELECT COUNT(*) as total
+                FROM venta_detalle
+                WHERE producto_id = :producto_id
                 LIMIT 1";
-        
+
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':producto_id', $productoId, PDO::PARAM_INT);
         $stmt->execute();
-        
+
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return ($result['total'] ?? 0) > 0;
     }

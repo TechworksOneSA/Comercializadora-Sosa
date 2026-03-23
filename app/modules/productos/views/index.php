@@ -230,11 +230,11 @@ function cerrarModalEliminar() {
 
 function eliminarProducto() {
   if (!productoEliminarId) return;
-  
+
   const btn = document.querySelector('.btn-confirmar-eliminar');
   btn.disabled = true;
   btn.textContent = 'Procesando...';
-  
+
   fetch('<?= url("/admin/productos/eliminar/") ?>' + productoEliminarId, {
     method: 'POST',
     headers: {

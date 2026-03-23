@@ -283,4 +283,41 @@ class DeudoresController extends Controller
 
         redirect('/admin/deudores/ver?id=' . $deudaId);
     }
+
+    public function eliminar()
+    {
+        RoleMiddleware::requireAdminOrVendedor();
+
+        $id = (int)($_POST['id'] ?? 0);
+        
+        if ($id <= 0) {
+            $_SESSION['flash_error'] = "ID inválido";
+            redirect('/admin/deudores');
+            return;
+        }
+
+        try {
+            // Verificar que la deuda exista
+            $deuda = $this->model->getDeudaById($id);
+            if (!$deuda) {
+                $_SESSION['flash_error'] = "Deuda no encontrada";
+                redirect('/admin/deudores');
+                return;
+            }
+
+            // Verificar que la deuda no esté completamente pagada o convertida
+            if ($deuda['estado'] === 'PAGADA' || $deuda['estado'] === 'CONVERTIDA') {
+                $_SESSION['flash_error'] = "No se puede eliminar una deuda con estado " . $deuda['estado'];
+                redirect('/admin/deudores/ver?id=' . $id);
+                return;
+            }
+
+            $this->model->eliminarDeuda($id);
+            $_SESSION['flash_success'] = "Deuda #{$id} eliminada exitosamente";
+            redirect('/admin/deudores');
+        } catch (Exception $e) {
+            $_SESSION['flash_error'] = "Error eliminando deuda: " . $e->getMessage();
+            redirect('/admin/deudores/ver?id=' . $id);
+        }
+    }
 }

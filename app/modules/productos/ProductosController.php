@@ -453,14 +453,14 @@ class ProductosController extends Controller
         try {
             // Verificar si el producto tiene ventas asociadas
             $tieneVentas = $this->model->tieneVentasAsociadas((int)$id);
-            
+
             if ($tieneVentas) {
                 // Si tiene ventas, solo desactivar (eliminación lógica)
                 $result = $this->model->desactivar((int)$id);
-                
+
                 if ($result) {
                     echo json_encode([
-                        'success' => true, 
+                        'success' => true,
                         'message' => 'El producto tiene ventas registradas y ha sido desactivado. Ya no aparecerá en el inventario activo.'
                     ]);
                 } else {

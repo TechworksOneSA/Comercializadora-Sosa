@@ -17,11 +17,20 @@
           Cliente: <?= htmlspecialchars($deuda['cliente_nombre']) ?>
         </p>
       </div>
-      <a
-        href="<?= url('/admin/deudores') ?>"
-        style="padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 600; border: 2px solid white;">
-        ← Volver
-      </a>
+      <div style="display: flex; gap: 0.75rem;">
+        <?php if (!in_array(($deuda['estado'] ?? 'ACTIVA'), ['PAGADA', 'CONVERTIDA'])): ?>
+          <button
+            onclick="confirmarEliminarDeuda(<?= $deuda['id'] ?>)"
+            style="padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+            🗑️ Eliminar
+          </button>
+        <?php endif; ?>
+        <a
+          href="<?= url('/admin/deudores') ?>"
+          style="padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 600; border: 2px solid white;">
+          ← Volver
+        </a>
+      </div>
     </div>
   </div>
 
@@ -390,4 +399,22 @@
       });
     }
   });
+
+  // Confirmar eliminación de deuda
+  function confirmarEliminarDeuda(deudaId) {
+    if (confirm('⚠️ ¿Está seguro que desea eliminar esta deuda?\n\nEsta acción:\n• Eliminará la deuda y sus pagos\n• Restaurará el stock de los productos\n• NO se puede deshacer\n\n¿Desea continuar?')) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '<?= url('/admin/deudores/eliminar') ?>';
+
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'id';
+      input.value = deudaId;
+
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
 </script>

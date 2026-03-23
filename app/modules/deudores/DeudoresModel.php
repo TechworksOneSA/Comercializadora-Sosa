@@ -374,6 +374,53 @@ class DeudoresModel extends Model
         return $stmt->execute([':monto' => $monto, ':id' => $deudaId]);
     }
 
+    public function eliminarDeuda(int $deudaId): bool
+    {
+        $this->ensureTables();
+
+        try {
+            $this->db->beginTransaction();
+
+            // 1) Obtener detalles para restaurar stock
+            $detalles = $this->getDetalleProductos($deudaId);
+
+            // 2) Restaurar stock de cada producto
+            if (!empty($detalles)) {
+                $sqlStock = "UPDATE productos SET stock = stock + :cantidad WHERE id = :producto_id";
+                $stmtStock = $this->db->prepare($sqlStock);
+
+                foreach ($detalles as $detalle) {
+                    $stmtStock->execute([
+                        ':cantidad' => $detalle['cantidad'],
+                        ':producto_id' => $detalle['producto_id']
+                    ]);
+                }
+            }
+
+            // 3) Eliminar pagos asociados
+            $sqlPagos = "DELETE FROM {$this->tablePagos} WHERE deuda_id = :id";
+            $stmtPagos = $this->db->prepare($sqlPagos);
+            $stmtPagos->execute([':id' => $deudaId]);
+
+            // 4) Eliminar detalles
+            $sqlDetalle = "DELETE FROM {$this->tableDetalle} WHERE deuda_id = :id";
+            $stmtDetalle = $this->db->prepare($sqlDetalle);
+            $stmtDetalle->execute([':id' => $deudaId]);
+
+            // 5) Eliminar deuda principal
+            $sqlDeuda = "DELETE FROM {$this->table} WHERE id = :id";
+            $stmtDeuda = $this->db->prepare($sqlDeuda);
+            $stmtDeuda->execute([':id' => $deudaId]);
+
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            if ($this->db->inTransaction()) $this->db->rollBack();
+            error_log("Error eliminando deuda: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
     // =========================================================
     // VENTA AUTO
     // =========================================================
