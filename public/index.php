@@ -138,6 +138,7 @@ $router->post("/admin/deudores/guardar", "DeudoresController@guardar");
 $router->get("/admin/deudores/ver", "DeudoresController@ver");
 $router->post("/admin/deudores/registrarPago", "DeudoresController@registrarPago");
 $router->post("/admin/deudores/ampliar", "DeudoresController@ampliar");
+$router->post("/admin/deudores/eliminar", "DeudoresController@eliminar");
 // Endpoint de depuración
 $router->get("/admin/deudores/debug-clientes", "DeudoresController@debugClientes");
 

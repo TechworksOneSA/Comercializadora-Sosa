@@ -424,7 +424,7 @@ class DeudoresModel extends Model
     // =========================================================
     // VENTA AUTO
     // =========================================================
-    
+
     /**
      * Obtiene el método de pago predominante de los pagos de una deuda
      */
@@ -436,21 +436,21 @@ class DeudoresModel extends Model
                 GROUP BY metodo_pago
                 ORDER BY total_metodo DESC
                 LIMIT 1";
-        
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':deuda_id' => $deudaId]);
         $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         return $resultado ? $resultado['metodo_pago'] : 'Efectivo';
     }
-    
+
     private function convertirDeudaAVenta(int $deudaId, int $usuarioId): int
     {
         $deuda = $this->getDeudaById($deudaId);
         if (!$deuda) throw new Exception("Deuda no encontrada");
 
         $detalleDeuda = $this->getDetalleProductos($deudaId);
-        
+
         // Obtener el método de pago predominante de los pagos realizados
         $metodoPago = $this->getMetodoPagoPredominante($deudaId);
 
