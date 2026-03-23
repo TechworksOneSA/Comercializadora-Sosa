@@ -38,7 +38,7 @@ $deuda_fecha = $deuda_fecha ?? null;
 
   <!-- FORMULARIO -->
   <form method="POST" action="<?= $modoEdicion ? url('/admin/deudores/actualizar') : url('/admin/deudores/guardar') ?>" id="formDeuda" style="padding: 2rem;">
-    
+
     <?php if ($modoEdicion): ?>
       <input type="hidden" name="deuda_id" value="<?= $deuda['id'] ?>">
     <?php endif; ?>

@@ -7,6 +7,35 @@ class CajaModel extends Model
     public function __construct()
     {
         $this->db = Database::connect();
+        $this->ensureDeudaIdColumn();
+    }
+
+    /**
+     * Asegurar que la columna deuda_id existe en movimientos_caja
+     */
+    private function ensureDeudaIdColumn(): void
+    {
+        try {
+            // Verificar si la columna existe
+            $sql = "SELECT COLUMN_NAME 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                      AND TABLE_NAME = 'movimientos_caja' 
+                      AND COLUMN_NAME = 'deuda_id'";
+            $stmt = $this->db->query($sql);
+            
+            if (!$stmt->fetchColumn()) {
+                // Agregar la columna si no existe
+                $this->db->exec(
+                    "ALTER TABLE movimientos_caja 
+                     ADD COLUMN deuda_id INT(11) NULL AFTER venta_id,
+                     ADD INDEX idx_deuda_id (deuda_id)"
+                );
+            }
+        } catch (Exception $e) {
+            // Si falla, continuar (la columna puede ya existir)
+            error_log("ensureDeudaIdColumn: " . $e->getMessage());
+        }
     }
 
     /* =========================================================
@@ -80,9 +109,11 @@ class CajaModel extends Model
             return true;
         }
 
+        $deudaId = isset($data['deuda_id']) ? (int)$data['deuda_id'] : null;
+
         $sql = "INSERT INTO movimientos_caja
-                (tipo, concepto, monto, metodo_pago, observaciones, venta_id, usuario_id, fecha)
-                VALUES ('ingreso', :concepto, :monto, :metodo_pago, :observaciones, :venta_id, :usuario_id, NOW())";
+                (tipo, concepto, monto, metodo_pago, observaciones, venta_id, deuda_id, usuario_id, fecha)
+                VALUES ('ingreso', :concepto, :monto, :metodo_pago, :observaciones, :venta_id, :deuda_id, :usuario_id, NOW())";
 
         $stmt = $this->db->prepare($sql);
 
@@ -92,6 +123,7 @@ class CajaModel extends Model
             ':metodo_pago'   => $metodoPago,
             ':observaciones' => (string)($data['observaciones'] ?? ''),
             ':venta_id'      => $ventaId,
+            ':deuda_id'      => $deudaId,
             ':usuario_id'    => (int)($data['usuario_id'] ?? 0),
         ]);
     }

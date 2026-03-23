@@ -331,6 +331,7 @@ class DeudoresModel extends Model
                 'metodo_pago' => $metodoPago,
                 'observaciones' => $observacionesCaja,
                 'venta_id' => null,
+                'deuda_id' => $deudaId,
                 'usuario_id' => $usuarioId
             ]);
 
@@ -397,17 +398,22 @@ class DeudoresModel extends Model
                 }
             }
 
-            // 3) Eliminar pagos asociados
+            // 3) Eliminar movimientos de caja asociados (abonos registrados)
+            $sqlCaja = "DELETE FROM movimientos_caja WHERE deuda_id = :id";
+            $stmtCaja = $this->db->prepare($sqlCaja);
+            $stmtCaja->execute([':id' => $deudaId]);
+
+            // 4) Eliminar pagos asociados
             $sqlPagos = "DELETE FROM {$this->tablePagos} WHERE deuda_id = :id";
             $stmtPagos = $this->db->prepare($sqlPagos);
             $stmtPagos->execute([':id' => $deudaId]);
 
-            // 4) Eliminar detalles
+            // 5) Eliminar detalles
             $sqlDetalle = "DELETE FROM {$this->tableDetalle} WHERE deuda_id = :id";
             $stmtDetalle = $this->db->prepare($sqlDetalle);
             $stmtDetalle->execute([':id' => $deudaId]);
 
-            // 5) Eliminar deuda principal
+            // 6) Eliminar deuda principal
             $sqlDeuda = "DELETE FROM {$this->table} WHERE id = :id";
             $stmtDeuda = $this->db->prepare($sqlDeuda);
             $stmtDeuda->execute([':id' => $deudaId]);
