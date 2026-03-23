@@ -19,6 +19,11 @@
       </div>
       <div style="display: flex; gap: 0.75rem;">
         <?php if (!in_array(($deuda['estado'] ?? 'ACTIVA'), ['PAGADA', 'CONVERTIDA'])): ?>
+          <a
+            href="<?= url('/admin/deudores/editar?id=' . $deuda['id']) ?>"
+            style="padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 600; border: 2px solid white; cursor: pointer;">
+            ✏️ Editar
+          </a>
           <button
             onclick="confirmarEliminarDeuda(<?= $deuda['id'] ?>)"
             style="padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
@@ -318,7 +323,7 @@
       <p style="margin: 0 0 1.5rem 0; font-size: 1.1rem; color: #495057; line-height: 1.6;">
         ¿Está seguro que desea <strong style="color: #dc3545;">eliminar esta deuda</strong>?
       </p>
-      
+
       <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
         <p style="margin: 0 0 0.75rem 0; font-weight: 600; color: #856404;">Esta acción:</p>
         <ul style="margin: 0; padding-left: 1.5rem; color: #856404;">

@@ -136,6 +136,8 @@ $router->get("/admin/deudores", "DeudoresController@index");
 $router->get("/admin/deudores/crear", "DeudoresController@crear");
 $router->post("/admin/deudores/guardar", "DeudoresController@guardar");
 $router->get("/admin/deudores/ver", "DeudoresController@ver");
+$router->get("/admin/deudores/editar", "DeudoresController@editar");
+$router->post("/admin/deudores/actualizar", "DeudoresController@actualizar");
 $router->post("/admin/deudores/registrarPago", "DeudoresController@registrarPago");
 $router->post("/admin/deudores/ampliar", "DeudoresController@ampliar");
 $router->post("/admin/deudores/eliminar", "DeudoresController@eliminar");
