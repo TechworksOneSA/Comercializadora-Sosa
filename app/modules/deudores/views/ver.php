@@ -339,9 +339,17 @@
   // Cerrar modal con tecla ESC
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-      const modal = document.getElementById('modalAbono');
-      if (modal && modal.style.display === 'flex') {
-        modal.style.display = 'none';
+      // Cerrar modal de abono
+      const modalAbono = document.getElementById('modalAbono');
+      if (modalAbono && modalAbono.style.display === 'flex') {
+        modalAbono.style.display = 'none';
+        return;
+      }
+
+      // Cerrar modal de eliminar
+      const modalEliminar = document.getElementById('modalEliminarDeuda');
+      if (modalEliminar && modalEliminar.style.display === 'flex') {
+        cerrarModalEliminar();
       }
     }
   });
@@ -400,21 +408,44 @@
     }
   });
 
-  // Confirmar eliminación de deuda
+  // Variables globales para el modal de eliminación
+  let deudaIdAEliminar = null;
+
+  // Mostrar modal de confirmación de eliminación
   function confirmarEliminarDeuda(deudaId) {
-    if (confirm('⚠️ ¿Está seguro que desea eliminar esta deuda?\n\nEsta acción:\n• Eliminará la deuda y sus pagos\n• Restaurará el stock de los productos\n• NO se puede deshacer\n\n¿Desea continuar?')) {
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = '<?= url('/admin/deudores/eliminar') ?>';
-
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'id';
-      input.value = deudaId;
-
-      form.appendChild(input);
-      document.body.appendChild(form);
-      form.submit();
-    }
+    deudaIdAEliminar = deudaId;
+    document.getElementById('modalDeudaIdEliminar').textContent = deudaId;
+    document.getElementById('modalEliminarDeuda').style.display = 'flex';
   }
+
+  // Cerrar modal de eliminación
+  function cerrarModalEliminar() {
+    document.getElementById('modalEliminarDeuda').style.display = 'none';
+    deudaIdAEliminar = null;
+  }
+
+  // Confirmar eliminación desde modal
+  document.getElementById('btnConfirmarEliminarDeuda')?.addEventListener('click', function() {
+    if (!deudaIdAEliminar) return;
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<?= url('/admin/deudores/eliminar') ?>';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'id';
+    input.value = deudaIdAEliminar;
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+  });
+
+  // Cerrar modal al hacer clic fuera
+  document.getElementById('modalEliminarDeuda')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+      cerrarModalEliminar();
+    }
+  });
 </script>
